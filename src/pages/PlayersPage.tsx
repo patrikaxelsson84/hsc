@@ -1,41 +1,75 @@
 import { ArrowLeft, ArrowRight, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { samplePlayers } from "../data/sampleCompetition";
+import type { ClassLevel, AgeCategory } from "../lib/scoring";
 
-const sortedPlayers = [...samplePlayers].sort((firstPlayer, secondPlayer) => {
-    const teamCompare = firstPlayer.club.localeCompare(secondPlayer.club);
-
-    if (teamCompare !== 0) {
-        return teamCompare;
-    }
-
-    if (firstPlayer.classLevel !== secondPlayer.classLevel) {
-        return firstPlayer.classLevel - secondPlayer.classLevel;
-    }
-
-    return firstPlayer.name.localeCompare(secondPlayer.name);
-});
-
-const playersByTeam = sortedPlayers.reduce<Record<string, typeof samplePlayers>>((teams, player) => {
-    const team = player.club || "No team";
-
-    teams[team] ??= [];
-    teams[team].push(player);
-
-    return teams;
-}, {});
-
-const teamGroups = Object.entries(playersByTeam).sort(([firstTeam], [secondTeam]) =>
-    firstTeam.localeCompare(secondTeam)
-);
 
 export default function PlayersPage() {
-    const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
-    const selectedPlayers = selectedTeam ? playersByTeam[selectedTeam] : [];
-    const selectedClassCount = useMemo(
-        () => new Set(selectedPlayers.map((player) => player.classLevel)).size,
-        [selectedPlayers]
+    const [players, setPlayers] = useState(samplePlayers);
+// <<< NEW CODE START >>>
+
+    const sortedPlayers = [...players].sort((firstPlayer, secondPlayer) => {
+        const teamCompare = firstPlayer.club.localeCompare(secondPlayer.club);
+
+        if (teamCompare !== 0) {
+            return teamCompare;
+        }
+
+        if (firstPlayer.classLevel !== secondPlayer.classLevel) {
+            return firstPlayer.classLevel - secondPlayer.classLevel;
+        }
+
+        return firstPlayer.name.localeCompare(secondPlayer.name);
+    });
+
+    const playersByTeam = sortedPlayers.reduce<
+        Record<string, typeof samplePlayers>
+    >((teams, player) => {
+        const team = player.club || "No team";
+
+        teams[team] ??= [];
+        teams[team].push(player);
+
+        return teams;
+    }, {});
+
+    const teamGroups = Object.entries(playersByTeam).sort(
+        ([firstTeam], [secondTeam]) =>
+            firstTeam.localeCompare(secondTeam)
     );
+
+// <<< NEW CODE END >>>
+    // <<< NEW CODE START >>>
+    const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+
+    const [editingPlayer, setEditingPlayer] =
+        useState<(typeof samplePlayers)[number] | null>(null);
+    const savePlayer = () => {
+        if (!editingPlayer) return;
+
+        setPlayers((currentPlayers) =>
+            currentPlayers.map((player) =>
+                player.id === editingPlayer.id
+                    ? editingPlayer
+                    : player
+            )
+        );
+
+        // Close the roster if the player changed clubs
+        if (editingPlayer.club !== selectedTeam) {
+            setSelectedTeam(null);
+        }
+
+        setEditingPlayer(null);
+    };
+
+// <<< NEW CODE END >>>
+
+    const selectedPlayers = selectedTeam
+        ? playersByTeam[selectedTeam] ?? []
+        : [];
+    const selectedClassCount =
+        new Set(selectedPlayers.map((player) => player.classLevel)).size;
 
     return (
         <div className="admin-page">
@@ -83,6 +117,7 @@ export default function PlayersPage() {
                                         <th>Name</th>
                                         <th>Category</th>
                                         <th>7-meters</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -92,6 +127,14 @@ export default function PlayersPage() {
                                             <td>{player.name}</td>
                                             <td>{player.ageCategory}</td>
                                             <td>{player.sevenMeters}</td>
+                                            <td>
+                                                <button
+                                                    className="secondary-action"
+                                                    onClick={() => setEditingPlayer(player)}
+                                                >
+                                                    Edit
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -123,6 +166,96 @@ export default function PlayersPage() {
                     ))}
                 </section>
             )}
+            {editingPlayer && (
+                <div className="modal-overlay">
+                    <div className="modal-card">
+
+                        <h2>Edit {editingPlayer.name}</h2>
+
+                        <label>Name</label>
+
+                        <input
+                            value={editingPlayer.name}
+                            onChange={(e) =>
+                                setEditingPlayer({
+                                    ...editingPlayer,
+                                    name: e.target.value,
+                                })
+                            }
+                        />
+
+                        <label>Club</label>
+
+                        <select
+                            value={editingPlayer.club}
+                            onChange={(e) =>
+                                setEditingPlayer({
+                                    ...editingPlayer,
+                                    club: e.target.value,
+                                })
+                            }
+                        >
+                            {teamGroups.map(([team]) => (
+                                <option key={team} value={team}>
+                                    {team}
+                                </option>
+                            ))}
+                        </select>
+
+                        <label>Class</label>
+
+                        <select
+                            value={editingPlayer.classLevel}
+                            onChange={(e) =>
+                                setEditingPlayer({
+                                    ...editingPlayer,
+                                    classLevel: Number(e.target.value) as ClassLevel,
+                                })
+                            }
+                        >
+                            <option value={1}>Class 1</option>
+                            <option value={2}>Class 2</option>
+                            <option value={3}>Class 3</option>
+                            <option value={4}>Class 4</option>
+                        </select>
+
+                        <label>Category</label>
+
+                        <select
+                            value={editingPlayer.ageCategory}
+                            onChange={(e) =>
+                                setEditingPlayer({
+                                    ...editingPlayer,
+                                    ageCategory: e.target.value as AgeCategory,
+                                })
+                            }
+                        >
+                            <option value="herr">Herr</option>
+                            <option value="dam">Dam</option>
+                            <option value="junior">Junior</option>
+                            <option value="minior">Minior</option>
+                        </select>
+
+                        <div className="modal-buttons">
+                            <button
+                                className="primary-action"
+                                onClick={savePlayer}
+                            >
+                                Save
+                            </button>
+
+                            <button
+                                className="secondary-action"
+                                onClick={() => setEditingPlayer(null)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

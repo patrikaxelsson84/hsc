@@ -1247,3 +1247,58 @@ a {
     grid-template-columns: 1fr;
   }
 }
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.65);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000;
+}
+
+.modal-card {
+    width: 500px;
+    max-width: 95vw;
+
+    background: #1f1f1f;
+
+    border-radius: 18px;
+
+    padding: 30px;
+
+    border: 1px solid #333;
+}
+
+.modal-card h2 {
+    margin-bottom: 25px;
+}
+
+.modal-card label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 6px;
+}
+
+.modal-card input {
+    width: 100%;
+    padding: 10px;
+
+    border-radius: 8px;
+
+    border: 1px solid #444;
+
+    background: #2a2a2a;
+
+    color: white;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 30px;
+}
