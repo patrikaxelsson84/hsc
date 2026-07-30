@@ -138,12 +138,10 @@ export default function ResultsPage() {
     if (!liveData) {
         return (
             <div className="admin-page">
-                <div className="admin-page-header">
-                    <div>
-                        <p className="eyebrow">Results</p>
-                        <h1>No active contest</h1>
-                        <p>Start a contest in Contest center to see live standings here.</p>
-                    </div>
+                <div className="results-empty-state">
+                    <img src="/error.avif" alt="" width={220} />
+                    <h1>No active contest</h1>
+                    <p>Start a contest in Contest center to see live standings here.</p>
                 </div>
             </div>
         );

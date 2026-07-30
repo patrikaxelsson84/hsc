@@ -1,11 +1,52 @@
 import { ArrowLeft, ArrowRight, Users } from "lucide-react";
 import { useState } from "react";
 import { samplePlayers } from "../data/sampleCompetition";
-import type { ClassLevel, AgeCategory } from "../lib/scoring";
+import type { ClassLevel, AgeCategory, PlayerScore } from "../lib/scoring";
 
+interface RegistrationEntry {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    club: string;
+    category: string;
+    title: string;
+    notes?: string;
+    createdAt: string;
+}
+
+function titleToAgeCategory(title: string): AgeCategory {
+    if (title === "mrs") return "dam";
+    if (title === "junior") return "junior";
+    if (title === "minior") return "minior";
+    return "herr";
+}
+
+function loadRegisteredPlayers(): PlayerScore[] {
+    try {
+        const raw = localStorage.getItem("hsc-registrations");
+        if (!raw) return [];
+        const entries = JSON.parse(raw) as RegistrationEntry[];
+        return entries.map((e) => ({
+            id: `reg-${e.createdAt}`,
+            name: `${e.firstName} ${e.lastName}`.trim(),
+            club: e.club ?? "",
+            classLevel: (Number(e.category) || 4) as ClassLevel,
+            ageCategory: titleToAgeCategory(e.title),
+            rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            sevenMeters: 0,
+        }));
+    } catch {
+        return [];
+    }
+}
 
 export default function PlayersPage() {
-    const [players, setPlayers] = useState(samplePlayers);
+    const [players, setPlayers] = useState<PlayerScore[]>(() => {
+        const registered = loadRegisteredPlayers();
+        const registeredIds = new Set(registered.map((p) => p.name.toLowerCase()));
+        const base = samplePlayers.filter((p) => !registeredIds.has(p.name.toLowerCase()));
+        return [...base, ...registered];
+    });
 // <<< NEW CODE START >>>
 
     const sortedPlayers = [...players].sort((firstPlayer, secondPlayer) => {

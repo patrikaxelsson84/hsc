@@ -1,8 +1,37 @@
-import { ArrowLeft, Archive, Play, RotateCcw, Save, Trophy } from "lucide-react";
+import { ArrowLeft, Archive, Play, Printer, RotateCcw, Save, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { samplePlayers } from "../data/sampleCompetition";
-import type { ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
+import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { rankPlayers } from "../lib/scoring";
+
+function titleToAgeCategory(title: string): AgeCategory {
+    if (title === "mrs") return "dam";
+    if (title === "junior") return "junior";
+    if (title === "minior") return "minior";
+    return "herr";
+}
+
+function loadAllPlayers(): PlayerScore[] {
+    try {
+        const raw = localStorage.getItem("hsc-registrations");
+        const registered: PlayerScore[] = raw
+            ? (JSON.parse(raw) as { firstName: string; lastName: string; club: string; category: string; title: string; createdAt: string }[]).map((e) => ({
+                  id: `reg-${e.createdAt}`,
+                  name: `${e.firstName} ${e.lastName}`.trim(),
+                  club: e.club ?? "",
+                  classLevel: (Number(e.category) || 4) as ClassLevel,
+                  ageCategory: titleToAgeCategory(e.title),
+                  rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  sevenMeters: 0,
+              }))
+            : [];
+        const registeredNames = new Set(registered.map((p) => p.name.toLowerCase()));
+        const base = samplePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
+        return [...base, ...registered];
+    } catch {
+        return samplePlayers;
+    }
+}
 
 const allClasses = "all";
 const scoreStoragePrefix = "hsc-scores-v3";
@@ -110,13 +139,13 @@ function getStoredScores(runId: string) {
     const stored = localStorage.getItem(`${scoreStoragePrefix}-${runId}`);
 
     if (!stored) {
-        return samplePlayers;
+        return loadAllPlayers();
     }
 
     try {
         return JSON.parse(stored) as PlayerScore[];
     } catch {
-        return samplePlayers;
+        return loadAllPlayers();
     }
 }
 
@@ -153,7 +182,7 @@ export default function ScoringPage() {
     const [laneAssignments, setLaneAssignments] = useState<Record<string, number>>({});
     const [activeLane, setActiveLane] = useState<number | null>(null);
     const [laneScoreFilter, setLaneScoreFilter] = useState<LaneFilter>("all");
-    const [players, setPlayers] = useState<PlayerScore[]>(samplePlayers);
+    const [players, setPlayers] = useState<PlayerScore[]>(loadAllPlayers);
     const [status, setStatus] = useState<"idle" | "saved" | "reset">("idle");
     const [oldContestIds, setOldContestIds] = useState<string[]>(getSavedContestIds);
     const competition = contests.find((item) => item.id === competitionId) ?? contests[0];
@@ -172,7 +201,7 @@ export default function ScoringPage() {
         );
     const registrationPlayers = useMemo(
         () =>
-            [...samplePlayers].sort(
+            loadAllPlayers().sort(
                 (firstPlayer, secondPlayer) =>
                     firstPlayer.club.localeCompare(secondPlayer.club) ||
                     firstPlayer.classLevel - secondPlayer.classLevel ||
@@ -197,6 +226,8 @@ export default function ScoringPage() {
         return list;
     }, [classFilter, laneScoreFilter, players, laneAssignments]);
     const rankings = rankPlayers(visiblePlayers);
+    const rankMap = new Map(rankings.map((r) => [r.id, r]));
+    const scoringRows = visiblePlayers.map((p) => rankMap.get(p.id)!).filter(Boolean);
     const tiedTotals = (() => {
         const counts = new Map<number, number>();
         for (const p of rankings) counts.set(p.total, (counts.get(p.total) ?? 0) + 1);
@@ -966,7 +997,7 @@ export default function ScoringPage() {
 
     return (
         <div className="admin-page">
-            <div className="admin-page-header">
+            <div className="admin-page-header startlist-no-print">
                 <div>
                     <p className="eyebrow">Scoring</p>
                     <h1>{competition.name}</h1>
@@ -980,7 +1011,7 @@ export default function ScoringPage() {
                 </button>
             </div>
 
-            <section className="score-controls">
+            <section className="score-controls startlist-no-print">
                 <label>
                     Class
                     <select
@@ -1014,7 +1045,11 @@ export default function ScoringPage() {
                     </label>
                 )}
 
-                <button className="secondary-action score-button" type="button" onClick={resetScores}>
+                <button className="secondary-action score-button startlist-no-print" type="button" onClick={() => window.print()}>
+                    <Printer size={17} aria-hidden="true" />
+                    Print start list
+                </button>
+                <button className="secondary-action score-button startlist-no-print" type="button" onClick={resetScores}>
                     <RotateCcw size={17} aria-hidden="true" />
                     Reset
                 </button>
@@ -1025,14 +1060,89 @@ export default function ScoringPage() {
             </section>
 
             {status !== "idle" && (
-                <p className="form-message">
+                <p className="form-message startlist-no-print">
                     {status === "saved"
                         ? `Scores saved for ${competition.name} - ${contestType.name}.`
                         : `Scores reset for ${competition.name} - ${contestType.name}.`}
                 </p>
             )}
 
-            <div className="score-entry-shell">
+            {/* Print-only start list */}
+            <div className="startlist-print-only">
+                <div className="startlist-print-header">
+                    <h1>{competition.name}</h1>
+                    <p>{contestType.name} · {players.length} players</p>
+                </div>
+                {laneCount > 1
+                    ? Array.from({ length: laneCount }, (_, i) => i + 1).map((lane) => {
+                        const lanePlayers = players.filter((p) => laneAssignments[p.id] === lane);
+                        return (
+                            <section key={lane} className="startlist-group">
+                                <h2>Lane {lane}</h2>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Club</th>
+                                            <th>Class</th>
+                                            {Array.from({ length: 10 }, (_, i) => <th key={i}>R{i + 1}</th>)}
+                                            <th>1–5</th>
+                                            <th>6–10</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {lanePlayers.map((player, idx) => (
+                                            <tr key={player.id}>
+                                                <td>{idx + 1}</td>
+                                                <td>{player.name}</td>
+                                                <td>{player.club || "–"}</td>
+                                                <td>{player.classLevel}</td>
+                                                {Array.from({ length: 12 }, (_, i) => <td key={i}></td>)}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </section>
+                        );
+                    })
+                    : ([1, 2, 3, 4] as ClassLevel[]).map((cl) => {
+                        const classPlayers = players.filter((p) => p.classLevel === cl);
+                        if (classPlayers.length === 0) return null;
+                        return (
+                            <section key={cl} className="startlist-group">
+                                <h2>Class {cl}</h2>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Club</th>
+                                            {Array.from({ length: 10 }, (_, i) => <th key={i}>R{i + 1}</th>)}
+                                            <th>1–5</th>
+                                            <th>6–10</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {classPlayers.map((player, idx) => (
+                                            <tr key={player.id}>
+                                                <td>{idx + 1}</td>
+                                                <td>{player.name}</td>
+                                                <td>{player.club || "–"}</td>
+                                                {Array.from({ length: 12 }, (_, i) => <td key={i}></td>)}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </section>
+                        );
+                    })
+                }
+            </div>
+
+            <div className="score-entry-shell startlist-no-print">
                 <table>
                     <thead>
                         <tr>
@@ -1049,7 +1159,7 @@ export default function ScoringPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {rankings.map((player) => (
+                        {scoringRows.map((player) => (
                             <tr key={player.id}>
                                 <td>
                                     <strong>{player.name}</strong>
@@ -1093,7 +1203,7 @@ export default function ScoringPage() {
                 </table>
             </div>
 
-            <section className="admin-panel">
+            <section className="admin-panel startlist-no-print">
                 <div className="panel-title-row">
                     <h2>Competition summary</h2>
                     <span className="success-pill">{contestType.name}</span>

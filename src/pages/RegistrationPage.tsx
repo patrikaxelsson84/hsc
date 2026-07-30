@@ -2,6 +2,11 @@ import { ArrowLeft, Check, Send } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { samplePlayers } from "../data/sampleCompetition";
+
+const clubOptions = [...new Set(samplePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+);
 
 type RegistrationStatus = "idle" | "submitted";
 
@@ -78,25 +83,49 @@ export default function RegistrationPage() {
                     </div>
 
                     <label>
-                        Email
-                        <input name="email" type="email" autoComplete="email" required />
+                        Email <span className="field-optional">(optional)</span>
+                        <input name="email" type="email" autoComplete="email" />
                     </label>
 
                     <div className="field-grid">
                         <label>
                             Club
-                            <input name="club" type="text" placeholder="Club name" required />
+                            <input
+                                name="club"
+                                type="text"
+                                placeholder="Type to search..."
+                                list="club-options"
+                                autoComplete="off"
+                                required
+                            />
+                            <datalist id="club-options">
+                                {clubOptions.map((club) => (
+                                    <option key={club} value={club} />
+                                ))}
+                            </datalist>
                         </label>
                         <label>
-                            Category
+                            Class
                             <select name="category" required defaultValue="">
                                 <option value="" disabled>
-                                    Select category
+                                    Select class
                                 </option>
-                                <option value="open">Open</option>
+                                <option value="1">Class 1</option>
+                                <option value="2">Class 2</option>
+                                <option value="3">Class 3</option>
+                                <option value="4">Class 4</option>
+                            </select>
+                        </label>
+                        <label>
+                            Title
+                            <select name="title" required defaultValue="">
+                                <option value="" disabled>
+                                    Select title
+                                </option>
+                                <option value="mr">Mr.</option>
+                                <option value="mrs">Mrs.</option>
                                 <option value="junior">Junior</option>
-                                <option value="senior">Senior</option>
-                                <option value="team">Team</option>
+                                <option value="minior">Minior</option>
                             </select>
                         </label>
                     </div>

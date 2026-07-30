@@ -488,6 +488,12 @@ a {
   font-weight: 800;
 }
 
+.field-optional {
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: var(--text-2);
+}
+
 .registration-form input,
 .registration-form select,
 .registration-form textarea {
@@ -1450,6 +1456,28 @@ a {
   margin-top: 24px;
 }
 
+.results-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.results-empty-state img {
+  opacity: 0.7;
+}
+
+.results-empty-state h1 {
+  margin: 0;
+}
+
+.results-empty-state p {
+  margin: 0;
+  color: var(--text-2);
+}
+
 .results-team-box {
   width: 100%;
 }
@@ -1481,14 +1509,50 @@ a {
   display: none;
 }
 
+/* ── Start list ────────────────────────────────────────── */
+
+.startlist-print-only {
+  display: none;
+}
+
 /* ── Print styles ─────────────────────────────────────── */
 
 @media print {
   .results-no-print,
+  .startlist-no-print,
   .admin-nav,
   .site-header,
   nav {
     display: none !important;
+  }
+
+  .startlist-print-only {
+    display: block;
+  }
+
+  .startlist-print-header {
+    margin-bottom: 20px;
+  }
+
+  .startlist-print-header h1 {
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+  }
+
+  .startlist-print-header p {
+    margin: 0;
+    color: #555;
+    font-size: 0.9rem;
+  }
+
+  .startlist-group {
+    margin-bottom: 32px;
+    break-inside: avoid;
+  }
+
+  .startlist-group h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
   }
 
   .results-print-title {
@@ -1565,6 +1629,110 @@ a {
     border: 1px solid #ccc;
     padding: 4px 8px;
   }
+}
+
+/* ── Competitions page ─────────────────────────────────── */
+
+.comp-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.comp-source-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.comp-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.comp-form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.comp-form-grid input[type="text"],
+.comp-form-grid input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.comp-form-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px !important;
+  padding-bottom: 8px;
+}
+
+.comp-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.comp-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.comp-pill-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comp-pill-closed {
+  background: var(--line);
+  color: var(--text-2);
+}
+
+.comp-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.comp-delete-btn:hover {
+  color: var(--danger, #e53e3e);
+  background: var(--surface);
 }
 
 /* ── Score entry ───────────────────────────────────────── */

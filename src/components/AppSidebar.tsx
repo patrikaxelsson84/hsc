@@ -32,7 +32,7 @@ const menuItems = [
         path: "/admin/registration",
     },
     {
-        title: "Scoring",
+        title: "Contest",
         icon: Target,
         path: "/admin/scoring",
     },
