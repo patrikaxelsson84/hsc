@@ -1,7 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import AdminLayout from "../layouts/AdminLayout";
 
+import ClubPage from "../pages/ClubPage";
 import CompetitionsPage from "../pages/CompetitionsPage";
+import CompetitionsPublicPage from "../pages/CompetitionsPublicPage";
 import DashboardPage from "../pages/DashboardPage";
 import HomePage from "../pages/HomePage";
 import PlayersPage from "../pages/PlayersPage";
@@ -17,6 +19,14 @@ export const router = createBrowserRouter([
     {
         path: "/registration",
         element: <RegistrationPage />,
+    },
+    {
+        path: "/club",
+        element: <ClubPage />,
+    },
+    {
+        path: "/competitions",
+        element: <CompetitionsPublicPage />,
     },
     {
         path: "/admin",

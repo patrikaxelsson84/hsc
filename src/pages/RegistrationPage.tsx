@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { samplePlayers } from "../data/sampleCompetition";
+import LangSelect from "../components/LangSelect";
+import { useLanguage } from "../lib/language";
 
 const clubOptions = [...new Set(samplePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
@@ -14,6 +16,7 @@ export default function RegistrationPage() {
     const [status, setStatus] = useState<RegistrationStatus>("idle");
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
+    const { t } = useLanguage();
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -32,32 +35,33 @@ export default function RegistrationPage() {
 
     return (
         <main className="registration-page">
+            <div className="registration-lang-bar">
+                <LangSelect />
+            </div>
+
             <section className="registration-shell">
                 <div className="registration-intro">
                     <Link className="back-link" to="/">
                         <ArrowLeft size={17} aria-hidden="true" />
-                        {isAdminRoute ? "Public home" : "Home"}
+                        {isAdminRoute ? t.reg_back_public : t.reg_back_home}
                     </Link>
 
-                    <p className="eyebrow">Player registration</p>
-                    <h1>Register for the next HSC competition.</h1>
-                    <p>
-                        Submit player details now so organizers can confirm categories, clubs, and
-                        score sheets before the event starts.
-                    </p>
+                    <p className="eyebrow">{t.reg_eyebrow}</p>
+                    <h1>{t.reg_heading}</h1>
+                    <p>{t.reg_copy}</p>
 
                     <div className="registration-points">
                         <span>
                             <Check size={18} aria-hidden="true" />
-                            Confirmation handled by the organizer
+                            {t.reg_point_1}
                         </span>
                         <span>
                             <Check size={18} aria-hidden="true" />
-                            Supports singles and team entries
+                            {t.reg_point_2}
                         </span>
                         <span>
                             <Check size={18} aria-hidden="true" />
-                            Contact details kept with the event roster
+                            {t.reg_point_3}
                         </span>
                     </div>
                 </div>
@@ -65,35 +69,35 @@ export default function RegistrationPage() {
                 <form className="registration-form" onSubmit={handleSubmit}>
                     <div className="form-header">
                         <div>
-                            <p className="panel-kicker">Entry form</p>
-                            <h2>Competition details</h2>
+                            <p className="panel-kicker">{t.reg_kicker}</p>
+                            <h2>{t.reg_form_heading}</h2>
                         </div>
-                        {status === "submitted" && <span className="success-pill">Received</span>}
+                        {status === "submitted" && <span className="success-pill">{t.reg_received}</span>}
                     </div>
 
                     <div className="field-grid">
                         <label>
-                            First name
+                            {t.reg_first_name}
                             <input name="firstName" type="text" autoComplete="given-name" required />
                         </label>
                         <label>
-                            Last name
+                            {t.reg_last_name}
                             <input name="lastName" type="text" autoComplete="family-name" required />
                         </label>
                     </div>
 
                     <label>
-                        Email <span className="field-optional">(optional)</span>
+                        {t.reg_email} <span className="field-optional">{t.reg_optional}</span>
                         <input name="email" type="email" autoComplete="email" />
                     </label>
 
                     <div className="field-grid">
                         <label>
-                            Club
+                            {t.reg_club}
                             <input
                                 name="club"
                                 type="text"
-                                placeholder="Type to search..."
+                                placeholder={t.reg_search}
                                 list="club-options"
                                 autoComplete="off"
                                 required
@@ -105,50 +109,47 @@ export default function RegistrationPage() {
                             </datalist>
                         </label>
                         <label>
-                            Class
+                            {t.reg_class}
                             <select name="category" required defaultValue="">
                                 <option value="" disabled>
-                                    Select class
+                                    {t.reg_select_class}
                                 </option>
-                                <option value="1">Class 1</option>
-                                <option value="2">Class 2</option>
-                                <option value="3">Class 3</option>
-                                <option value="4">Class 4</option>
+                                <option value="1">{t.reg_class_1}</option>
+                                <option value="2">{t.reg_class_2}</option>
+                                <option value="3">{t.reg_class_3}</option>
+                                <option value="4">{t.reg_class_4}</option>
                             </select>
                         </label>
                         <label>
-                            Title
+                            {t.reg_title}
                             <select name="title" required defaultValue="">
                                 <option value="" disabled>
-                                    Select title
+                                    {t.reg_select_title}
                                 </option>
-                                <option value="mr">Mr.</option>
-                                <option value="mrs">Mrs.</option>
-                                <option value="junior">Junior</option>
-                                <option value="minior">Minior</option>
+                                <option value="mr">{t.reg_mr}</option>
+                                <option value="mrs">{t.reg_mrs}</option>
+                                <option value="junior">{t.reg_junior}</option>
+                                <option value="minior">{t.reg_minior}</option>
                             </select>
                         </label>
                     </div>
 
                     <label>
-                        Notes
+                        {t.reg_notes}
                         <textarea
                             name="notes"
                             rows={4}
-                            placeholder="Partner, accessibility needs, or scheduling notes"
+                            placeholder={t.reg_notes_ph}
                         />
                     </label>
 
                     <button className="primary-action form-submit" type="submit">
-                        Submit registration
+                        {t.reg_submit}
                         <Send size={18} aria-hidden="true" />
                     </button>
 
                     {status === "submitted" && (
-                        <p className="form-message">
-                            Registration saved in this browser. You can connect it to Supabase when
-                            the event API is ready.
-                        </p>
+                        <p className="form-message">{t.reg_saved}</p>
                     )}
                 </form>
             </section>

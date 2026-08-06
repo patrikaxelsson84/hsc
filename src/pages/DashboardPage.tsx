@@ -1,50 +1,60 @@
 import { ArrowRight, Play, UserPlus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { currentCompetition, samplePlayers } from "../data/sampleCompetition";
-
-const adminChoices = [
-    {
-        title: "Register a player",
-        text: "Add a new player entry with club, category, and competition details.",
-        path: "/admin/registration",
-        icon: UserPlus,
-    },
-    {
-        title: "Teams and players",
-        text: "See the full roster and review all clubs, teams, classes, and categories.",
-        path: "/admin/players",
-        icon: Users,
-    },
-    {
-        title: "Start a contest",
-        text: "Open scoring for the active competition and begin entering results.",
-        path: "/admin/scoring",
-        icon: Play,
-    },
-];
+import { useLanguage } from "../lib/language";
 
 export default function DashboardPage() {
-    const teamCount = new Set(samplePlayers.map((player) => player.club).filter(Boolean)).size;
+    const { t, lang } = useLanguage();
+    const teamCount = new Set(samplePlayers.map((p) => p.club).filter(Boolean)).size;
+
+    const adminChoices = [
+        {
+            title: t.dash_card_reg_title,
+            text:  t.dash_card_reg_text,
+            path:  "/admin/registration",
+            icon:  UserPlus,
+        },
+        {
+            title: t.dash_card_teams_title,
+            text:  t.dash_card_teams_text,
+            path:  "/admin/players",
+            icon:  Users,
+        },
+        {
+            title: t.dash_card_start_title,
+            text:  t.dash_card_start_text,
+            path:  "/admin/scoring",
+            icon:  Play,
+        },
+    ];
+
+    const fromWord   = lang === "sv" ? "från"        : "from";
+    const availText  = lang === "sv"
+        ? "är tillgängliga för den aktiva tävlingen."
+        : "are available for the active competition.";
 
     return (
         <div className="admin-page">
             <div className="admin-page-header">
                 <div>
-                    <p className="eyebrow">Logged in</p>
-                    <h1>What do you want to do?</h1>
+                    <p className="eyebrow">{t.dash_eyebrow}</p>
+                    <h1>{t.dash_heading}</h1>
                     <p>
-                        Choose the next step for {currentCompetition.name}: register players, review
-                        teams, or start the contest.
+                        {samplePlayers.length}{" "}
+                        {samplePlayers.length === 1 ? t.players_player_s : t.players_player_p}{" "}
+                        {fromWord}{" "}
+                        {teamCount}{" "}
+                        {teamCount === 1 ? t.sc_team_s : t.sc_team_p}{" "}
+                        {availText}
                     </p>
                 </div>
             </div>
 
-            <section className="admin-choice-grid" aria-label="Admin choices">
+            <section className="admin-choice-grid" aria-label={t.dash_heading}>
                 {adminChoices.map((choice) => {
                     const Icon = choice.icon;
-
                     return (
-                        <Link className="admin-choice-card" to={choice.path} key={choice.title}>
+                        <Link className="admin-choice-card" to={choice.path} key={choice.path}>
                             <span className="admin-choice-icon">
                                 <Icon size={24} aria-hidden="true" />
                             </span>
@@ -60,12 +70,16 @@ export default function DashboardPage() {
 
             <section className="admin-panel">
                 <div className="panel-title-row">
-                    <h2>Current competition</h2>
-                    <span className="success-pill">{currentCompetition.registrationOpen ? "Open" : "Closed"}</span>
+                    <h2>{t.dash_current_comp}</h2>
+                    <span className="success-pill">
+                        {currentCompetition.registrationOpen ? t.status_open : t.status_closed}
+                    </span>
                 </div>
                 <p>
-                    {samplePlayers.length} players from {teamCount} teams are available for the
-                    active competition.
+                    {samplePlayers.length}{" "}
+                    {samplePlayers.length === 1 ? t.players_player_s : t.players_player_p}{" "}
+                    {fromWord} {teamCount}{" "}
+                    {teamCount === 1 ? t.sc_team_s : t.sc_team_p}.
                 </p>
             </section>
         </div>
