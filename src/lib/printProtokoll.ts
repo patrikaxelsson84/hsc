@@ -3,6 +3,7 @@ import type { PlayerScore } from "./scoring";
 // ── shared helpers ────────────────────────────────────────────────────────────
 
 function openPrint(title: string, body: string, lang: string): void {
+    const printLabel = lang === "sv" ? "Skriv ut" : "Print";
     const html = `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
@@ -10,11 +11,14 @@ function openPrint(title: string, body: string, lang: string): void {
 <title>${title}</title>
 <style>
 *{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;padding:8mm;font-size:11px;color:#000}
+body{font-family:Arial,sans-serif;margin:0;padding:10mm;font-size:11px;color:#000}
+.toolbar{display:flex;gap:8px;margin-bottom:10px}
+.toolbar button{padding:6px 16px;font-size:13px;cursor:pointer;border:1px solid #555;border-radius:4px;background:#eee}
+.toolbar button:hover{background:#ddd}
 .ph{display:flex;align-items:center;gap:12px;margin-bottom:12px;border-bottom:2px solid #000;padding-bottom:8px}
 .ph h1{font-size:18px;margin:0;line-height:1.2}
 .ph p{margin:3px 0 0;font-size:12px;color:#333;font-weight:bold}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 14px}
 .lb{break-inside:avoid}
 table{border-collapse:collapse;width:100%}
 th,td{border:1px solid #555;padding:2px 4px;text-align:center;min-width:20px}
@@ -28,14 +32,14 @@ th{background:#d8d8ee;font-size:10px}
 .team-block{break-inside:avoid;margin-bottom:14px}
 .team-name{font-weight:bold;font-size:12px;background:#b0b0d8;padding:3px 6px;border:1px solid #555;border-bottom:none}
 @media print{
+    .toolbar{display:none}
     body{padding:6mm}
-    @page{margin:6mm;size:A4 portrait}
 }
 </style>
 </head>
 <body>
+<div class="toolbar"><button onclick="window.print()">${printLabel}</button></div>
 ${body}
-<script>window.onload=function(){window.print()}</script>
 </body>
 </html>`;
     const win = window.open("", "_blank");
