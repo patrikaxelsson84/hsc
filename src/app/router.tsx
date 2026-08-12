@@ -25,6 +25,10 @@ export const router = createBrowserRouter([
         element: <ClubPage />,
     },
     {
+        path: "/results",
+        element: <ResultsPage />,
+    },
+    {
         path: "/competitions",
         element: <CompetitionsPublicPage />,
     },

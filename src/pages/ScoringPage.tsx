@@ -1,9 +1,10 @@
-import { ArrowLeft, Archive, Play, Printer, RotateCcw, Save, Trophy } from "lucide-react";
+import { ArrowLeft, Archive, ClipboardList, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { samplePlayers } from "../data/sampleCompetition";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
+import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 
 function titleToAgeCategory(title: string): AgeCategory {
     if (title === "mrs") return "dam";
@@ -16,7 +17,7 @@ function loadAllPlayers(): PlayerScore[] {
     try {
         const raw = localStorage.getItem("hsc-registrations");
         const registered: PlayerScore[] = raw
-            ? (JSON.parse(raw) as { firstName: string; lastName: string; club: string; category: string; title: string; createdAt: string }[]).map((e) => ({
+            ? (JSON.parse(raw) as { firstName: string; lastName: string; club: string; category: string; title: string; createdAt: string }[]).filter((e) => !["mix-d","dubbel","mr-d","mrs-d","team-g"].includes(e.category)).map((e) => ({
                   id: `reg-${e.createdAt}`,
                   name: `${e.firstName} ${e.lastName}`.trim(),
                   club: e.club ?? "",
@@ -62,8 +63,8 @@ const contests = contestNames.map((name) => ({
 }));
 
 const contestTypes = [
-    "Class","Dubbel","Mixed","Team","Mr.","Mrs.","Junior","Minions",
-    "Individual","Mr. Double","Mrs. Double","Bonus hunt","Second chance","International match",
+    "Mixed","Dubbel","Team","Mr.","Mrs.","Junior","Minions",
+    "Mr. Double","Mrs. Double","Individual Rank",
 ].map((name) => ({
     id: name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),
     name,
@@ -88,10 +89,22 @@ function parseTypeSelection(typeId: string) {
     return getTypeSelection(typeId.split(typeIdSeparator).filter(Boolean));
 }
 
-function getStoredScores(runId: string) {
+function getStoredScores(runId: string): PlayerScore[] {
     const stored = localStorage.getItem(`${scoreStoragePrefix}-${runId}`);
-    if (!stored) return loadAllPlayers();
-    try { return JSON.parse(stored) as PlayerScore[]; } catch { return loadAllPlayers(); }
+    if (stored) {
+        try {
+            const data = JSON.parse(stored) as PlayerScore[];
+            if (data.length > 0) return data;
+        } catch { /* fall through */ }
+    }
+    const live = localStorage.getItem(`${liveScorePrefix}-${runId}`);
+    if (live) {
+        try {
+            const data = JSON.parse(live) as PlayerScore[];
+            if (data.length > 0) return data;
+        } catch { /* fall through */ }
+    }
+    return loadAllPlayers();
 }
 
 function resetPlayerScores(players: PlayerScore[]) {
@@ -99,13 +112,24 @@ function resetPlayerScores(players: PlayerScore[]) {
 }
 
 function getSavedContestIds() {
-    return Object.keys(localStorage)
+    const scoreRunIds = Object.keys(localStorage)
         .filter((key) => key.startsWith(`${scoreStoragePrefix}-`))
-        .map((key) => key.slice(scoreStoragePrefix.length + 1))
+        .map((key) => key.slice(scoreStoragePrefix.length + 1));
+    const scoreSet = new Set(scoreRunIds);
+    const liveRunIds = Object.keys(localStorage)
+        .filter((key) => key.startsWith(`${liveScorePrefix}-`))
+        .map((key) => key.slice(liveScorePrefix.length + 1))
         .filter((runId) => {
-            const [contestId, typeId] = runId.split("__");
-            return Boolean(contests.find((c) => c.id === contestId)) && parseTypeSelection(typeId).ids.length > 0;
+            if (scoreSet.has(runId)) return false;
+            try {
+                const raw = localStorage.getItem(`${liveScorePrefix}-${runId}`);
+                return raw ? (JSON.parse(raw) as PlayerScore[]).length > 0 : false;
+            } catch { return false; }
         });
+    return [...scoreRunIds, ...liveRunIds].filter((runId) => {
+        const [contestId, typeId] = runId.split("__");
+        return Boolean(contests.find((c) => c.id === contestId)) && parseTypeSelection(typeId).ids.length > 0;
+    });
 }
 
 export default function ScoringPage() {
@@ -325,6 +349,8 @@ export default function ScoringPage() {
 
     function saveScores() {
         localStorage.setItem(`${scoreStoragePrefix}-${currentRunId}`, JSON.stringify(players));
+        localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(players));
+        localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
     }
@@ -342,6 +368,37 @@ export default function ScoringPage() {
         setStatus("reset");
     }
 
+    function deleteOldContest(runId: string) {
+        localStorage.removeItem(`${scoreStoragePrefix}-${runId}`);
+        localStorage.removeItem(`${liveScorePrefix}-${runId}`);
+        localStorage.removeItem(`${teamsStoragePrefix}-${runId}`);
+        localStorage.removeItem(`${lanesStoragePrefix}-${runId}`);
+        const active = localStorage.getItem(activeContestKey);
+        if (active) {
+            try { if ((JSON.parse(active) as { runId: string }).runId === runId) localStorage.removeItem(activeContestKey); } catch { /* empty */ }
+        }
+        setOldContestIds((cur) => cur.filter((id) => id !== runId));
+    }
+
+    function resetEverything() {
+        if (!window.confirm(lang === "sv" ? "Radera ALLA tävlingar och poäng? Detta går inte att ångra." : "Delete ALL contests and scores? This cannot be undone.")) return;
+        Object.keys(localStorage)
+            .filter((k) =>
+                k.startsWith(`${scoreStoragePrefix}-`) ||
+                k.startsWith(`${liveScorePrefix}-`) ||
+                k.startsWith(`${teamsStoragePrefix}-`) ||
+                k.startsWith(`${lanesStoragePrefix}-`)
+            )
+            .forEach((k) => localStorage.removeItem(k));
+        localStorage.removeItem(activeContestKey);
+        setOldContestIds([]);
+        setPlayers(loadAllPlayers());
+        setTeamAssignments([]); setActiveTeamId(null);
+        setLaneAssignments({}); setActiveLane(null);
+        setStatus("reset");
+        setView("menu");
+    }
+
     // ── MENU ────────────────────────────────────────────────────────────────
     if (view === "menu") {
         return (
@@ -352,6 +409,10 @@ export default function ScoringPage() {
                         <h1>{t.sc_heading_menu}</h1>
                         <p>{t.sc_desc_menu}</p>
                     </div>
+                    <button className="danger-action score-button" type="button" onClick={resetEverything}>
+                        <Trash2 size={17} aria-hidden="true" />
+                        {lang === "sv" ? "Rensa allt" : "Reset all"}
+                    </button>
                 </div>
 
                 <section className="admin-choice-grid" aria-label={t.sc_heading_menu}>
@@ -424,10 +485,20 @@ export default function ScoringPage() {
                 {oldContests.length > 0 ? (
                     <section className="contest-grid" aria-label={t.sc_heading_saved}>
                         {oldContests.map((c) => (
-                            <button className="contest-card" key={c.runId} type="button" onClick={() => openOldContest(c.runId)}>
-                                <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
-                                <span>{c.contest.name} – {c.type.name}</span>
-                            </button>
+                            <div className="contest-card-wrapper" key={c.runId}>
+                                <button className="contest-card" type="button" onClick={() => openOldContest(c.runId)}>
+                                    <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
+                                    <span>{c.contest.name} – {c.type.name}</span>
+                                </button>
+                                <button
+                                    className="comp-delete-btn contest-card-delete"
+                                    type="button"
+                                    aria-label={`${lang === "sv" ? "Ta bort" : "Delete"} ${c.contest.name}`}
+                                    onClick={() => deleteOldContest(c.runId)}
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            </div>
                         ))}
                     </section>
                 ) : (
@@ -875,6 +946,41 @@ export default function ScoringPage() {
                 <button className="secondary-action score-button startlist-no-print" type="button" onClick={() => window.print()}>
                     <Printer size={17} aria-hidden="true" />
                     {t.sc_print_list}
+                </button>
+                <button className="secondary-action score-button startlist-no-print" type="button"
+                    onClick={() => printStartordning({
+                        competitionName: competition.name,
+                        players,
+                        laneAssignments,
+                        laneCount,
+                        laneFilter: laneScoreFilter,
+                        lang,
+                    })}>
+                    <ClipboardList size={17} aria-hidden="true" />
+                    {lang === "sv" ? "Startordning" : "Start list"}
+                </button>
+                <button className="secondary-action score-button startlist-no-print" type="button"
+                    onClick={() => printProtokoll({
+                        competitionName: competition.name,
+                        typeName: contestType.name,
+                        players,
+                        laneAssignments,
+                        laneCount,
+                        laneFilter: laneScoreFilter,
+                        lang,
+                    })}>
+                    <ClipboardList size={17} aria-hidden="true" />
+                    {lang === "sv" ? "Domarprotokoll" : "Protocol"}
+                </button>
+                <button className="secondary-action score-button startlist-no-print" type="button"
+                    onClick={() => printLaguppställning({
+                        competitionName: competition.name,
+                        players,
+                        teamAssignments,
+                        lang,
+                    })}>
+                    <ClipboardList size={17} aria-hidden="true" />
+                    {lang === "sv" ? "Laguppställning" : "Team lineup"}
                 </button>
                 <button className="secondary-action score-button startlist-no-print" type="button" onClick={resetScores}>
                     <RotateCcw size={17} aria-hidden="true" />

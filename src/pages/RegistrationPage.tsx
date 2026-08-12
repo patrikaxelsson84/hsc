@@ -1,8 +1,9 @@
 import { ArrowLeft, Check, Send } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { samplePlayers } from "../data/sampleCompetition";
+import { loadCompetitions } from "../data/competitions";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 
@@ -17,6 +18,10 @@ export default function RegistrationPage() {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
     const { t } = useLanguage();
+    const [searchParams] = useSearchParams();
+    const compId = searchParams.get("comp") ?? "";
+    const competitions = loadCompetitions().filter((c) => c.registrationOpen);
+    const selectedComp = competitions.find((c) => c.id === compId) ?? null;
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -70,10 +75,25 @@ export default function RegistrationPage() {
                     <div className="form-header">
                         <div>
                             <p className="panel-kicker">{t.reg_kicker}</p>
-                            <h2>{t.reg_form_heading}</h2>
+                            <h2>{selectedComp ? selectedComp.name : t.reg_form_heading}</h2>
                         </div>
                         {status === "submitted" && <span className="success-pill">{t.reg_received}</span>}
                     </div>
+
+                    {/* Competition selector — hidden if pre-selected via URL param */}
+                    {selectedComp ? (
+                        <input type="hidden" name="competitionId" value={selectedComp.id} />
+                    ) : (
+                        <label>
+                            {t.reg_competition ?? "Tävling"}
+                            <select name="competitionId" required defaultValue="">
+                                <option value="" disabled>{t.reg_select_competition ?? "Välj tävling…"}</option>
+                                {competitions.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name} — {c.date}</option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
 
                     <div className="field-grid">
                         <label>

@@ -4,7 +4,7 @@
   --surface-strong: #101820;
   --text: #5b6570;
   --text-strong: #121820;
-  --muted: #7d8792;
+  --muted: #3d4752;
   --line: #e2e5e2;
   --brand: #0f766e;
   --brand-strong: #115e59;
@@ -74,6 +74,7 @@ a {
 .header-action,
 .primary-action,
 .secondary-action,
+.danger-action,
 .back-link,
 .season-list span,
 .registration-points span {
@@ -143,6 +144,22 @@ a {
   color: var(--text-strong);
   background: rgba(255, 255, 255, 0.72);
   font-weight: 800;
+}
+
+.danger-action {
+  padding: 13px 19px;
+  border: 1px solid #f5c6c6;
+  border-radius: 8px;
+  color: #c0392b;
+  background: #fff5f5;
+  font-weight: 800;
+  cursor: pointer;
+  gap: 7px;
+}
+
+.danger-action:hover {
+  background: #fde8e8;
+  border-color: #e88;
 }
 
 .hero-section {
@@ -356,6 +373,24 @@ a {
 .status-closed {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.comp-register-btn {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: #dcfce7;
+    color: #166534;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.comp-register-btn:hover {
+    background: #bbf7d0;
 }
 
 .stat-grid {
@@ -636,8 +671,8 @@ a {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 7px 11px;
-  background: rgba(15, 118, 110, 0.12);
-  color: var(--brand-strong);
+  background: #dcfce7;
+  color: #14532d;
   font-size: 0.8rem;
   font-weight: 900;
 }
@@ -694,8 +729,8 @@ a {
   margin: 0;
   border-radius: 8px;
   padding: 12px 14px;
-  background: rgba(15, 118, 110, 0.1);
-  color: var(--brand-strong);
+  background: #dcfce7;
+  color: #14532d;
   line-height: 1.45;
 }
 
@@ -831,7 +866,7 @@ a {
 
 .admin-page {
   display: grid;
-  gap: 22px;
+  gap: 14px;
 }
 
 .admin-page-header {
@@ -1021,6 +1056,27 @@ a {
   place-items: center;
   background: rgba(15, 118, 110, 0.1);
   color: var(--brand-strong);
+}
+
+.contest-card-wrapper {
+  position: relative;
+}
+
+.contest-card-wrapper .contest-card {
+  width: 100%;
+}
+
+.contest-card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.contest-card-wrapper:hover .contest-card-delete,
+.contest-card-wrapper:focus-within .contest-card-delete {
+  opacity: 1;
 }
 
 .admin-panel {
@@ -1567,83 +1623,249 @@ a {
 /* ── Results page ─────────────────────────────────────── */
 
 .results-class-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
 }
 
+/* Draggable section wrapper */
+.results-drag-item.results-dragging {
+  opacity: 0.35;
+}
+
+.results-drag-item.results-drag-over .results-class-box {
+  border-color: #3a6ea8;
+  box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.18);
+}
+
+/* Grip handle lives inside .results-class-header */
+.results-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 4px 1px 0;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.12s;
+}
+
+.results-drag-handle:hover {
+  color: #fff;
+}
+
+.results-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Each category/class is a clean bordered card */
 .results-class-box {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
+  border: 1px solid #bfcfe2;
+  border-radius: 6px;
   overflow: hidden;
 }
 
+/* Card header: light navy-tinted band with the category title */
 .results-class-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-raised, var(--surface));
+  padding: 6px 12px;
+  background: #e8f0f9;
+  border-bottom: 1px solid #bfcfe2;
 }
 
 .results-class-header h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
+.results-class-header .success-pill {
+  display: none;
+}
+
+/* Scrollable table wrapper — no extra card styling */
 .results-class-table {
-  border: none;
-  border-radius: 0;
+  overflow-x: auto;
 }
 
 .results-class-table table {
+  width: auto;
   min-width: unset;
-  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.79rem;
+  line-height: 1.3;
 }
 
+/* Dark navy header row matching SVHKF reference */
+.results-class-table thead th {
+  background: #1e3a5f;
+  color: #fff;
+  padding: 5px 7px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.67rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.results-class-table thead th:last-child {
+  border-right: none;
+}
+
+.results-class-table thead th:nth-child(2) {
+  text-align: left;
+  padding: 5px 10px;
+  width: 160px;
+}
+
+.results-class-table thead th:nth-child(3) {
+  text-align: left;
+  padding: 5px 10px;
+  width: 120px;
+}
+
+/* Compact data cells */
+.results-class-table tbody td {
+  padding: 4px 7px;
+  border-right: 1px solid #dde7f0;
+  border-bottom: 1px solid #dde7f0;
+  text-align: center;
+  color: var(--text);
+  font-size: 0.78rem;
+  min-width: 26px;
+  white-space: nowrap;
+}
+
+.results-class-table tbody td:last-child {
+  border-right: none;
+}
+
+.results-class-table tbody td:nth-child(2),
+.results-class-table tbody td:nth-child(3) {
+  text-align: left;
+  padding: 4px 10px;
+  min-width: unset;
+}
+
+/* Alternating row colour */
+.results-class-table tbody tr:nth-child(even) {
+  background: #dce8f5;
+}
+
+.results-class-table tbody tr:hover {
+  background: #c6d9ef;
+}
+
+/* Rank column */
 .results-class-table .rank-cell {
   font-weight: 700;
-  width: 2rem;
+  width: 28px;
+  min-width: 28px;
   text-align: center;
+  color: #1e3a5f;
 }
 
-.results-class-table tr.top-rank td:first-child {
-  color: var(--brand);
+/* Gold highlight for top-3 */
+.results-class-table tr.top-rank .rank-cell {
+  color: #a07800;
 }
 
-.results-second-chance {
-  padding: 10px 20px;
-  border-top: 1px solid var(--line);
+/* Cream subtotal columns (1–5, 6–10, Total, GP) */
+.results-subtotal {
+  background: #f0ead8 !important;
+  font-weight: 700;
+  color: #2a2000 !important;
+}
+
+/* Empty-category fallback text */
+.results-empty-cat {
+  padding: 10px 12px;
+  color: var(--text-2);
   font-size: 0.85rem;
-  color: var(--text-muted, var(--text));
 }
 
-.results-team-section {
-  margin-top: 24px;
+/* Page header */
+.results-page-header h1 {
+  font-size: 1.4rem;
 }
 
+.results-page-header .eyebrow {
+  margin-bottom: 2px;
+}
+
+/* ── Dark-mode overrides ─────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .results-class-box {
+    border-color: var(--line);
+  }
+
+  .results-class-header {
+    background: rgba(30, 58, 95, 0.28);
+    border-bottom-color: var(--line);
+  }
+
+  .results-class-header h2 {
+    color: #8bb8e8;
+  }
+
+  .results-class-table tbody tr:nth-child(even) {
+    background: rgba(100, 140, 200, 0.12);
+  }
+
+  .results-class-table tbody tr:hover {
+    background: rgba(100, 140, 200, 0.2);
+  }
+
+  .results-class-table tbody td {
+    border-right-color: var(--line);
+    border-bottom-color: var(--line);
+  }
+
+  .results-subtotal {
+    background: rgba(200, 165, 0, 0.13) !important;
+    color: var(--text-strong) !important;
+  }
+
+
+}
+
+/* ── Empty state (no active contest) ────────────────── */
 .results-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 64px 24px;
+  padding: 80px 24px;
   text-align: center;
 }
 
-.results-empty-state img {
-  opacity: 0.7;
+.results-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--brand-strong);
+  margin-bottom: 8px;
 }
 
-.results-empty-state h1 {
+.results-empty-state h2 {
   margin: 0;
+  font-size: 1.25rem;
 }
 
 .results-empty-state p {
   margin: 0;
   color: var(--text-2);
+  max-width: 340px;
 }
 
 .results-team-box {
@@ -2769,7 +2991,7 @@ a {
     font-weight: 700;
 }
 
-.club-incoming-comp-header span {
+.club-incoming-comp-header > div > span {
     font-size: 0.8rem;
     color: var(--muted);
 }
@@ -2840,6 +3062,131 @@ a {
     font-size: 0.8rem;
     color: var(--muted);
     white-space: nowrap;
+    flex: 1;
+}
+
+/* Edit / delete buttons on each registration row */
+.reg-row-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.reg-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+
+.reg-action-btn:hover {
+    background: var(--surface-alt, #f0f4f8);
+    color: var(--text-strong);
+}
+
+.reg-action-delete:hover {
+    background: #fff0f0;
+    border-color: #f5c6c6;
+    color: #c0392b;
+}
+
+/* Inline edit form */
+.reg-edit-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reg-edit-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.reg-edit-row input,
+.reg-edit-row select {
+    flex: 1 1 100px;
+    min-width: 80px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.82rem;
+}
+
+.reg-edit-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* ── Mix doubles pair UI ─────────────────────────────── */
+.mix-pair-builder {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.mix-pair-builder select {
+    flex: 1;
+    min-width: 150px;
+}
+.mix-pair-sep {
+    font-weight: 700;
+    color: var(--brand);
+    flex-shrink: 0;
+}
+.mix-pair-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.mix-pair-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+.mix-pair-row .team-slot-remove {
+    margin-left: auto;
+}
+.mix-incoming-section {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.mix-incoming-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.mix-incoming-pair-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    padding: 3px 0;
 }
 
 /* ── Own competition tab ─────────────────────────────── */
