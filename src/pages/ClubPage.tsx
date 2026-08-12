@@ -801,6 +801,31 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setView("type");
     }
 
+    function resumeContest(compId: string) {
+        const runKey = Object.keys(localStorage).find((k) => k.startsWith(`${SCORE_PREFIX}-${compId}__`));
+        if (!runKey) return;
+        const runId = runKey.slice(`${SCORE_PREFIX}-`.length);
+        const typeIdPart = runId.split("__").slice(1).join("__");
+        const restoredTypeIds = parseTypeId(typeIdPart);
+        const savedPlayers: PlayerScore[] = (() => {
+            try { return JSON.parse(localStorage.getItem(runKey) ?? "[]"); } catch { return []; }
+        })();
+        const laneData: { count: number; assignments: Record<string, number> } | null = (() => {
+            try { return JSON.parse(localStorage.getItem(`${LANES_PREFIX}-${runId}`) ?? "null"); } catch { return null; }
+        })();
+        const teamData: { id: string; name: string; playerIds: string[] }[] = (() => {
+            try { return JSON.parse(localStorage.getItem(`${TEAMS_PREFIX}-${runId}`) ?? "[]"); } catch { return []; }
+        })();
+        setSelectedCompId(compId);
+        setTypeIds(restoredTypeIds);
+        setPlayers(savedPlayers);
+        setLaneCount(laneData?.count ?? 1);
+        setLaneAssignments(laneData?.assignments ?? {});
+        setTeamAssignments(teamData);
+        setActiveLane(null); setActiveTeamId(null); setStatus("idle");
+        setView("scoring");
+    }
+
     function bestPhotoMatch(name: string): string | null {
         const lower = name.toLowerCase().trim();
         let m = players.find((p) => p.name.toLowerCase() === lower);
@@ -985,21 +1010,44 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         const mon = d.toLocaleString("sv-SE", { month: "short" }).toUpperCase();
                         const year = d.getFullYear();
                         const regCount = allRegs.filter((r) => r.competitionId === c.id && !PAIR_CATS.includes(r.category)).length;
+                        const hasSaved = Object.keys(localStorage).some((k) => k.startsWith(`${SCORE_PREFIX}-${c.id}__`));
+                        const badge = (
+                            <span className="club-comp-date-badge">
+                                <span>{mon}</span>
+                                <strong>{day}</strong>
+                                <span>{year}</span>
+                            </span>
+                        );
+                        const info = (
+                            <span className="club-comp-info">
+                                <strong>{c.name}</strong>
+                                {c.location && <span>{c.location}</span>}
+                                <span className="club-tab-count" style={{ marginTop: 4 }}>
+                                    {regCount} {t.club_incoming_count}
+                                </span>
+                            </span>
+                        );
+                        if (hasSaved) {
+                            return (
+                                <div key={c.id} className="club-comp-card club-comp-card-resume">
+                                    {badge}{info}
+                                    <span className="club-comp-resume-actions">
+                                        <button type="button" className="primary-action"
+                                            onClick={() => resumeContest(c.id)}>
+                                            {lang === "sv" ? "Fortsätt" : "Continue"}
+                                        </button>
+                                        <button type="button" className="secondary-action"
+                                            onClick={() => pickComp(c.id)}>
+                                            {lang === "sv" ? "Ny tävling" : "New contest"}
+                                        </button>
+                                    </span>
+                                </div>
+                            );
+                        }
                         return (
                             <button key={c.id} type="button" className="club-comp-card"
                                 onClick={() => pickComp(c.id)}>
-                                <span className="club-comp-date-badge">
-                                    <span>{mon}</span>
-                                    <strong>{day}</strong>
-                                    <span>{year}</span>
-                                </span>
-                                <span className="club-comp-info">
-                                    <strong>{c.name}</strong>
-                                    {c.location && <span>{c.location}</span>}
-                                    <span className="club-tab-count" style={{ marginTop: 4 }}>
-                                        {regCount} {t.club_incoming_count}
-                                    </span>
-                                </span>
+                                {badge}{info}
                             </button>
                         );
                     })}

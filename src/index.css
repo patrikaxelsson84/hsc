@@ -3070,6 +3070,31 @@ a {
     background: color-mix(in srgb, var(--brand) 7%, transparent);
 }
 
+.club-comp-card-resume {
+    flex-wrap: wrap;
+    cursor: default;
+    border-color: color-mix(in srgb, var(--brand) 50%, transparent);
+    background: color-mix(in srgb, var(--brand) 5%, transparent);
+}
+
+.club-comp-card-resume:hover {
+    border-color: color-mix(in srgb, var(--brand) 60%, transparent);
+}
+
+.club-comp-resume-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.club-comp-resume-actions .primary-action,
+.club-comp-resume-actions .secondary-action {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
 .club-comp-date-badge {
     display: flex;
     flex-direction: column;
