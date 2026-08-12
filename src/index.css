@@ -2377,6 +2377,181 @@ a {
     margin-top: 30px;
 }
 
+/* ── Photo import modal ── */
+.photo-modal {
+    width: 680px;
+    max-width: 96vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.photo-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.photo-modal-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 18px;
+}
+
+.photo-modal-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+}
+
+.photo-modal-close:hover { color: #fff; }
+
+.photo-key-section {
+    margin-bottom: 16px;
+}
+
+.photo-key-section p {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #bbb;
+}
+
+.photo-key-section input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.photo-hint {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+.photo-upload-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border: 2px dashed #555;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ccc;
+    transition: border-color 0.2s, color 0.2s;
+    margin-bottom: 12px;
+}
+
+.photo-upload-btn:hover { border-color: #888; color: #fff; }
+.photo-upload-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.photo-upload-btn input { display: none; }
+
+.photo-error {
+    color: #f87171;
+    font-size: 13px;
+    margin: 8px 0 0;
+}
+
+.photo-analyzing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 0;
+    color: #aaa;
+}
+
+.photo-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #444;
+    border-top-color: #7c8cff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.photo-half-select {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.photo-half-select label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.photo-review-table {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.photo-review-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.photo-review-table th,
+.photo-review-table td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    text-align: center;
+}
+
+.photo-review-table th {
+    background: #2a2a2a;
+    color: #aaa;
+    font-weight: 600;
+}
+
+.photo-review-table td:first-child,
+.photo-review-table th:first-child,
+.photo-review-table td:nth-child(2),
+.photo-review-table th:nth-child(2) {
+    text-align: left;
+}
+
+.photo-review-table tr.photo-unmatched td {
+    background: rgba(251, 113, 133, 0.08);
+}
+
+.photo-review-table select {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    padding: 3px 6px;
+    font-size: 12px;
+    max-width: 160px;
+}
+
+.photo-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
 /* ── Registration page lang bar ── */
 .registration-lang-bar {
     display: flex;

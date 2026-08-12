@@ -1,5 +1,7 @@
-import { ArrowLeft, ClipboardList, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardList, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
+import { extractScoresFromImage } from "../lib/importFromPhoto";
+import type { RecognizedScore } from "../lib/importFromPhoto";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { loadCompetitions } from "../data/competitions";
@@ -766,6 +768,11 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [status,             setStatus]             = useState<"idle" | "saved" | "reset">("idle");
     const [laneScoreFilter,    setLaneScoreFilter]    = useState<number | "all">("all");
     const [classFilter,        setClassFilter]        = useState<ClassLevel | "all">("all");
+    const [photoStep,          setPhotoStep]          = useState<"closed" | "upload" | "analyzing" | "review">("closed");
+    const [photoApiKey,        setPhotoApiKey]        = useState(() => localStorage.getItem("hsc-anthropic-key") ?? "");
+    const [photoHalf,          setPhotoHalf]          = useState<"first" | "second">("first");
+    const [photoMatches,       setPhotoMatches]       = useState<(RecognizedScore & { matchedId: string | null })[]>([]);
+    const [photoError,         setPhotoError]         = useState("");
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -792,6 +799,51 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setPlayers([]); setLaneAssignments({}); setActiveLane(null);
         setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
         setView("type");
+    }
+
+    function bestPhotoMatch(name: string): string | null {
+        const lower = name.toLowerCase().trim();
+        let m = players.find((p) => p.name.toLowerCase() === lower);
+        if (m) return m.id;
+        m = players.find((p) => {
+            const pl = p.name.toLowerCase();
+            return pl.includes(lower) || lower.includes(pl);
+        });
+        return m?.id ?? null;
+    }
+
+    async function handlePhotoFile(file: File) {
+        setPhotoStep("analyzing");
+        setPhotoError("");
+        try {
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            const recognized = await extractScoresFromImage(dataUrl, photoApiKey);
+            setPhotoMatches(recognized.map((r) => ({ ...r, matchedId: bestPhotoMatch(r.name) })));
+            setPhotoStep("review");
+        } catch (e: unknown) {
+            setPhotoError(e instanceof Error ? e.message : String(e));
+            setPhotoStep("upload");
+        }
+    }
+
+    function applyPhotoScores() {
+        const offset = photoHalf === "first" ? 0 : 5;
+        setPlayers((cur) =>
+            cur.map((p) => {
+                const match = photoMatches.find((m) => m.matchedId === p.id);
+                if (!match) return p;
+                const next = [...p.rounds];
+                match.rounds.forEach((score, i) => { next[offset + i] = score; });
+                return { ...p, rounds: next };
+            })
+        );
+        setPhotoStep("closed");
+        setStatus("idle");
     }
 
     function proceedFromType() {
@@ -1347,6 +1399,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     })}>
                     <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Laguppställning" : "Team lineup"}
                 </button>
+                <button className="secondary-action score-button" type="button"
+                    onClick={() => setPhotoStep("upload")}>
+                    <Camera size={17} aria-hidden="true" /> {lang === "sv" ? "Importera foto" : "Import photo"}
+                </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
                 </a>
@@ -1410,6 +1466,127 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* ── Photo import modal ─────────────────────────────────────── */}
+            {photoStep !== "closed" && (
+                <div className="modal-overlay" onClick={() => setPhotoStep("closed")}>
+                    <div className="modal-card photo-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="photo-modal-header">
+                            <h2><Camera size={20} /> {lang === "sv" ? "Importera poäng från foto" : "Import scores from photo"}</h2>
+                            <button className="photo-modal-close" onClick={() => setPhotoStep("closed")}>✕</button>
+                        </div>
+
+                        {photoStep === "upload" && (
+                            <>
+                                {!photoApiKey && (
+                                    <div className="photo-key-section">
+                                        <p>{lang === "sv" ? "Ange din Anthropic API-nyckel:" : "Enter your Anthropic API key:"}</p>
+                                        <input
+                                            type="password"
+                                            placeholder="sk-ant-..."
+                                            value={photoApiKey}
+                                            onChange={(e) => setPhotoApiKey(e.target.value)}
+                                        />
+                                        <button className="secondary-action" onClick={() => {
+                                            localStorage.setItem("hsc-anthropic-key", photoApiKey);
+                                        }}>
+                                            {lang === "sv" ? "Spara nyckel" : "Save key"}
+                                        </button>
+                                    </div>
+                                )}
+                                {photoApiKey && (
+                                    <p className="photo-hint">
+                                        {lang === "sv"
+                                            ? "Ta ett foto av protokollet och välj det nedan. Claude läser av namnen och poängen automatiskt."
+                                            : "Take a photo of the scorecard and select it below. Claude will read names and scores automatically."}
+                                    </p>
+                                )}
+                                <label className={`photo-upload-btn${!photoApiKey ? " disabled" : ""}`}>
+                                    <Camera size={22} />
+                                    {lang === "sv" ? "Välj foto / kamera" : "Choose photo / camera"}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        disabled={!photoApiKey}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handlePhotoFile(file);
+                                            e.target.value = "";
+                                        }}
+                                    />
+                                </label>
+                                {photoError && <p className="photo-error">{photoError}</p>}
+                            </>
+                        )}
+
+                        {photoStep === "analyzing" && (
+                            <div className="photo-analyzing">
+                                <div className="photo-spinner" />
+                                <p>{lang === "sv" ? "Claude analyserar bilden…" : "Claude is analyzing the image…"}</p>
+                            </div>
+                        )}
+
+                        {photoStep === "review" && (
+                            <>
+                                <div className="photo-half-select">
+                                    <span>{lang === "sv" ? "Omgångar:" : "Rounds:"}</span>
+                                    <label>
+                                        <input type="radio" checked={photoHalf === "first"} onChange={() => setPhotoHalf("first")} />
+                                        {lang === "sv" ? "Första halvlek (R1–R5)" : "First half (R1–R5)"}
+                                    </label>
+                                    <label>
+                                        <input type="radio" checked={photoHalf === "second"} onChange={() => setPhotoHalf("second")} />
+                                        {lang === "sv" ? "Andra halvlek (R6–R10)" : "Second half (R6–R10)"}
+                                    </label>
+                                </div>
+
+                                <div className="photo-review-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>{lang === "sv" ? "Igenkänt" : "Recognized"}</th>
+                                                <th>{lang === "sv" ? "Matchar" : "Matches"}</th>
+                                                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {photoMatches.map((m, i) => (
+                                                <tr key={i} className={m.matchedId ? "" : "photo-unmatched"}>
+                                                    <td>{m.name}</td>
+                                                    <td>
+                                                        <select
+                                                            value={m.matchedId ?? ""}
+                                                            onChange={(e) => setPhotoMatches((cur) =>
+                                                                cur.map((pm, j) => j === i ? { ...pm, matchedId: e.target.value || null } : pm)
+                                                            )}
+                                                        >
+                                                            <option value="">– {lang === "sv" ? "ingen" : "none"} –</option>
+                                                            {players.map((p) => (
+                                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    {m.rounds.map((r, ri) => <td key={ri}>{r || "–"}</td>)}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="photo-actions">
+                                    <button className="secondary-action" onClick={() => setPhotoStep("upload")}>
+                                        {lang === "sv" ? "Nytt foto" : "New photo"}
+                                    </button>
+                                    <button className="primary-action" onClick={applyPhotoScores}>
+                                        {lang === "sv" ? "Tillämpa poäng" : "Apply scores"}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
