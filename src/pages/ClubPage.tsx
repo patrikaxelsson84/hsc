@@ -773,6 +773,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [photoHalf,          setPhotoHalf]          = useState<"first" | "second">("first");
     const [photoMatches,       setPhotoMatches]       = useState<(RecognizedScore & { matchedId: string | null })[]>([]);
     const [photoError,         setPhotoError]         = useState("");
+    const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
+    const [csvMatches,         setCsvMatches]         = useState<{ csvName: string; round: number; score: number; matchedId: string | null }[]>([]);
+    const [csvError,           setCsvError]           = useState("");
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -868,6 +871,54 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             })
         );
         setPhotoStep("closed");
+        setStatus("idle");
+    }
+
+    function handleCsvFile(file: File) {
+        setCsvError("");
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const text = reader.result as string;
+                const lines = text.trim().split(/\r?\n/);
+                const header = lines[0].split(",").map((h) => h.trim());
+                const iOmgang = header.findIndex((h) => h === "Omgång" || h === "Omgang");
+                const iNamn   = header.findIndex((h) => h === "Namn");
+                const iSumma  = header.findIndex((h) => h === "Summa");
+                if (iOmgang === -1 || iNamn === -1 || iSumma === -1) {
+                    setCsvError("Kunde inte hitta kolumnerna Omgång, Namn och Summa i filen.");
+                    return;
+                }
+                const matches = lines.slice(1).flatMap((line) => {
+                    const cols = line.split(",");
+                    const round = parseInt(cols[iOmgang] ?? "", 10);
+                    const name  = cols[iNamn]?.trim() ?? "";
+                    const score = parseInt(cols[iSumma] ?? "", 10);
+                    if (!name || isNaN(round) || isNaN(score)) return [];
+                    return [{ csvName: name, round, score, matchedId: bestPhotoMatch(name) }];
+                });
+                if (matches.length === 0) { setCsvError("Inga giltiga rader hittades."); return; }
+                setCsvMatches(matches);
+                setCsvStep("review");
+            } catch {
+                setCsvError("Kunde inte läsa filen.");
+            }
+        };
+        reader.readAsText(file, "utf-8");
+    }
+
+    function applyCsvScores() {
+        setPlayers((cur) =>
+            cur.map((p) => {
+                const relevant = csvMatches.filter((m) => m.matchedId === p.id);
+                if (relevant.length === 0) return p;
+                const next = [...p.rounds];
+                relevant.forEach((m) => { next[m.round - 1] = m.score; });
+                return { ...p, rounds: next };
+            })
+        );
+        setCsvStep("closed");
+        setCsvMatches([]);
         setStatus("idle");
     }
 
@@ -1454,7 +1505,11 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <label className="secondary-action score-button" style={{ cursor: "pointer" }}>
                     <FileSpreadsheet size={17} aria-hidden="true" /> {lang === "sv" ? "Importera CSV" : "Import CSV"}
                     <input type="file" accept=".csv" style={{ display: "none" }}
-                        onChange={(e) => { e.target.value = ""; }} />
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCsvFile(file);
+                            e.target.value = "";
+                        }} />
                 </label>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
@@ -1519,6 +1574,75 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* ── CSV import modal ───────────────────────────────────────── */}
+            {csvStep !== "closed" && (
+                <div className="modal-overlay" onClick={() => setCsvStep("closed")}>
+                    <div className="modal-card photo-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="photo-modal-header">
+                            <h2><FileSpreadsheet size={20} /> {lang === "sv" ? "Importera CSV-poäng" : "Import CSV scores"}</h2>
+                            <button className="photo-modal-close" onClick={() => setCsvStep("closed")}>✕</button>
+                        </div>
+
+                        {csvError && <p className="photo-error">{csvError}</p>}
+
+                        {csvStep === "review" && (() => {
+                            const rounds = [...new Set(csvMatches.map((m) => m.round))].sort((a, b) => a - b);
+                            return (
+                                <>
+                                    <p className="photo-hint">
+                                        {lang === "sv"
+                                            ? `Hittade poäng för omgång ${rounds.map((r) => `R${r}`).join(", ")}. Kontrollera matchningarna och tryck Tillämpa.`
+                                            : `Found scores for round ${rounds.map((r) => `R${r}`).join(", ")}. Check matches and press Apply.`}
+                                    </p>
+                                    <div className="photo-review-table">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>{lang === "sv" ? "Omgång" : "Round"}</th>
+                                                    <th>{lang === "sv" ? "CSV-namn" : "CSV name"}</th>
+                                                    <th>{lang === "sv" ? "Matchar" : "Matches"}</th>
+                                                    <th>{lang === "sv" ? "Poäng" : "Score"}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {csvMatches.map((m, i) => (
+                                                    <tr key={i} className={m.matchedId ? "" : "photo-unmatched"}>
+                                                        <td>R{m.round}</td>
+                                                        <td>{m.csvName}</td>
+                                                        <td>
+                                                            <select
+                                                                value={m.matchedId ?? ""}
+                                                                onChange={(e) => setCsvMatches((cur) =>
+                                                                    cur.map((cm, j) => j === i ? { ...cm, matchedId: e.target.value || null } : cm)
+                                                                )}
+                                                            >
+                                                                <option value="">– {lang === "sv" ? "ingen" : "none"} –</option>
+                                                                {players.map((p) => (
+                                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td><strong>{m.score}</strong></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="photo-actions">
+                                        <button className="secondary-action" onClick={() => setCsvStep("closed")}>
+                                            {lang === "sv" ? "Avbryt" : "Cancel"}
+                                        </button>
+                                        <button className="primary-action" onClick={applyCsvScores}>
+                                            {lang === "sv" ? "Tillämpa poäng" : "Apply scores"}
+                                        </button>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
 
             {/* ── Photo import modal ─────────────────────────────────────── */}
             {photoStep !== "closed" && (
