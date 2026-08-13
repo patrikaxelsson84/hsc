@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, ClipboardList, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
@@ -1450,6 +1450,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <button className="secondary-action score-button" type="button"
                     onClick={() => setPhotoStep("upload")}>
                     <Camera size={17} aria-hidden="true" /> {lang === "sv" ? "Importera foto" : "Import photo"}
+                </button>
+                <button className="secondary-action score-button" type="button"
+                    onClick={() => {}}>
+                    <FileSpreadsheet size={17} aria-hidden="true" /> {lang === "sv" ? "Importera CSV" : "Import CSV"}
                 </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
