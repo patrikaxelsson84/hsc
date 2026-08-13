@@ -1451,10 +1451,11 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     onClick={() => setPhotoStep("upload")}>
                     <Camera size={17} aria-hidden="true" /> {lang === "sv" ? "Importera foto" : "Import photo"}
                 </button>
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => {}}>
+                <label className="secondary-action score-button" style={{ cursor: "pointer" }}>
                     <FileSpreadsheet size={17} aria-hidden="true" /> {lang === "sv" ? "Importera CSV" : "Import CSV"}
-                </button>
+                    <input type="file" accept=".csv" style={{ display: "none" }}
+                        onChange={(e) => { e.target.value = ""; }} />
+                </label>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
                 </a>
