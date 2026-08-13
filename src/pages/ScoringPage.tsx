@@ -324,7 +324,7 @@ export default function ScoringPage() {
     }
 
     function updateRound(playerId: string, roundIndex: number, value: string) {
-        const score = Math.max(0, Math.min(64, Number(value) || 0));
+        const score = Math.max(0, Math.min(100, Number(value) || 0));
         setPlayers((cur) => {
             const next = cur.map((p) =>
                 p.id === playerId
@@ -1094,7 +1094,7 @@ export default function ScoringPage() {
                                     <td key={`${player.id}-${index}`}>
                                         <input
                                             aria-label={`${player.name} R${index + 1}`}
-                                            inputMode="numeric" min={0} max={64} type="number"
+                                            inputMode="numeric" min={0} max={100} type="number"
                                             value={round}
                                             onChange={(e) => updateRound(player.id, index, e.target.value)}
                                         />

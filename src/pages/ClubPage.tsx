@@ -1011,7 +1011,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     }
 
     function updateRound(id: string, idx: number, val: string) {
-        const score = Math.max(0, Math.min(64, Number(val) || 0));
+        const score = Math.max(0, Math.min(100, Number(val) || 0));
         setPlayers((cur) => {
             const next = cur.map((p) => p.id === id ? { ...p, rounds: p.rounds.map((r, i) => i === idx ? score : r) } : p);
             localStorage.setItem(`${LIVE_PREFIX}-${currentRunId}`, JSON.stringify(next));
@@ -1547,7 +1547,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 </td>
                                 {player.rounds.map((round, idx) => (
                                     <td key={idx}>
-                                        <input type="number" inputMode="numeric" min={0} max={64}
+                                        <input type="number" inputMode="numeric" min={0} max={100}
                                             value={round} aria-label={`${player.name} R${idx + 1}`}
                                             onChange={(e) => updateRound(player.id, idx, e.target.value)} />
                                     </td>
