@@ -730,26 +730,10 @@ const ACTIVE_KEY    = "hsc-active-v1";
 const FLOW_PREFIX   = "hsc-flow-v1";
 const TYPE_SEP      = "+";
 
-const contestTypeDefs: { id: string; sv: string; en: string }[] = [
-    { id: "mixed",           sv: "Mixed",          en: "Mixed" },
-    { id: "dubbel",          sv: "Dubbel",         en: "Double" },
-    { id: "team",            sv: "Lag",            en: "Team" },
-    { id: "mr",              sv: "Herr",           en: "Mr." },
-    { id: "mrs",             sv: "Dam",            en: "Mrs." },
-    { id: "junior",          sv: "Junior",         en: "Junior" },
-    { id: "minions",         sv: "Minorer",        en: "Minions" },
-    { id: "mr-double",       sv: "Herrdubbel",     en: "Mr. Double" },
-    { id: "mrs-double",      sv: "Damdubbel",      en: "Mrs. Double" },
-    { id: "individual-rank", sv: "Individuell",    en: "Individual Rank" },
-];
+import { contestTypeDefs, typeName } from "../lib/contestTypes";
 
 function buildTypeId(ids: string[]) { return ids.join(TYPE_SEP); }
 function parseTypeId(raw: string)   { return raw.split(TYPE_SEP).filter(Boolean); }
-function typeLabel(id: string, lang: string) {
-    const def = contestTypeDefs.find((d) => d.id === id);
-    return def ? (lang === "sv" ? def.sv : def.en) : id;
-}
-function typeName(ids: string[], lang: string) { return ids.map((id) => typeLabel(id, lang)).join(" + "); }
 
 type OwnView = "pick" | "type" | "registration" | "lanes" | "teams" | "scoring";
 

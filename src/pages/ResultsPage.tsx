@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
+import { typeNameFromRunId } from "../lib/contestTypes";
 
 const liveScorePrefix    = "hsc-live-v1";
 const teamsStoragePrefix = "hsc-teams-v1";
@@ -287,7 +288,7 @@ function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.R
 type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 
 export default function ResultsPage() {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [liveData, setLiveData] = useState(readLiveData);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [dragKey, setDragKey] = useState<SectionKey | null>(null);
@@ -348,7 +349,8 @@ export default function ResultsPage() {
     const miniorPlayers   = players.filter((p) => p.ageCategory === "minior");
 
     const competitionId = active.runId.split("__")[0];
-    const mixedPairs = active.typeName.includes("Mixed") ? buildMixedPairs(players, competitionId) : [];
+    const liveTypeName = typeNameFromRunId(active.runId, lang);
+    const mixedPairs = active.runId.toLowerCase().includes("mixed") ? buildMixedPairs(players, competitionId) : [];
 
     const sections: Partial<Record<SectionKey, SectionFactory>> = {};
 
@@ -439,7 +441,7 @@ export default function ResultsPage() {
                     <p className="eyebrow">{t.results_eyebrow}</p>
                     <h1>{active.contestName}</h1>
                     <p>
-                        {active.typeName} · {players.length}{" "}
+                        {liveTypeName} · {players.length}{" "}
                         {players.length === 1 ? t.results_player_s : t.results_player_p}{" "}
                         · {t.results_updates_auto}
                     </p>
@@ -463,7 +465,7 @@ export default function ResultsPage() {
 
             <div className="results-print-title">
                 <h1>{active.contestName}</h1>
-                <p>{active.typeName}</p>
+                <p>{liveTypeName}</p>
             </div>
 
             <div className="results-class-grid" style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}>
