@@ -294,6 +294,15 @@ export default function ResultsPage() {
     const [dragKey, setDragKey] = useState<SectionKey | null>(null);
     const [dropTarget, setDropTarget] = useState<{ col: ColId; before: SectionKey | null } | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [colCount, setColCount] = useState<number>(() => {
+        const saved = localStorage.getItem("hsc-results-colcount");
+        return saved ? Number(saved) : 4;
+    });
+
+    function changeColCount(n: number) {
+        setColCount(n);
+        localStorage.setItem("hsc-results-colcount", String(n));
+    }
 
     useEffect(() => {
         const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -436,6 +445,13 @@ export default function ResultsPage() {
                         · {t.results_updates_auto}
                     </p>
                 </div>
+                <div className="results-colcount-picker">
+                    {[1, 2, 3, 4].map((n) => (
+                        <button key={n} type="button"
+                            className={colCount === n ? "lane-count-btn active" : "lane-count-btn"}
+                            onClick={() => changeColCount(n)}>{n}</button>
+                    ))}
+                </div>
                 <button className="secondary-action score-button" type="button" onClick={toggleFullscreen}>
                     {isFullscreen ? <Minimize size={17} aria-hidden="true" /> : <Maximize size={17} aria-hidden="true" />}
                     {isFullscreen ? (t.lang === "sv" ? "Minimera" : "Exit fullscreen") : (t.lang === "sv" ? "Helskärm" : "Fullscreen")}
@@ -451,7 +467,7 @@ export default function ResultsPage() {
                 <p>{active.typeName}</p>
             </div>
 
-            <div className="results-class-grid">
+            <div className="results-class-grid" style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}>
                 {COL_IDS.map((col) => renderColumn(col, colKeys[col]))}
             </div>
         </div>

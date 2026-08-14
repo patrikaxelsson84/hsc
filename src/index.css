@@ -1623,16 +1623,14 @@ a {
 /* ── Results page ─────────────────────────────────────── */
 
 .results-class-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 10px;
-  align-items: flex-start;
+  align-items: start;
 }
 
 .results-col {
   display: flex;
   flex-direction: column;
-  flex: 1 1 260px;
   min-height: 60px;
 }
 
@@ -1818,6 +1816,12 @@ a {
 
 .results-page-header .eyebrow {
   margin-bottom: 2px;
+}
+
+.results-colcount-picker {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 /* ── Dark-mode overrides ─────────────────────────────── */
