@@ -186,22 +186,23 @@ export function printLaguppställning({
         ? `<p>${noTeams}</p>`
         : complete.map((team) => {
             const members = team.playerIds.map((id) => playerMap.get(id)).filter(Boolean) as PlayerScore[];
-            const rows = members.map((p) => `
+            const rows = members.map((p, i) => `
                 <tr>
+                    <td class="num">${i + 1}</td>
                     <td class="nc">${p.name}</td>
                     <td>${p.club || "–"}</td>
                     <td>${p.classLevel}</td>
                 </tr>`).join("");
-            return `<div class="team-block">
-                <div class="team-name">${team.name}</div>
-                <table>
-                    <thead><tr><th class="nt">Namn</th><th>${klubbLabel}</th><th>${klassLabel}</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>`;
+            return `<div class="lb"><table>
+                <thead>
+                    <tr><th colspan="4" class="lh">${team.name}</th></tr>
+                    <tr><th class="num">#</th><th class="nt">Namn</th><th>${klubbLabel}</th><th>${klassLabel}</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table></div>`;
         }).join("");
 
     openPrint(`${competitionName} – Laguppställning`, `
 <div class="ph"><div><h1>${competitionName}</h1><p>Laguppställning</p></div></div>
-<div class="grid single">${blocks}</div>`, lang);
+<div class="grid">${blocks}</div>`, lang);
 }
