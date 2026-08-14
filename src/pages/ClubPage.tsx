@@ -1581,7 +1581,16 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             <tr key={player.id}>
                                 <td>
                                     <strong>{player.name}</strong>
-                                    <span>{player.club} · {t.sc_class_prefix} {player.classLevel}</span>
+                                    <span>{player.club} · {t.sc_class_prefix} {player.classLevel} · </span>
+                                    <button type="button" className="cat-badge-btn"
+                                        title="Klicka för att ändra kategori"
+                                        onClick={() => {
+                                            const order: AgeCategory[] = ["herr", "dam", "junior", "minior"];
+                                            const next = order[(order.indexOf(player.ageCategory) + 1) % order.length];
+                                            setPlayers((cur) => cur.map((p) => p.id === player.id ? { ...p, ageCategory: next } : p));
+                                        }}>
+                                        {catLabel(player.ageCategory)}
+                                    </button>
                                 </td>
                                 {player.rounds.map((round, idx) => (
                                     <td key={idx}>

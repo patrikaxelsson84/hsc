@@ -667,6 +667,22 @@ a {
   padding: 30px;
 }
 
+.cat-badge-btn {
+  display: inline;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.cat-badge-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
 .success-pill {
   flex: 0 0 auto;
   border-radius: 999px;
