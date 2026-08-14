@@ -1623,20 +1623,39 @@ a {
 /* ── Results page ─────────────────────────────────────── */
 
 .results-class-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  align-items: flex-start;
+  align-items: start;
+}
+
+.results-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 60px;
+}
+
+/* Drop zone strip between sections */
+.results-drop-zone {
+  height: 6px;
+  border-radius: 4px;
+  transition: height 0.12s, background 0.12s;
+}
+
+.results-drop-zone-end {
+  flex: 1;
+  min-height: 40px;
+}
+
+.results-drop-zone-active {
+  height: 18px;
+  background: #3a6ea8;
+  margin: 2px 0;
 }
 
 /* Draggable section wrapper */
 .results-drag-item.results-dragging {
   opacity: 0.35;
-}
-
-.results-drag-item.results-drag-over .results-class-box {
-  border-color: #3a6ea8;
-  box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.18);
 }
 
 /* Grip handle lives inside .results-class-header */

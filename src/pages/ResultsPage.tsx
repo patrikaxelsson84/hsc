@@ -8,9 +8,24 @@ const liveScorePrefix    = "hsc-live-v1";
 const teamsStoragePrefix = "hsc-teams-v1";
 const activeContestKey   = "hsc-active-v1";
 
-export const RESULTS_ORDER_KEY = "hsc-results-order-v1";
 export type SectionKey = "mixed-pairs" | "class-1" | "class-2" | "class-3" | "class-4" | "herr" | "dam" | "junior" | "minior" | "teams";
 const DEFAULT_ORDER: SectionKey[] = ["mixed-pairs", "class-1", "class-2", "class-3", "class-4", "herr", "dam", "junior", "minior", "teams"];
+
+const RESULTS_COLS_KEY = "hsc-results-cols-v1";
+type ColLayout = { left: SectionKey[]; right: SectionKey[] };
+
+function loadColLayout(): ColLayout {
+    try {
+        const raw = localStorage.getItem(RESULTS_COLS_KEY);
+        if (raw) return JSON.parse(raw) as ColLayout;
+    } catch {}
+    const mid = Math.ceil(DEFAULT_ORDER.length / 2);
+    return { left: DEFAULT_ORDER.slice(0, mid), right: DEFAULT_ORDER.slice(mid) };
+}
+
+function saveColLayout(layout: ColLayout) {
+    localStorage.setItem(RESULTS_COLS_KEY, JSON.stringify(layout));
+}
 
 const REGISTRATIONS_KEY = "hsc-registrations";
 
@@ -57,18 +72,6 @@ function buildMixedPairs(players: PlayerScore[], competitionId: string): PairRes
     } catch {
         return [];
     }
-}
-
-export function loadResultsOrder(): SectionKey[] {
-    try {
-        const raw = localStorage.getItem(RESULTS_ORDER_KEY);
-        if (raw) return JSON.parse(raw) as SectionKey[];
-    } catch {}
-    return [...DEFAULT_ORDER];
-}
-
-export function saveResultsOrder(order: SectionKey[]) {
-    localStorage.setItem(RESULTS_ORDER_KEY, JSON.stringify(order));
 }
 
 type ActiveContest = { runId: string; contestName: string; typeName: string };
@@ -277,9 +280,9 @@ type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 export default function ResultsPage() {
     const { t } = useLanguage();
     const [liveData, setLiveData] = useState(readLiveData);
-    const [sectionOrder, setSectionOrder] = useState<SectionKey[]>(loadResultsOrder);
-    const [dragFrom, setDragFrom] = useState<SectionKey | null>(null);
-    const [dragOver, setDragOver] = useState<SectionKey | null>(null);
+    const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
+    const [dragKey, setDragKey] = useState<SectionKey | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ col: "left" | "right"; before: SectionKey | null } | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
@@ -345,21 +348,69 @@ export default function ResultsPage() {
     if (miniorPlayers.length > 0) sections.minior  = (h) => <CategoryResultBox title="Minions" players={miniorPlayers} showClass handle={h} />;
     if (teams.length         > 0) sections.teams   = (h) => <TeamResultBox teams={teams} handle={h} />;
 
-    const allKeys        = Object.keys(sections) as SectionKey[];
-    const orderedKnown   = sectionOrder.filter((k) => k in sections);
-    const untracked      = allKeys.filter((k) => !sectionOrder.includes(k));
-    const activeSections = [...orderedKnown, ...untracked];
+    const allActiveKeys = Object.keys(sections) as SectionKey[];
+    const knownKeys = new Set([...colLayout.left, ...colLayout.right]);
+    const untracked = allActiveKeys.filter((k) => !knownKeys.has(k));
 
-    function reorder(from: SectionKey, to: SectionKey) {
-        const merged = [...sectionOrder];
-        for (const k of DEFAULT_ORDER) { if (!merged.includes(k)) merged.push(k); }
-        const fi = merged.indexOf(from);
-        const ti = merged.indexOf(to);
-        if (fi === -1 || ti === -1 || fi === ti) return;
-        merged.splice(fi, 1);
-        merged.splice(ti, 0, from);
-        setSectionOrder(merged);
-        saveResultsOrder(merged);
+    const leftActive  = [...colLayout.left.filter((k) => k in sections), ...untracked];
+    const rightActive = colLayout.right.filter((k) => k in sections);
+
+    function drop(col: "left" | "right", before: SectionKey | null) {
+        if (!dragKey) return;
+        const next: ColLayout = {
+            left:  colLayout.left.filter((k) => k !== dragKey),
+            right: colLayout.right.filter((k) => k !== dragKey),
+        };
+        const target = next[col];
+        if (before === null) {
+            target.push(dragKey);
+        } else {
+            const idx = target.indexOf(before);
+            target.splice(idx === -1 ? target.length : idx, 0, dragKey);
+        }
+        setColLayout(next);
+        saveColLayout(next);
+        setDragKey(null);
+        setDropTarget(null);
+    }
+
+    function renderColumn(col: "left" | "right", keys: SectionKey[]) {
+        return (
+            <div
+                className="results-col"
+                onDragOver={(e) => { e.preventDefault(); if (dragKey) setDropTarget({ col, before: null }); }}
+                onDrop={(e) => { e.stopPropagation(); drop(col, null); }}
+            >
+                {keys.map((key) => {
+                    const handle = (
+                        <div className="results-drag-handle" draggable
+                            onDragStart={(e) => { e.stopPropagation(); setDragKey(key); }}
+                            onDragEnd={() => { setDragKey(null); setDropTarget(null); }}
+                            title="Dra för att flytta">
+                            <GripVertical size={13} />
+                        </div>
+                    );
+                    const isDropHere = dropTarget?.col === col && dropTarget?.before === key;
+                    return (
+                        <div key={key}>
+                            <div
+                                className={`results-drop-zone${isDropHere ? " results-drop-zone-active" : ""}`}
+                                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey && dragKey !== key) setDropTarget({ col, before: key }); }}
+                                onDrop={(e) => { e.stopPropagation(); drop(col, key); }}
+                            />
+                            <div className={`results-drag-item${dragKey === key ? " results-dragging" : ""}`}>
+                                {sections[key]!(handle)}
+                            </div>
+                        </div>
+                    );
+                })}
+                <div
+                    className={`results-drop-zone results-drop-zone-end${dropTarget?.col === col && dropTarget?.before === null ? " results-drop-zone-active" : ""}`}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey) setDropTarget({ col, before: null }); }}
+                    onDrop={(e) => { e.stopPropagation(); drop(col, null); }}
+                />
+            </div>
+        );
     }
 
     return (
@@ -390,37 +441,8 @@ export default function ResultsPage() {
             </div>
 
             <div className="results-class-grid">
-                {activeSections.map((key) => {
-                    const handle = (
-                        <div
-                            className="results-drag-handle"
-                            draggable
-                            onDragStart={() => setDragFrom(key)}
-                            title="Dra för att ändra ordning"
-                        >
-                            <GripVertical size={13} />
-                        </div>
-                    );
-                    return (
-                        <div
-                            key={key}
-                            className={[
-                                "results-drag-item",
-                                dragFrom === key                     ? "results-dragging"  : "",
-                                dragOver === key && dragFrom !== key ? "results-drag-over" : "",
-                            ].filter(Boolean).join(" ")}
-                            onDragOver={(e) => { e.preventDefault(); if (dragFrom && dragFrom !== key) setDragOver(key); }}
-                            onDrop={() => {
-                                if (dragFrom && dragFrom !== key) reorder(dragFrom, key);
-                                setDragFrom(null);
-                                setDragOver(null);
-                            }}
-                            onDragEnd={() => { setDragFrom(null); setDragOver(null); }}
-                        >
-                            {sections[key]!(handle)}
-                        </div>
-                    );
-                })}
+                {renderColumn("left",  leftActive)}
+                {renderColumn("right", rightActive)}
             </div>
         </div>
     );
