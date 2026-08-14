@@ -779,6 +779,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [csvError,           setCsvError]           = useState("");
     const [addPlayerOpen,      setAddPlayerOpen]      = useState(false);
     const [addPlayerSearch,    setAddPlayerSearch]    = useState("");
+    const [addPlayerLane,      setAddPlayerLane]      = useState<number>(1);
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -1552,7 +1553,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         }} />
                 </label>
                 <button className="secondary-action score-button" type="button"
-                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); }}>
+                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); }}>
                     <Plus size={17} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
                 </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
@@ -1667,6 +1668,16 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 placeholder={lang === "sv" ? "Sök namn eller klubb…" : "Search name or club…"}
                                 value={addPlayerSearch}
                                 onChange={(e) => setAddPlayerSearch(e.target.value)} />
+                            {laneCount > 1 && (
+                                <div className="add-player-lane-row">
+                                    <span>{lang === "sv" ? "Bana:" : "Lane:"}</span>
+                                    {Array.from({ length: laneCount }, (_, i) => i + 1).map((n) => (
+                                        <button key={n} type="button"
+                                            className={addPlayerLane === n ? "lane-count-btn active" : "lane-count-btn"}
+                                            onClick={() => setAddPlayerLane(n)}>{n}</button>
+                                    ))}
+                                </div>
+                            )}
                             <div className="add-player-list">
                                 {candidates.length === 0
                                     ? <p className="form-message">{lang === "sv" ? "Inga spelare hittades." : "No players found."}</p>
@@ -1674,6 +1685,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                         <button key={p.id} type="button" className="add-player-row"
                                             onClick={() => {
                                                 setPlayers((cur) => [...cur, { ...p, rounds: Array(10).fill(0), sevenMeters: 0 }]);
+                                                if (laneCount > 1) setLaneAssignments((cur) => ({ ...cur, [p.id]: addPlayerLane }));
                                                 setAddPlayerOpen(false);
                                             }}>
                                             <strong>{p.name}</strong>

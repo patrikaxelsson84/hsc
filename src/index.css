@@ -705,6 +705,15 @@ a {
   box-sizing: border-box;
 }
 
+.add-player-lane-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
 .add-player-list {
   max-height: 320px;
   overflow-y: auto;
