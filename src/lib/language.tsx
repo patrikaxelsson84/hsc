@@ -353,7 +353,7 @@ const sv: typeof en = {
     reg_title:              "Titel",
     reg_select_title:       "Välj titel",
     reg_mr:                 "Herr",
-    reg_mrs:                "Fru",
+    reg_mrs:                "Dam",
     reg_junior:             "Junior",
     reg_minior:             "Minior",
     reg_notes:              "Anteckningar",

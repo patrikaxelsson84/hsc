@@ -5,7 +5,7 @@ export const contestTypeDefs: { id: string; sv: string; en: string }[] = [
     { id: "mr",              sv: "Herr",        en: "Mr." },
     { id: "mrs",             sv: "Dam",         en: "Mrs." },
     { id: "junior",          sv: "Junior",      en: "Junior" },
-    { id: "minions",         sv: "Minorer",     en: "Minions" },
+    { id: "minions",         sv: "Minior",      en: "Minions" },
     { id: "mr-double",       sv: "Herrdubbel",  en: "Mr. Double" },
     { id: "mrs-double",      sv: "Damdubbel",   en: "Mrs. Double" },
     { id: "individual-rank", sv: "Individuell", en: "Individual Rank" },
