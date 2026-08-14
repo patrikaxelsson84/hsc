@@ -234,6 +234,7 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
 }
 
 function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.ReactNode }) {
+    const { t } = useLanguage();
     const playedRounds = new Set(
         pairs.flatMap((p) => p.rounds.map((s, i) => s !== 0 ? i : -1).filter((i) => i >= 0))
     );
@@ -250,8 +251,8 @@ function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.R
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Mr.</th>
-                            <th>Mrs.</th>
+                            <th>{t.reg_mr}</th>
+                            <th>{t.reg_mrs}</th>
                             <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
                             <th className="results-subtotal">1–5</th>
                             <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
@@ -359,10 +360,10 @@ export default function ResultsPage() {
         const filtered = players.filter((p) => p.classLevel === cl && p.ageCategory !== "junior" && p.ageCategory !== "minior");
         sections[k] = (handle) => <ClassResultBox classLevel={cl} players={filtered} handle={handle} />;
     });
-    if (herrPlayers.length   > 0) sections.herr   = (h) => <CategoryResultBox title="Mr."     players={herrPlayers}   showClass handle={h} />;
-    if (damPlayers.length    > 0) sections.dam     = (h) => <CategoryResultBox title="Mrs."    players={damPlayers}    showClass handle={h} />;
-    if (juniorPlayers.length > 0) sections.junior  = (h) => <CategoryResultBox title="Junior"  players={juniorPlayers} showClass handle={h} />;
-    if (miniorPlayers.length > 0) sections.minior  = (h) => <CategoryResultBox title="Minions" players={miniorPlayers} showClass handle={h} />;
+    if (herrPlayers.length   > 0) sections.herr   = (h) => <CategoryResultBox title={t.reg_mr}     players={herrPlayers}   showClass handle={h} />;
+    if (damPlayers.length    > 0) sections.dam     = (h) => <CategoryResultBox title={t.reg_mrs}    players={damPlayers}    showClass handle={h} />;
+    if (juniorPlayers.length > 0) sections.junior  = (h) => <CategoryResultBox title={t.reg_junior} players={juniorPlayers} showClass handle={h} />;
+    if (miniorPlayers.length > 0) sections.minior  = (h) => <CategoryResultBox title={t.reg_minior} players={miniorPlayers} showClass handle={h} />;
     if (teams.length         > 0) sections.teams   = (h) => <TeamResultBox teams={teams} handle={h} />;
 
     const allActiveKeys = Object.keys(sections) as SectionKey[];
