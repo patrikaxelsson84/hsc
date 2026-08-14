@@ -336,7 +336,7 @@ export default function ResultsPage() {
     }
     presentClasses.forEach((cl) => {
         const k = `class-${cl}` as SectionKey;
-        const filtered = players.filter((p) => p.classLevel === cl);
+        const filtered = players.filter((p) => p.classLevel === cl && p.ageCategory !== "junior" && p.ageCategory !== "minior");
         sections[k] = (handle) => <ClassResultBox classLevel={cl} players={filtered} handle={handle} />;
     });
     if (herrPlayers.length   > 0) sections.herr   = (h) => <CategoryResultBox title="Mr."     players={herrPlayers}   showClass handle={h} />;

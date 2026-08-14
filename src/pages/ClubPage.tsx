@@ -727,6 +727,7 @@ const LIVE_PREFIX   = "hsc-live-v1";
 const TEAMS_PREFIX  = "hsc-teams-v1";
 const LANES_PREFIX  = "hsc-lanes-v1";
 const ACTIVE_KEY    = "hsc-active-v1";
+const FLOW_PREFIX   = "hsc-flow-v1";
 const TYPE_SEP      = "+";
 
 const contestTypes = [
@@ -780,6 +781,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
 
+    // Auto-save flow state at every step so the user can resume after navigating away
+    useEffect(() => {
+        if (!selectedCompId || view === "pick") return;
+        const flowKey = `${FLOW_PREFIX}-${selectedCompId}`;
+        const state = { view, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments };
+        localStorage.setItem(flowKey, JSON.stringify(state));
+    }, [view, selectedCompId, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments]);
+
     // Pool: all players registered for the selected competition
     const compPlayers: PlayerScore[] = selectedCompId
         ? allRegs.filter((r) => r.competitionId === selectedCompId && !PAIR_CATS.includes(r.category)).map(regToPlayerScore)
@@ -797,6 +806,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     }
 
     function pickComp(id: string) {
+        localStorage.removeItem(`${FLOW_PREFIX}-${id}`);
         setSelectedCompId(id);
         setTypeIds([]); setLaneCount(1); setSelectedPlayerIds([]);
         setPlayers([]); setLaneAssignments({}); setActiveLane(null);
@@ -805,28 +815,37 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     }
 
     function resumeContest(compId: string) {
-        const runKey = Object.keys(localStorage).find((k) => k.startsWith(`${SCORE_PREFIX}-${compId}__`));
-        if (!runKey) return;
-        const runId = runKey.slice(`${SCORE_PREFIX}-`.length);
-        const typeIdPart = runId.split("__").slice(1).join("__");
-        const restoredTypeIds = parseTypeId(typeIdPart);
-        const savedPlayers: PlayerScore[] = (() => {
-            try { return JSON.parse(localStorage.getItem(runKey) ?? "[]"); } catch { return []; }
+        // Try to restore from flow state (any step)
+        const flowRaw = localStorage.getItem(`${FLOW_PREFIX}-${compId}`);
+        const flow: { view: OwnView; typeIds: string[]; laneCount: number; selectedPlayerIds: string[]; laneAssignments: Record<string, number>; teamAssignments: { id: string; name: string; playerIds: string[] }[] } | null = (() => {
+            try { return flowRaw ? JSON.parse(flowRaw) : null; } catch { return null; }
         })();
+
+        // Try to restore saved players from scoring session
+        const runKey = Object.keys(localStorage).find((k) => k.startsWith(`${SCORE_PREFIX}-${compId}__`));
+        const savedPlayers: PlayerScore[] = (() => {
+            try { return runKey ? JSON.parse(localStorage.getItem(runKey) ?? "[]") : []; } catch { return []; }
+        })();
+
+        const restoredTypeIds = flow?.typeIds ?? (runKey ? parseTypeId(runKey.slice(`${SCORE_PREFIX}-`.length).split("__").slice(1).join("__")) : []);
+        const runId = runKey ? runKey.slice(`${SCORE_PREFIX}-`.length) : `${compId}__${buildTypeId(restoredTypeIds)}`;
+
         const laneData: { count: number; assignments: Record<string, number> } | null = (() => {
             try { return JSON.parse(localStorage.getItem(`${LANES_PREFIX}-${runId}`) ?? "null"); } catch { return null; }
         })();
         const teamData: { id: string; name: string; playerIds: string[] }[] = (() => {
             try { return JSON.parse(localStorage.getItem(`${TEAMS_PREFIX}-${runId}`) ?? "[]"); } catch { return []; }
         })();
+
         setSelectedCompId(compId);
         setTypeIds(restoredTypeIds);
         setPlayers(savedPlayers);
-        setLaneCount(laneData?.count ?? 1);
-        setLaneAssignments(laneData?.assignments ?? {});
-        setTeamAssignments(teamData);
+        setLaneCount(flow?.laneCount ?? laneData?.count ?? 1);
+        setLaneAssignments(flow?.laneAssignments ?? laneData?.assignments ?? {});
+        setTeamAssignments(flow?.teamAssignments ?? teamData);
+        setSelectedPlayerIds(flow?.selectedPlayerIds ?? savedPlayers.map((p) => p.id));
         setActiveLane(null); setActiveTeamId(null); setStatus("idle");
-        setView("scoring");
+        setView(flow?.view ?? "scoring");
     }
 
     function bestPhotoMatch(name: string): string | null {
@@ -1061,7 +1080,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         const mon = d.toLocaleString("sv-SE", { month: "short" }).toUpperCase();
                         const year = d.getFullYear();
                         const regCount = allRegs.filter((r) => r.competitionId === c.id && !PAIR_CATS.includes(r.category)).length;
-                        const hasSaved = Object.keys(localStorage).some((k) => k.startsWith(`${SCORE_PREFIX}-${c.id}__`));
+                        const hasSaved = Object.keys(localStorage).some((k) => k.startsWith(`${SCORE_PREFIX}-${c.id}__`)) || localStorage.getItem(`${FLOW_PREFIX}-${c.id}`) !== null;
                         const badge = (
                             <span className="club-comp-date-badge">
                                 <span>{mon}</span>
