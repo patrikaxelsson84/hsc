@@ -1623,15 +1623,16 @@ a {
 /* ── Results page ─────────────────────────────────────── */
 
 .results-class-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .results-col {
   display: flex;
   flex-direction: column;
+  flex: 1 1 260px;
   min-height: 60px;
 }
 
