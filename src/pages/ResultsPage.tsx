@@ -68,7 +68,7 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                     {rankings.map((player) => (
                         <tr key={player.id} className={player.rank <= 3 ? "top-rank" : undefined}>
                             <td className="rank-cell">{player.rank}</td>
-                            <td>{player.name}</td>
+                            <td><strong>{player.name}</strong></td>
                             <td>{player.club || "–"}</td>
                             {showClass && <td>{player.classLevel}</td>}
                             {player.rounds.slice(0, 5).map((r, i) => <td key={i}>{r || ""}</td>)}
