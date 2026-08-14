@@ -730,17 +730,26 @@ const ACTIVE_KEY    = "hsc-active-v1";
 const FLOW_PREFIX   = "hsc-flow-v1";
 const TYPE_SEP      = "+";
 
-const contestTypes = [
-    "Mixed","Dubbel","Team","Mr.","Mrs.","Junior","Minions",
-    "Mr. Double","Mrs. Double","Individual Rank",
-].map((name) => ({
-    id:   name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-    name,
-}));
+const contestTypeDefs: { id: string; sv: string; en: string }[] = [
+    { id: "mixed",           sv: "Mixed",          en: "Mixed" },
+    { id: "dubbel",          sv: "Dubbel",         en: "Double" },
+    { id: "team",            sv: "Lag",            en: "Team" },
+    { id: "mr",              sv: "Herr",           en: "Mr." },
+    { id: "mrs",             sv: "Dam",            en: "Mrs." },
+    { id: "junior",          sv: "Junior",         en: "Junior" },
+    { id: "minions",         sv: "Minorer",        en: "Minions" },
+    { id: "mr-double",       sv: "Herrdubbel",     en: "Mr. Double" },
+    { id: "mrs-double",      sv: "Damdubbel",      en: "Mrs. Double" },
+    { id: "individual-rank", sv: "Individuell",    en: "Individual Rank" },
+];
 
 function buildTypeId(ids: string[]) { return ids.join(TYPE_SEP); }
 function parseTypeId(raw: string)   { return raw.split(TYPE_SEP).filter(Boolean); }
-function typeName(ids: string[])    { return ids.map((id) => contestTypes.find((t) => t.id === id)?.name ?? id).join(" + "); }
+function typeLabel(id: string, lang: string) {
+    const def = contestTypeDefs.find((d) => d.id === id);
+    return def ? (lang === "sv" ? def.sv : def.en) : id;
+}
+function typeName(ids: string[], lang: string) { return ids.map((id) => typeLabel(id, lang)).join(" + "); }
 
 type OwnView = "pick" | "type" | "registration" | "lanes" | "teams" | "scoring";
 
@@ -955,7 +964,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             .filter((p) => selectedPlayerIds.includes(p.id))
             .map((p) => ({ ...p, rounds: Array(10).fill(0) as number[], sevenMeters: 0 }));
         const runId = `${selectedCompId}__${buildTypeId(typeIds)}`;
-        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds) }));
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         localStorage.setItem(`${LIVE_PREFIX}-${runId}`, JSON.stringify(chosen));
         setPlayers(chosen); setTeamAssignments([]); setActiveTeamId(null);
         setLaneAssignments({}); setActiveLane(null); setStatus("idle");
@@ -1052,7 +1061,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     function saveScores() {
         localStorage.setItem(`${SCORE_PREFIX}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(`${LIVE_PREFIX}-${currentRunId}`, JSON.stringify(players));
-        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds) }));
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         setStatus("saved");
     }
 
@@ -1178,13 +1187,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 </div>
 
                 <section className="contest-grid">
-                    {contestTypes.map((type) => (
+                    {contestTypeDefs.map((type) => (
                         <button key={type.id} type="button"
                             className={typeIds.includes(type.id) ? "contest-card selected" : "contest-card"}
                             aria-pressed={typeIds.includes(type.id)}
                             onClick={() => setTypeIds((cur) => cur.includes(type.id) ? cur.filter((x) => x !== type.id) : [...cur, type.id])}>
                             <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
-                            <span>{type.name}</span>
+                            <span>{lang === "sv" ? type.sv : type.en}</span>
                         </button>
                     ))}
                 </section>
@@ -1202,8 +1211,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         <h1>{t.sc_reg_eyebrow}</h1>
                         <p>
                             {lang === "sv"
-                                ? `${typeName(typeIds)}. Valda: ${selectedPlayerIds.length}`
-                                : `${typeName(typeIds)}. Selected: ${selectedPlayerIds.length}`}
+                                ? `${typeName(typeIds, lang)}. Valda: ${selectedPlayerIds.length}`
+                                : `${typeName(typeIds, lang)}. Selected: ${selectedPlayerIds.length}`}
                         </p>
                     </div>
                     <button className="secondary-action roster-back-button" type="button" onClick={goBack}>
@@ -1479,7 +1488,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <div>
                     <p className="eyebrow">{t.sc_eyebrow_scoring}</p>
                     <h1>{selectedComp?.name}</h1>
-                    <p>{typeName(typeIds)} · {players.length} {t.sc_player_p}</p>
+                    <p>{typeName(typeIds, lang)} · {players.length} {t.sc_player_p}</p>
                 </div>
                 <button className="secondary-action roster-back-button" type="button" onClick={goBack}>
                     <ArrowLeft size={17} aria-hidden="true" /> {t.sc_back}
@@ -1521,7 +1530,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <button className="secondary-action score-button" type="button"
                     onClick={() => printProtokoll({
                         competitionName: selectedComp?.name ?? "",
-                        typeName: typeName(typeIds),
+                        typeName: typeName(typeIds, lang),
                         players,
                         laneAssignments,
                         laneCount,
