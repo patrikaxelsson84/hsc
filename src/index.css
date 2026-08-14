@@ -693,6 +693,22 @@ a {
   width: 120px;
 }
 
+.player-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 5px;
+  border-radius: 4px;
+  opacity: 0.4;
+}
+.player-remove-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  opacity: 1;
+}
+
 .cat-badge-btn {
   display: inline;
   background: none;

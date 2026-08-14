@@ -1574,6 +1574,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             <th>{t.sc_col_6_10}</th>
                             <th>{t.sc_col_total}</th>
                             <th>{t.sc_col_rank}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1616,6 +1617,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <td>{player.secondHalf}</td>
                                 <td><strong>{player.total}</strong></td>
                                 <td>{player.rank}</td>
+                                <td>
+                                    <button type="button" className="player-remove-btn"
+                                        title={lang === "sv" ? "Ta bort spelare" : "Remove player"}
+                                        onClick={() => {
+                                            if (confirm(`${lang === "sv" ? "Ta bort" : "Remove"} ${player.name}?`))
+                                                setPlayers((cur) => cur.filter((p) => p.id !== player.id));
+                                        }}>✕</button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
