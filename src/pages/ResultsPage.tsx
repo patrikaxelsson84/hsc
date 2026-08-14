@@ -9,8 +9,55 @@ const teamsStoragePrefix = "hsc-teams-v1";
 const activeContestKey   = "hsc-active-v1";
 
 export const RESULTS_ORDER_KEY = "hsc-results-order-v1";
-export type SectionKey = "class-1" | "class-2" | "class-3" | "class-4" | "herr" | "dam" | "junior" | "minior" | "teams";
-const DEFAULT_ORDER: SectionKey[] = ["class-1", "class-2", "class-3", "class-4", "herr", "dam", "junior", "minior", "teams"];
+export type SectionKey = "mixed-pairs" | "class-1" | "class-2" | "class-3" | "class-4" | "herr" | "dam" | "junior" | "minior" | "teams";
+const DEFAULT_ORDER: SectionKey[] = ["mixed-pairs", "class-1", "class-2", "class-3", "class-4", "herr", "dam", "junior", "minior", "teams"];
+
+const REGISTRATIONS_KEY = "hsc-registrations";
+
+interface PairResult {
+    id: string;
+    mrName: string;
+    mrsName: string;
+    rounds: number[];
+    total: number;
+    rank: number;
+}
+
+function buildMixedPairs(players: PlayerScore[], competitionId: string): PairResult[] {
+    try {
+        const regs: { firstName: string; lastName: string; category: string; pairWith?: string; competitionId?: string }[] =
+            JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
+        const pairs = regs.filter((r) => r.competitionId === competitionId && r.category === "mix-d" && r.pairWith);
+
+        const seen = new Set<string>();
+        const results: PairResult[] = [];
+
+        for (const entry of pairs) {
+            const nameA = `${entry.firstName} ${entry.lastName}`.trim();
+            const nameB = entry.pairWith!;
+            const key = [nameA, nameB].sort().join("|");
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            const pA = players.find((p) => p.name === nameA);
+            const pB = players.find((p) => p.name === nameB);
+            if (!pA || !pB) continue;
+
+            const isMrA = pA.ageCategory === "herr";
+            const mr  = isMrA ? pA : pB;
+            const mrs = isMrA ? pB : pA;
+
+            const rounds = Array.from({ length: 10 }, (_, i) => (mr.rounds[i] ?? 0) + (mrs.rounds[i] ?? 0));
+            results.push({ id: key, mrName: mr.name, mrsName: mrs.name, rounds, total: rounds.reduce((a, b) => a + b, 0), rank: 0 });
+        }
+
+        results.sort((a, b) => b.total - a.total);
+        results.forEach((r, i) => { r.rank = i + 1; });
+        return results;
+    } catch {
+        return [];
+    }
+}
 
 export function loadResultsOrder(): SectionKey[] {
     try {
@@ -175,6 +222,56 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
     );
 }
 
+function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.ReactNode }) {
+    const playedRounds = new Set(
+        pairs.flatMap((p) => p.rounds.map((s, i) => s !== 0 ? i : -1).filter((i) => i >= 0))
+    );
+    const cell = (score: number, idx: number) => playedRounds.has(idx) ? score : "";
+
+    return (
+        <section className="results-class-box">
+            <div className="results-class-header">
+                {handle}
+                <h2>Mixed</h2>
+            </div>
+            <div className="results-class-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Mr.</th>
+                            <th>Mrs.</th>
+                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                            <th className="results-subtotal">1–5</th>
+                            <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                            <th className="results-subtotal">6–10</th>
+                            <th className="results-subtotal">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {pairs.map((pair) => {
+                            const firstHalf  = pair.rounds.slice(0, 5).reduce((a, b) => a + b, 0);
+                            const secondHalf = pair.rounds.slice(5, 10).reduce((a, b) => a + b, 0);
+                            return (
+                                <tr key={pair.id} className={pair.rank <= 3 ? "top-rank" : undefined}>
+                                    <td className="rank-cell">{pair.rank}</td>
+                                    <td><strong>{pair.mrName}</strong></td>
+                                    <td><strong>{pair.mrsName}</strong></td>
+                                    {pair.rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
+                                    <td className="results-subtotal">{playedRounds.size > 0 ? firstHalf : ""}</td>
+                                    {pair.rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
+                                    <td className="results-subtotal">{playedRounds.size > 0 ? secondHalf : ""}</td>
+                                    <td className="results-subtotal"><strong>{playedRounds.size > 0 ? pair.total : ""}</strong></td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    );
+}
+
 type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 
 export default function ResultsPage() {
@@ -229,7 +326,14 @@ export default function ResultsPage() {
     const juniorPlayers   = players.filter((p) => p.ageCategory === "junior");
     const miniorPlayers   = players.filter((p) => p.ageCategory === "minior");
 
+    const competitionId = active.runId.split("__")[0];
+    const mixedPairs = active.typeName.includes("Mixed") ? buildMixedPairs(players, competitionId) : [];
+
     const sections: Partial<Record<SectionKey, SectionFactory>> = {};
+
+    if (mixedPairs.length > 0) {
+        sections["mixed-pairs"] = (h) => <MixedPairsBox pairs={mixedPairs} handle={h} />;
+    }
     presentClasses.forEach((cl) => {
         const k = `class-${cl}` as SectionKey;
         const filtered = players.filter((p) => p.classLevel === cl);
