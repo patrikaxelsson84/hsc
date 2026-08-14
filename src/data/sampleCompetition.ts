@@ -265,7 +265,7 @@ const playerRows: PlayerRow[] = [
     ["343", "Melina Olsson", "Dyna X Karlskrona", 4, "minior"],
     ["344", "Ebba Karlberg", "Jämjö Hsk", 4, "minior"],
     ["345", "Ronnie Petterrsson", "Tingsryd Hsc", 4, "herr"],
-    ["346", "Philemon Amigo Pettersson", "Tingsryd Hsc", "minior"],
+    ["346", "Philemon Amigo Pettersson", "Tingsryd Hsc", 4, "minior"],
     ["347", "Jonathan Svensson", "Köping Hkf", 4, "herr"],
     ["348", "Ronjah Pettersson", "Tingsryd Hsc", 4, "dam"],
     ["349", "Fredrik Ernerstam", "Tingsryd Hsc", 4, "herr"],
