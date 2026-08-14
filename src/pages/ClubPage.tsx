@@ -1622,6 +1622,17 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 </table>
             </div>
 
+            {/* ── Team rename strip ──────────────────────────────────────── */}
+            {teamAssignments.length > 0 && (
+                <div className="team-rename-strip">
+                    <span className="team-rename-label">{lang === "sv" ? "Lagnamn:" : "Team names:"}</span>
+                    {teamAssignments.map((tm) => (
+                        <input key={tm.id} className="team-rename-input" value={tm.name}
+                            onChange={(e) => updateTeamName(tm.id, e.target.value)} />
+                    ))}
+                </div>
+            )}
+
             {/* ── CSV import modal ───────────────────────────────────────── */}
             {csvStep !== "closed" && (
                 <div className="modal-overlay" onClick={() => setCsvStep("closed")}>

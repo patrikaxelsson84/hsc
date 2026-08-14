@@ -667,6 +667,32 @@ a {
   padding: 30px;
 }
 
+.team-rename-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+
+.team-rename-label {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.team-rename-input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  background: var(--surface);
+  color: var(--text);
+  width: 120px;
+}
+
 .cat-badge-btn {
   display: inline;
   background: none;
