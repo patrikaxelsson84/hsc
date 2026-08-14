@@ -1672,15 +1672,15 @@ a {
   display: flex;
   align-items: center;
   padding: 6px 12px;
-  background: #e8f0f9;
-  border-bottom: 1px solid #bfcfe2;
+  background: #1a6abf;
+  border-bottom: 1px solid #1558a0;
 }
 
 .results-class-header h2 {
   margin: 0;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #1e3a5f;
+  color: #ffffff;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -1807,12 +1807,12 @@ a {
   }
 
   .results-class-header {
-    background: rgba(30, 58, 95, 0.28);
-    border-bottom-color: var(--line);
+    background: #1a6abf;
+    border-bottom-color: #1558a0;
   }
 
   .results-class-header h2 {
-    color: #8bb8e8;
+    color: #ffffff;
   }
 
   .results-class-table tbody tr:nth-child(even) {
@@ -1999,7 +1999,11 @@ a {
   }
 
   .results-class-header {
-    background: none;
+    background: #1a6abf;
+  }
+
+  .results-class-header h2 {
+    color: #ffffff;
   }
 
   .table-shell {
