@@ -127,7 +127,6 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                         <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
                         <th className="results-subtotal">6–10</th>
                         <th className="results-subtotal">{t.results_col_total}</th>
-                        <th className="results-subtotal">GP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -142,7 +141,6 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                             {player.rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
                             <td className="results-subtotal">{player.secondHalf}</td>
                             <td className="results-subtotal"><strong>{player.total}</strong></td>
-                            <td className="results-subtotal">{player.rankingPoints}</td>
                         </tr>
                     ))}
                 </tbody>
