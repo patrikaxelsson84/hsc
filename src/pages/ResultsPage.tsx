@@ -1,4 +1,4 @@
-import { GripVertical, Printer, Trophy } from "lucide-react";
+import { GripVertical, Maximize, Minimize, Printer, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
@@ -170,6 +170,21 @@ export default function ResultsPage() {
     const [sectionOrder, setSectionOrder] = useState<SectionKey[]>(loadResultsOrder);
     const [dragFrom, setDragFrom] = useState<SectionKey | null>(null);
     const [dragOver, setDragOver] = useState<SectionKey | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+        document.addEventListener("fullscreenchange", onChange);
+        return () => document.removeEventListener("fullscreenchange", onChange);
+    }, []);
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
 
     useEffect(() => {
         const refresh = () => setLiveData(readLiveData());
@@ -242,6 +257,10 @@ export default function ResultsPage() {
                         · {t.results_updates_auto}
                     </p>
                 </div>
+                <button className="secondary-action score-button" type="button" onClick={toggleFullscreen}>
+                    {isFullscreen ? <Minimize size={17} aria-hidden="true" /> : <Maximize size={17} aria-hidden="true" />}
+                    {isFullscreen ? (t.lang === "sv" ? "Minimera" : "Exit fullscreen") : (t.lang === "sv" ? "Helskärm" : "Fullscreen")}
+                </button>
                 <button className="secondary-action score-button" type="button" onClick={() => window.print()}>
                     <Printer size={17} aria-hidden="true" />
                     {t.results_print}
