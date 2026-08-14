@@ -12,15 +12,25 @@ export type SectionKey = "mixed-pairs" | "class-1" | "class-2" | "class-3" | "cl
 const DEFAULT_ORDER: SectionKey[] = ["mixed-pairs", "class-1", "class-2", "class-3", "class-4", "herr", "dam", "junior", "minior", "teams"];
 
 const RESULTS_COLS_KEY = "hsc-results-cols-v1";
-type ColLayout = { left: SectionKey[]; right: SectionKey[] };
+type ColId = "c1" | "c2" | "c3" | "c4";
+type ColLayout = Record<ColId, SectionKey[]>;
+const COL_IDS: ColId[] = ["c1", "c2", "c3", "c4"];
 
 function loadColLayout(): ColLayout {
     try {
         const raw = localStorage.getItem(RESULTS_COLS_KEY);
-        if (raw) return JSON.parse(raw) as ColLayout;
+        if (raw) {
+            const parsed = JSON.parse(raw) as ColLayout;
+            if (parsed.c1) return { c1: parsed.c1, c2: parsed.c2 ?? [], c3: parsed.c3 ?? [], c4: parsed.c4 ?? [] };
+        }
     } catch {}
-    const mid = Math.ceil(DEFAULT_ORDER.length / 2);
-    return { left: DEFAULT_ORDER.slice(0, mid), right: DEFAULT_ORDER.slice(mid) };
+    const q = Math.ceil(DEFAULT_ORDER.length / 4);
+    return {
+        c1: DEFAULT_ORDER.slice(0, q),
+        c2: DEFAULT_ORDER.slice(q, q * 2),
+        c3: DEFAULT_ORDER.slice(q * 2, q * 3),
+        c4: DEFAULT_ORDER.slice(q * 3),
+    };
 }
 
 function saveColLayout(layout: ColLayout) {
@@ -282,7 +292,7 @@ export default function ResultsPage() {
     const [liveData, setLiveData] = useState(readLiveData);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [dragKey, setDragKey] = useState<SectionKey | null>(null);
-    const [dropTarget, setDropTarget] = useState<{ col: "left" | "right"; before: SectionKey | null } | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ col: ColId; before: SectionKey | null } | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
@@ -349,18 +359,19 @@ export default function ResultsPage() {
     if (teams.length         > 0) sections.teams   = (h) => <TeamResultBox teams={teams} handle={h} />;
 
     const allActiveKeys = Object.keys(sections) as SectionKey[];
-    const knownKeys = new Set([...colLayout.left, ...colLayout.right]);
+    const knownKeys = new Set(COL_IDS.flatMap((c) => colLayout[c]));
     const untracked = allActiveKeys.filter((k) => !knownKeys.has(k));
 
-    const leftActive  = [...colLayout.left.filter((k) => k in sections), ...untracked];
-    const rightActive = colLayout.right.filter((k) => k in sections);
+    const colKeys: Record<ColId, SectionKey[]> = {
+        c1: [...colLayout.c1.filter((k) => k in sections), ...untracked],
+        c2: colLayout.c2.filter((k) => k in sections),
+        c3: colLayout.c3.filter((k) => k in sections),
+        c4: colLayout.c4.filter((k) => k in sections),
+    };
 
-    function drop(col: "left" | "right", before: SectionKey | null) {
+    function drop(col: ColId, before: SectionKey | null) {
         if (!dragKey) return;
-        const next: ColLayout = {
-            left:  colLayout.left.filter((k) => k !== dragKey),
-            right: colLayout.right.filter((k) => k !== dragKey),
-        };
+        const next = Object.fromEntries(COL_IDS.map((c) => [c, colLayout[c].filter((k) => k !== dragKey)])) as ColLayout;
         const target = next[col];
         if (before === null) {
             target.push(dragKey);
@@ -374,7 +385,7 @@ export default function ResultsPage() {
         setDropTarget(null);
     }
 
-    function renderColumn(col: "left" | "right", keys: SectionKey[]) {
+    function renderColumn(col: ColId, keys: SectionKey[]) {
         return (
             <div
                 className="results-col"
@@ -441,8 +452,7 @@ export default function ResultsPage() {
             </div>
 
             <div className="results-class-grid">
-                {renderColumn("left",  leftActive)}
-                {renderColumn("right", rightActive)}
+                {COL_IDS.map((col) => renderColumn(col, colKeys[col]))}
             </div>
         </div>
     );
