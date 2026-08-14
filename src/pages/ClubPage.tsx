@@ -1039,6 +1039,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setStatus("idle");
     }
 
+    function saveFlow() {
+        if (!selectedCompId || view === "pick") return;
+        const state = { view, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments };
+        localStorage.setItem(`${FLOW_PREFIX}-${selectedCompId}`, JSON.stringify(state));
+        setStatus("saved");
+    }
+
     function saveScores() {
         localStorage.setItem(`${SCORE_PREFIX}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(`${LIVE_PREFIX}-${currentRunId}`, JSON.stringify(players));
@@ -1147,6 +1154,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         disabled={typeIds.length === 0} onClick={() => setTypeIds([])}>
                         {t.sc_clear}
                     </button>
+                    <button className="secondary-action score-button" type="button" onClick={saveFlow}>
+                        <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                    </button>
                     <button className="primary-action score-button" type="button"
                         disabled={typeIds.length === 0} onClick={proceedFromType}>
                         {t.sc_continue}
@@ -1206,6 +1216,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     <button className="secondary-action score-button" type="button"
                         onClick={() => setSelectedPlayerIds([])}>
                         {t.sc_clear}
+                    </button>
+                    <button className="secondary-action score-button" type="button" onClick={saveFlow}>
+                        <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
                     </button>
                     <button className="primary-action score-button" type="button"
                         disabled={selectedPlayerIds.length === 0} onClick={startContest}>
@@ -1269,6 +1282,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 </div>
 
                 <section className="score-controls">
+                    <button className="secondary-action score-button" type="button" onClick={saveFlow}>
+                        <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                    </button>
                     <button className="primary-action score-button" type="button" onClick={proceedFromLanes}>
                         {t.sc_lane_cont}
                     </button>
@@ -1348,6 +1364,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <section className="score-controls">
                     <button className="secondary-action score-button" type="button" onClick={addTeam}>
                         {t.sc_add_team}
+                    </button>
+                    <button className="secondary-action score-button" type="button" onClick={saveFlow}>
+                        <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
                     </button>
                     <button className="primary-action score-button" type="button"
                         onClick={() => { saveTeams(teamAssignments); setView("scoring"); }}>
