@@ -71,9 +71,9 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                             <td><strong>{player.name}</strong></td>
                             <td>{player.club || "–"}</td>
                             {showClass && <td>{player.classLevel}</td>}
-                            {player.rounds.slice(0, 5).map((r, i) => <td key={i}>{r || ""}</td>)}
+                            {player.rounds.slice(0, 5).map((r, i) => <td key={i}>{r}</td>)}
                             <td className="results-subtotal">{player.firstHalf}</td>
-                            {player.rounds.slice(5, 10).map((r, i) => <td key={i}>{r || ""}</td>)}
+                            {player.rounds.slice(5, 10).map((r, i) => <td key={i}>{r}</td>)}
                             <td className="results-subtotal">{player.secondHalf}</td>
                             <td className="results-subtotal"><strong>{player.total}</strong></td>
                             <td className="results-subtotal">{player.rankingPoints}</td>
@@ -147,10 +147,10 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
                                 <tr key={team.id} className={team.rank <= 3 ? "top-rank" : undefined}>
                                     <td className="rank-cell">{team.rank}</td>
                                     <td><strong>{team.name}</strong></td>
-                                    {rounds.slice(0, 5).map((r, i) => <td key={i}>{r || ""}</td>)}
-                                    <td className="results-subtotal">{firstHalf || ""}</td>
-                                    {rounds.slice(5, 10).map((r, i) => <td key={i}>{r || ""}</td>)}
-                                    <td className="results-subtotal">{secondHalf || ""}</td>
+                                    {rounds.slice(0, 5).map((r, i) => <td key={i}>{r}</td>)}
+                                    <td className="results-subtotal">{firstHalf}</td>
+                                    {rounds.slice(5, 10).map((r, i) => <td key={i}>{r}</td>)}
+                                    <td className="results-subtotal">{secondHalf}</td>
                                     <td className="results-subtotal"><strong>{team.total}</strong></td>
                                 </tr>
                             );
