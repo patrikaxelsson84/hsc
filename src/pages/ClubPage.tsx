@@ -777,6 +777,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
     const [csvMatches,         setCsvMatches]         = useState<{ csvName: string; round: number; score: number; matchedId: string | null }[]>([]);
     const [csvError,           setCsvError]           = useState("");
+    const [addPlayerOpen,      setAddPlayerOpen]      = useState(false);
+    const [addPlayerSearch,    setAddPlayerSearch]    = useState("");
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -1549,6 +1551,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             e.target.value = "";
                         }} />
                 </label>
+                <button className="secondary-action score-button" type="button"
+                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); }}>
+                    <Plus size={17} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
+                </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
                 </a>
@@ -1641,6 +1647,45 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     ))}
                 </div>
             )}
+
+            {/* ── Add player modal ───────────────────────────────────────── */}
+            {addPlayerOpen && (() => {
+                const currentIds = new Set(players.map((p) => p.id));
+                const q = addPlayerSearch.toLowerCase().trim();
+                const candidates = samplePlayers
+                    .filter((p) => !currentIds.has(p.id))
+                    .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.club ?? "").toLowerCase().includes(q))
+                    .slice(0, 30);
+                return (
+                    <div className="modal-overlay" onClick={() => setAddPlayerOpen(false)}>
+                        <div className="modal-card photo-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="photo-modal-header">
+                                <h2><Plus size={20} /> {lang === "sv" ? "Lägg till spelare" : "Add player"}</h2>
+                                <button className="photo-modal-close" onClick={() => setAddPlayerOpen(false)}>✕</button>
+                            </div>
+                            <input className="add-player-search" autoFocus
+                                placeholder={lang === "sv" ? "Sök namn eller klubb…" : "Search name or club…"}
+                                value={addPlayerSearch}
+                                onChange={(e) => setAddPlayerSearch(e.target.value)} />
+                            <div className="add-player-list">
+                                {candidates.length === 0
+                                    ? <p className="form-message">{lang === "sv" ? "Inga spelare hittades." : "No players found."}</p>
+                                    : candidates.map((p) => (
+                                        <button key={p.id} type="button" className="add-player-row"
+                                            onClick={() => {
+                                                setPlayers((cur) => [...cur, { ...p, rounds: Array(10).fill(0), sevenMeters: 0 }]);
+                                                setAddPlayerOpen(false);
+                                            }}>
+                                            <strong>{p.name}</strong>
+                                            <span>{p.club} · {t.sc_class_prefix} {p.classLevel} · {catLabel(p.ageCategory)}</span>
+                                        </button>
+                                    ))
+                                }
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* ── CSV import modal ───────────────────────────────────────── */}
             {csvStep !== "closed" && (

@@ -693,6 +693,49 @@ a {
   width: 120px;
 }
 
+.add-player-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.add-player-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.add-player-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.add-player-row:hover {
+  background: var(--surface-2);
+}
+.add-player-row strong {
+  font-size: 0.88rem;
+}
+.add-player-row span {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
 .player-remove-btn {
   background: none;
   border: none;
