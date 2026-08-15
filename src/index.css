@@ -693,6 +693,33 @@ a {
   width: 120px;
 }
 
+.add-player-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.add-player-tabs button {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-2);
+}
+.add-player-tabs button.active {
+  background: var(--primary, #1a6abf);
+  color: #fff;
+  border-color: transparent;
+}
+
+.add-player-new-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .add-player-search {
   width: 100%;
   padding: 8px 12px;

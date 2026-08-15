@@ -773,6 +773,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [addPlayerOpen,      setAddPlayerOpen]      = useState(false);
     const [addPlayerSearch,    setAddPlayerSearch]    = useState("");
     const [addPlayerLane,      setAddPlayerLane]      = useState<number>(1);
+    const [addPlayerTab,       setAddPlayerTab]       = useState<"search" | "new">("search");
+    const [newPlayerForm,      setNewPlayerForm]      = useState({ firstName: "", lastName: "", club: "", classLevel: 4 as ClassLevel, ageCategory: "herr" as AgeCategory });
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -1546,7 +1548,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         }} />
                 </label>
                 <button className="secondary-action score-button" type="button"
-                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); }}>
+                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); setAddPlayerTab("search"); }}>
                     <Plus size={17} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
                 </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
@@ -1657,6 +1659,66 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <h2><Plus size={20} /> {lang === "sv" ? "Lägg till spelare" : "Add player"}</h2>
                                 <button className="photo-modal-close" onClick={() => setAddPlayerOpen(false)}>✕</button>
                             </div>
+                            <div className="add-player-tabs">
+                                <button type="button" className={addPlayerTab === "search" ? "active" : ""} onClick={() => setAddPlayerTab("search")}>
+                                    {lang === "sv" ? "Sök i register" : "Search roster"}
+                                </button>
+                                <button type="button" className={addPlayerTab === "new" ? "active" : ""} onClick={() => setAddPlayerTab("new")}>
+                                    {lang === "sv" ? "Ny spelare" : "New player"}
+                                </button>
+                            </div>
+
+                            {addPlayerTab === "new" ? (
+                                <div className="add-player-new-form">
+                                    <div className="field-grid">
+                                        <label>{lang === "sv" ? "Förnamn" : "First name"}
+                                            <input value={newPlayerForm.firstName} onChange={(e) => setNewPlayerForm((f) => ({ ...f, firstName: e.target.value }))} />
+                                        </label>
+                                        <label>{lang === "sv" ? "Efternamn" : "Last name"}
+                                            <input value={newPlayerForm.lastName} onChange={(e) => setNewPlayerForm((f) => ({ ...f, lastName: e.target.value }))} />
+                                        </label>
+                                        <label>{lang === "sv" ? "Klubb" : "Club"}
+                                            <input value={newPlayerForm.club} onChange={(e) => setNewPlayerForm((f) => ({ ...f, club: e.target.value }))} />
+                                        </label>
+                                        <label>{lang === "sv" ? "Klass" : "Class"}
+                                            <select value={newPlayerForm.classLevel} onChange={(e) => setNewPlayerForm((f) => ({ ...f, classLevel: Number(e.target.value) as ClassLevel }))}>
+                                                {([1,2,3,4] as ClassLevel[]).map((n) => <option key={n} value={n}>{n}</option>)}
+                                            </select>
+                                        </label>
+                                        <label>{lang === "sv" ? "Kategori" : "Category"}
+                                            <select value={newPlayerForm.ageCategory} onChange={(e) => setNewPlayerForm((f) => ({ ...f, ageCategory: e.target.value as AgeCategory }))}>
+                                                <option value="herr">{t.reg_mr}</option>
+                                                <option value="dam">{t.reg_mrs}</option>
+                                                <option value="junior">{t.reg_junior}</option>
+                                                <option value="minior">{t.reg_minior}</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                    <div className="photo-actions">
+                                        <button type="button" className="primary-action"
+                                            disabled={!newPlayerForm.firstName.trim()}
+                                            onClick={() => {
+                                                const name = `${newPlayerForm.firstName.trim()} ${newPlayerForm.lastName.trim()}`.trim();
+                                                const newP: PlayerScore = {
+                                                    id: `new-${Date.now()}`,
+                                                    name,
+                                                    club: newPlayerForm.club,
+                                                    classLevel: newPlayerForm.classLevel,
+                                                    ageCategory: newPlayerForm.ageCategory,
+                                                    rounds: Array(10).fill(0),
+                                                    sevenMeters: 0,
+                                                };
+                                                setPlayers((cur) => [...cur, newP]);
+                                                if (laneCount > 1) setLaneAssignments((cur) => ({ ...cur, [newP.id]: addPlayerLane }));
+                                                setNewPlayerForm({ firstName: "", lastName: "", club: "", classLevel: 4, ageCategory: "herr" });
+                                                setAddPlayerOpen(false);
+                                            }}>
+                                            {lang === "sv" ? "Lägg till" : "Add"}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                            <>
                             <input className="add-player-search" autoFocus
                                 placeholder={lang === "sv" ? "Sök namn eller klubb…" : "Search name or club…"}
                                 value={addPlayerSearch}
@@ -1687,6 +1749,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                     ))
                                 }
                             </div>
+                            </>
+                            )}
                         </div>
                     </div>
                 );
