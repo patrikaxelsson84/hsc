@@ -1,7 +1,7 @@
 import { ArrowLeft, Archive, ClipboardList, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
-import { useMemo, useState } from "react";
-import { samplePlayers } from "../data/sampleCompetition";
+import { useEffect, useMemo, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
+import { usePlayers } from "../contexts/PlayersContext";
 import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
@@ -13,7 +13,7 @@ function titleToAgeCategory(title: string): AgeCategory {
     return "herr";
 }
 
-function loadAllPlayers(): PlayerScore[] {
+function loadAllPlayers(basePlayers: PlayerScore[]): PlayerScore[] {
     try {
         const raw = localStorage.getItem("hsc-registrations");
         const registered: PlayerScore[] = raw
@@ -28,10 +28,10 @@ function loadAllPlayers(): PlayerScore[] {
               }))
             : [];
         const registeredNames = new Set(registered.map((p) => p.name.toLowerCase()));
-        const base = samplePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
+        const base = basePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
         return [...base, ...registered];
     } catch {
-        return samplePlayers;
+        return basePlayers;
     }
 }
 
@@ -89,7 +89,7 @@ function parseTypeSelection(typeId: string) {
     return getTypeSelection(typeId.split(typeIdSeparator).filter(Boolean));
 }
 
-function getStoredScores(runId: string): PlayerScore[] {
+function getStoredScores(runId: string, basePlayers: PlayerScore[]): PlayerScore[] {
     const stored = localStorage.getItem(`${scoreStoragePrefix}-${runId}`);
     if (stored) {
         try {
@@ -104,7 +104,7 @@ function getStoredScores(runId: string): PlayerScore[] {
             if (data.length > 0) return data;
         } catch { /* fall through */ }
     }
-    return loadAllPlayers();
+    return loadAllPlayers(basePlayers);
 }
 
 function resetPlayerScores(players: PlayerScore[]) {
@@ -134,6 +134,7 @@ function getSavedContestIds() {
 
 export default function ScoringPage() {
     const { t, lang } = useLanguage();
+    const { players: basePlayers, loading: baseLoading } = usePlayers();
 
     const [view,                    setView]                    = useState<ContestView>("menu");
     const [competitionId,           setCompetitionId]           = useState(contests[0].id);
@@ -148,9 +149,13 @@ export default function ScoringPage() {
     const [laneAssignments,         setLaneAssignments]         = useState<Record<string, number>>({});
     const [activeLane,              setActiveLane]              = useState<number | null>(null);
     const [laneScoreFilter,         setLaneScoreFilter]         = useState<LaneFilter>("all");
-    const [players,                 setPlayers]                 = useState<PlayerScore[]>(loadAllPlayers);
+    const [players,                 setPlayers]                 = useState<PlayerScore[]>([]);
     const [status,                  setStatus]                  = useState<"idle" | "saved" | "reset">("idle");
     const [oldContestIds,           setOldContestIds]           = useState<string[]>(getSavedContestIds);
+
+    useEffect(() => {
+        if (!baseLoading) setPlayers((cur) => cur.length === 0 ? loadAllPlayers(basePlayers) : cur);
+    }, [baseLoading, basePlayers]);
 
     const competition   = contests.find((c) => c.id === competitionId) ?? contests[0];
     const contestType   = parseTypeSelection(contestTypeId);
@@ -166,10 +171,10 @@ export default function ScoringPage() {
         .filter((item): item is { runId: string; contest: (typeof contests)[number]; type: ReturnType<typeof parseTypeSelection> } => Boolean(item));
 
     const registrationPlayers = useMemo(
-        () => loadAllPlayers().sort((a, b) =>
+        () => loadAllPlayers(basePlayers).sort((a, b) =>
             a.club.localeCompare(b.club) || a.classLevel - b.classLevel || a.name.localeCompare(b.name)
         ),
-        []
+        [basePlayers]
     );
     const registrationClubs = useMemo(
         () => [...new Set(registrationPlayers.map((p) => p.club || t.sc_no_team))].sort((a, b) => a.localeCompare(b)),
@@ -222,7 +227,7 @@ export default function ScoringPage() {
         const [nci, nti] = runId.split("__");
         const sel     = parseTypeSelection(nti);
         const contest = contests.find((c) => c.id === nci);
-        const loaded  = getStoredScores(runId);
+        const loaded  = getStoredScores(runId, basePlayers);
         localStorage.setItem(activeContestKey, JSON.stringify({ runId, contestName: contest?.name ?? nci, typeName: sel.name }));
         localStorage.setItem(`${liveScorePrefix}-${runId}`, JSON.stringify(loaded));
         const teamsRaw = localStorage.getItem(`${teamsStoragePrefix}-${runId}`);

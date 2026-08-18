@@ -1,11 +1,13 @@
 import { ArrowRight, Play, UserPlus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { currentCompetition, samplePlayers } from "../data/sampleCompetition";
+import { currentCompetition } from "../data/sampleCompetition";
 import { useLanguage } from "../lib/language";
+import { usePlayers } from "../contexts/PlayersContext";
 
 export default function DashboardPage() {
     const { t, lang } = useLanguage();
-    const teamCount = new Set(samplePlayers.map((p) => p.club).filter(Boolean)).size;
+    const { players } = usePlayers();
+    const teamCount = new Set(players.map((p) => p.club).filter(Boolean)).size;
 
     const adminChoices = [
         {
@@ -40,8 +42,8 @@ export default function DashboardPage() {
                     <p className="eyebrow">{t.dash_eyebrow}</p>
                     <h1>{t.dash_heading}</h1>
                     <p>
-                        {samplePlayers.length}{" "}
-                        {samplePlayers.length === 1 ? t.players_player_s : t.players_player_p}{" "}
+                        {players.length}{" "}
+                        {players.length === 1 ? t.players_player_s : t.players_player_p}{" "}
                         {fromWord}{" "}
                         {teamCount}{" "}
                         {teamCount === 1 ? t.sc_team_s : t.sc_team_p}{" "}
@@ -76,8 +78,8 @@ export default function DashboardPage() {
                     </span>
                 </div>
                 <p>
-                    {samplePlayers.length}{" "}
-                    {samplePlayers.length === 1 ? t.players_player_s : t.players_player_p}{" "}
+                    {players.length}{" "}
+                    {players.length === 1 ? t.players_player_s : t.players_player_p}{" "}
                     {fromWord} {teamCount}{" "}
                     {teamCount === 1 ? t.sc_team_s : t.sc_team_p}.
                 </p>
