@@ -1,8 +1,8 @@
 import { ArrowLeft, ArrowRight, Users } from "lucide-react";
-import { useState } from "react";
-import { samplePlayers } from "../data/sampleCompetition";
+import { useEffect, useState } from "react";
 import type { ClassLevel, AgeCategory, PlayerScore } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
+import { usePlayers } from "../contexts/PlayersContext";
 
 interface RegistrationEntry {
     firstName: string;
@@ -41,15 +41,22 @@ function loadRegisteredPlayers(): PlayerScore[] {
     }
 }
 
+function mergeWithRegistered(basePlayers: PlayerScore[]): PlayerScore[] {
+    const registered = loadRegisteredPlayers();
+    const registeredIds = new Set(registered.map((p) => p.name.toLowerCase()));
+    const base = basePlayers.filter((p) => !registeredIds.has(p.name.toLowerCase()));
+    return [...base, ...registered];
+}
+
 export default function PlayersPage() {
     const { t } = useLanguage();
+    const { players: basePlayers, loading } = usePlayers();
 
-    const [players, setPlayers] = useState<PlayerScore[]>(() => {
-        const registered = loadRegisteredPlayers();
-        const registeredIds = new Set(registered.map((p) => p.name.toLowerCase()));
-        const base = samplePlayers.filter((p) => !registeredIds.has(p.name.toLowerCase()));
-        return [...base, ...registered];
-    });
+    const [players, setPlayers] = useState<PlayerScore[]>([]);
+
+    useEffect(() => {
+        if (!loading) setPlayers(mergeWithRegistered(basePlayers));
+    }, [loading, basePlayers]);
 
     const sortedPlayers = [...players].sort((a, b) => {
         const teamCompare = a.club.localeCompare(b.club);
@@ -58,7 +65,7 @@ export default function PlayersPage() {
         return a.name.localeCompare(b.name);
     });
 
-    const playersByTeam = sortedPlayers.reduce<Record<string, typeof samplePlayers>>(
+    const playersByTeam = sortedPlayers.reduce<Record<string, PlayerScore[]>>(
         (teams, player) => {
             const team = player.club || t.players_no_team;
             teams[team] ??= [];
@@ -71,7 +78,7 @@ export default function PlayersPage() {
     const teamGroups = Object.entries(playersByTeam).sort(([a], [b]) => a.localeCompare(b));
 
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
-    const [editingPlayer, setEditingPlayer] = useState<(typeof samplePlayers)[number] | null>(null);
+    const [editingPlayer, setEditingPlayer] = useState<PlayerScore | null>(null);
 
     function savePlayer() {
         if (!editingPlayer) return;

@@ -2,14 +2,14 @@ import { ArrowLeft, Camera, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, 
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { loadCompetitions } from "../data/competitions";
-import { samplePlayers } from "../data/sampleCompetition";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
+import { usePlayers } from "../contexts/PlayersContext";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -17,10 +17,6 @@ const CLUB_SESSION_KEY  = "hsc-club-session";
 const ROSTERS_KEY       = "hsc-club-rosters";
 const CREDENTIALS_KEY   = "hsc-club-credentials";
 const REGISTRATIONS_KEY = "hsc-registrations";
-
-const knownClubs = [...new Set(
-    samplePlayers.map((p) => p.club).filter(Boolean)
-)].sort((a, b) => a.localeCompare(b, "sv"));
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +42,7 @@ interface RegEntry {
 
 // ── Credentials ──────────────────────────────────────────────────────────────
 
-function initCredentials() {
+function initCredentials(knownClubs: string[]) {
     try {
         const stored: Record<string, string> = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) ?? "{}");
         let changed = false;
@@ -70,12 +66,12 @@ function checkClubPassword(clubName: string, password: string): boolean {
 
 // ── Roster storage ───────────────────────────────────────────────────────────
 
-function loadClubRoster(clubName: string): ClubPlayer[] {
+function loadClubRoster(clubName: string, basePlayers: PlayerScore[]): ClubPlayer[] {
     try {
         const stored: Record<string, ClubPlayer[]> = JSON.parse(localStorage.getItem(ROSTERS_KEY) ?? "{}");
         if (stored[clubName]) return stored[clubName];
     } catch { /* fall through */ }
-    const seeded = samplePlayers
+    const seeded = basePlayers
         .filter((p) => p.club.toLowerCase() === clubName.toLowerCase())
         .map((p) => ({ id: p.id, name: p.name, club: p.club, classLevel: p.classLevel, ageCategory: p.ageCategory }));
     saveClubRoster(clubName, seeded);
@@ -103,13 +99,13 @@ function ageCatLabel(cat: AgeCategory, t: ReturnType<typeof useLanguage>["t"]): 
 
 // ── Login screen ─────────────────────────────────────────────────────────────
 
-function ClubLogin({ onLogin }: { onLogin: (clubName: string) => void }) {
+function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => void; knownClubs: string[] }) {
     const { t } = useLanguage();
     const [club,     setClub]     = useState("");
     const [password, setPassword] = useState("");
     const [error,    setError]    = useState(false);
 
-    useEffect(() => { initCredentials(); }, []);
+    useEffect(() => { initCredentials(knownClubs); }, [knownClubs]);
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -1648,7 +1644,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             {addPlayerOpen && (() => {
                 const currentIds = new Set(players.map((p) => p.id));
                 const q = addPlayerSearch.toLowerCase().trim();
-                const candidates = samplePlayers
+                const candidates = basePlayers
                     .filter((p) => !currentIds.has(p.id))
                     .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.club ?? "").toLowerCase().includes(q))
                     .slice(0, 30);
@@ -1953,14 +1949,19 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
 export default function ClubPage() {
     const { t, lang } = useLanguage();
+    const { players: basePlayers, loading: baseLoading } = usePlayers();
+    const knownClubs = useMemo(
+        () => [...new Set(basePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b, "sv")),
+        [basePlayers],
+    );
+
     const [clubName, setClubName] = useState<string | null>(getSavedSession);
     const [tab, setTab]           = useState<"players" | "competition" | "own" | "incoming">("players");
+    const [players,  setPlayers]  = useState<ClubPlayer[]>([]);
 
-    const [players,     setPlayers]     = useState<ClubPlayer[]>(() => {
-        if (!clubName) return [];
-        const roster = loadClubRoster(clubName);
-
-        // Auto-merge anyone who registered under this club name but isn't in the roster yet
+    useEffect(() => {
+        if (baseLoading || !clubName) return;
+        const roster = loadClubRoster(clubName, basePlayers);
         const regs: RegEntry[] = (() => {
             try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
             catch { return []; }
@@ -1977,12 +1978,11 @@ export default function ClubPage() {
                 classLevel: (Number(r.category) || 4) as ClassLevel,
                 ageCategory: titleToAgeCategory(r.title),
             }));
-
-        if (fromRegs.length === 0) return roster;
-        const merged = [...roster, ...fromRegs];
-        saveClubRoster(clubName, merged);
-        return merged;
-    });
+        const merged = fromRegs.length === 0 ? roster : [...roster, ...fromRegs];
+        if (fromRegs.length > 0) saveClubRoster(clubName, merged);
+        setPlayers(merged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [baseLoading, clubName]);
     const [showAdd,     setShowAdd]     = useState(false);
     const [editPlayer,  setEditPlayer]  = useState<ClubPlayer | null>(null);
     const [newName,     setNewName]     = useState("");
@@ -2001,10 +2001,13 @@ export default function ClubPage() {
 
     if (!clubName) {
         return (
-            <ClubLogin onLogin={(name) => {
-                setClubName(name);
-                setPlayers(loadClubRoster(name));
-            }} />
+            <ClubLogin
+                knownClubs={knownClubs}
+                onLogin={(name) => {
+                    setClubName(name);
+                    setPlayers(loadClubRoster(name, basePlayers));
+                }}
+            />
         );
     }
 

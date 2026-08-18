@@ -1,15 +1,11 @@
 import { ArrowLeft, Check, Send } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { samplePlayers } from "../data/sampleCompetition";
 import { loadCompetitions } from "../data/competitions";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
-
-const clubOptions = [...new Set(samplePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-);
+import { usePlayers } from "../contexts/PlayersContext";
 
 type RegistrationStatus = "idle" | "submitted";
 
@@ -18,6 +14,11 @@ export default function RegistrationPage() {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
     const { t } = useLanguage();
+    const { players } = usePlayers();
+    const clubOptions = useMemo(
+        () => [...new Set(players.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+        [players],
+    );
     const [searchParams] = useSearchParams();
     const compId = searchParams.get("comp") ?? "";
     const competitions = loadCompetitions().filter((c) => c.registrationOpen);
