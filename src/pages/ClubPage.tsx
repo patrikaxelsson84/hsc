@@ -1949,7 +1949,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
 export default function ClubPage() {
     const { t, lang } = useLanguage();
-    const { players: basePlayers, loading: baseLoading } = usePlayers();
+    const { players: basePlayers, loading: baseLoading, savePlayers } = usePlayers();
     const knownClubs = useMemo(
         () => [...new Set(basePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b, "sv")),
         [basePlayers],
@@ -2014,6 +2014,16 @@ export default function ClubPage() {
     function saveAndSet(next: ClubPlayer[]) {
         saveClubRoster(clubName, next);
         setPlayers(next);
+        // Push this club's updated roster into the master GitHub registry.
+        // All other clubs' players are kept exactly as-is.
+        const others = basePlayers.filter(
+            (p) => p.club.toLowerCase() !== clubName.toLowerCase(),
+        );
+        const merged = [
+            ...others,
+            ...next.map((p) => ({ ...p, rounds: [0,0,0,0,0,0,0,0,0,0] as number[], sevenMeters: 0 })),
+        ];
+        void savePlayers(merged);
     }
 
     function handleLogout() {
