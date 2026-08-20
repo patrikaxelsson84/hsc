@@ -1958,6 +1958,7 @@ export default function ClubPage() {
     const [clubName, setClubName] = useState<string | null>(getSavedSession);
     const [tab, setTab]           = useState<"players" | "competition" | "own" | "incoming">("players");
     const [players,  setPlayers]  = useState<ClubPlayer[]>([]);
+    const [syncError, setSyncError] = useState<string | null>(null);
 
     useEffect(() => {
         if (baseLoading || !clubName) return;
@@ -2014,8 +2015,7 @@ export default function ClubPage() {
     function saveAndSet(next: ClubPlayer[]) {
         saveClubRoster(clubName, next);
         setPlayers(next);
-        // Push this club's updated roster into the master GitHub registry.
-        // All other clubs' players are kept exactly as-is.
+        setSyncError(null);
         const others = basePlayers.filter(
             (p) => p.club.toLowerCase() !== clubName.toLowerCase(),
         );
@@ -2023,7 +2023,9 @@ export default function ClubPage() {
             ...others,
             ...next.map((p) => ({ ...p, rounds: [0,0,0,0,0,0,0,0,0,0] as number[], sevenMeters: 0 })),
         ];
-        void savePlayers(merged);
+        savePlayers(merged).catch((err: unknown) => {
+            setSyncError(err instanceof Error ? err.message : "GitHub save failed");
+        });
     }
 
     function handleLogout() {
@@ -2126,6 +2128,12 @@ export default function ClubPage() {
                     <h1>{clubName}</h1>
                     <p>{t.club_desc}</p>
                 </div>
+
+                {syncError && (
+                    <p style={{ color: "var(--color-error, red)", marginBottom: "0.75rem", fontSize: "0.875rem" }}>
+                        ⚠ GitHub sync failed: {syncError}
+                    </p>
+                )}
 
                 {/* ── Tabs ── */}
                 <div className="club-tabs" role="tablist">
