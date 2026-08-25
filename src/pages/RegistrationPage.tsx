@@ -9,8 +9,11 @@ import { usePlayers } from "../contexts/PlayersContext";
 
 type RegistrationStatus = "idle" | "submitted";
 
+const CLUB_SESSION_KEY = "hsc-club-session";
+
 export default function RegistrationPage() {
     const [status, setStatus] = useState<RegistrationStatus>("idle");
+    const [title, setTitle] = useState("");
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
     const { t } = useLanguage();
@@ -19,6 +22,7 @@ export default function RegistrationPage() {
         () => [...new Set(players.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
         [players],
     );
+    const sessionClub = sessionStorage.getItem(CLUB_SESSION_KEY);
     const [searchParams] = useSearchParams();
     const compId = searchParams.get("comp") ?? "";
     const competitions = loadCompetitions().filter((c) => c.registrationOpen);
@@ -39,6 +43,32 @@ export default function RegistrationPage() {
         event.currentTarget.reset();
     }
 
+    if (!sessionClub) {
+        return (
+            <main className="registration-page">
+                <div className="registration-lang-bar">
+                    <LangSelect />
+                </div>
+                <section className="registration-shell">
+                    <div className="registration-intro">
+                        <Link className="back-link" to="/club">
+                            <ArrowLeft size={17} aria-hidden="true" />
+                            {t.club_back ?? "Tillbaka till klubbinloggning"}
+                        </Link>
+                        <p className="eyebrow">{t.reg_eyebrow}</p>
+                        <h1>{t.reg_heading}</h1>
+                        <p style={{ color: "var(--color-error, red)", fontWeight: 600 }}>
+                            {t.reg_login_required}
+                        </p>
+                        <Link className="primary-action" to="/club" style={{ display: "inline-flex", marginTop: "1rem" }}>
+                            {t.club_login}
+                        </Link>
+                    </div>
+                </section>
+            </main>
+        );
+    }
+
     return (
         <main className="registration-page">
             <div className="registration-lang-bar">
@@ -47,7 +77,7 @@ export default function RegistrationPage() {
 
             <section className="registration-shell">
                 <div className="registration-intro">
-                    <Link className="back-link" to="/">
+                    <Link className="back-link" to="/club">
                         <ArrowLeft size={17} aria-hidden="true" />
                         {isAdminRoute ? t.reg_back_public : t.reg_back_home}
                     </Link>
@@ -115,35 +145,49 @@ export default function RegistrationPage() {
                     <div className="field-grid">
                         <label>
                             {t.reg_club}
-                            <input
-                                name="club"
-                                type="text"
-                                placeholder={t.reg_search}
-                                list="club-options"
-                                autoComplete="off"
-                                required
-                            />
-                            <datalist id="club-options">
-                                {clubOptions.map((club) => (
-                                    <option key={club} value={club} />
-                                ))}
-                            </datalist>
+                            {sessionClub ? (
+                                <>
+                                    <input type="hidden" name="club" value={sessionClub} />
+                                    <input type="text" value={sessionClub} readOnly disabled style={{ opacity: 0.6, cursor: "not-allowed" }} />
+                                </>
+                            ) : (
+                                <>
+                                    <input
+                                        name="club"
+                                        type="text"
+                                        placeholder={t.reg_search}
+                                        list="club-options"
+                                        autoComplete="off"
+                                        required
+                                    />
+                                    <datalist id="club-options">
+                                        {clubOptions.map((club) => (
+                                            <option key={club} value={club} />
+                                        ))}
+                                    </datalist>
+                                </>
+                            )}
                         </label>
-                        <label>
-                            {t.reg_class}
-                            <select name="category" required defaultValue="">
-                                <option value="" disabled>
-                                    {t.reg_select_class}
-                                </option>
-                                <option value="1">{t.reg_class_1}</option>
-                                <option value="2">{t.reg_class_2}</option>
-                                <option value="3">{t.reg_class_3}</option>
-                                <option value="4">{t.reg_class_4}</option>
-                            </select>
-                        </label>
+                        {title !== "minior" && (
+                            <label>
+                                {t.reg_class}
+                                <select name="category" required defaultValue="">
+                                    <option value="" disabled>
+                                        {t.reg_select_class}
+                                    </option>
+                                    <option value="1">{t.reg_class_1}</option>
+                                    <option value="2">{t.reg_class_2}</option>
+                                    <option value="3">{t.reg_class_3}</option>
+                                    <option value="4">{t.reg_class_4}</option>
+                                </select>
+                            </label>
+                        )}
+                        {title === "minior" && (
+                            <input type="hidden" name="category" value="" />
+                        )}
                         <label>
                             {t.reg_title}
-                            <select name="title" required defaultValue="">
+                            <select name="title" required value={title} onChange={(e) => setTitle(e.target.value)}>
                                 <option value="" disabled>
                                     {t.reg_select_title}
                                 </option>

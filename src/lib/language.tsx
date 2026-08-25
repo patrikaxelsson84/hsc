@@ -38,6 +38,8 @@ const en = {
     ranking:                "Ranking",
 
     // ── Registration page ──────────────────────────────────────────
+    reg_login_required:     "You must be logged in as a club to register a player.",
+    club_login:             "Log in as club",
     reg_back_home:          "Home",
     reg_back_public:        "Public home",
     reg_eyebrow:            "Register players",
@@ -327,6 +329,8 @@ const sv: typeof en = {
     ranking:                "Ranking",
 
     // ── Registration page ──────────────────────────────────────────
+    reg_login_required:     "Du måste vara inloggad som klubb för att registrera en spelare.",
+    club_login:             "Logga in som klubb",
     reg_back_home:          "Hem",
     reg_back_public:        "Startsida",
     reg_eyebrow:            "Registrera spelare",

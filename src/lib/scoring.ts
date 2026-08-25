@@ -53,19 +53,21 @@ export function rankPlayers(players: PlayerScore[]): RankedPlayer[] {
         }))
         .sort((a, b) => b.total - a.total || b.sevenMeters - a.sevenMeters || a.name.localeCompare(b.name));
 
-    return sorted.map((player, index, list) => {
-        const previous = list[index - 1];
+    const ranked: RankedPlayer[] = [];
+    for (let index = 0; index < sorted.length; index++) {
+        const player = sorted[index];
+        const previous = ranked[index - 1];
         const rank =
             previous && previous.total === player.total && previous.sevenMeters === player.sevenMeters
                 ? previous.rank
                 : index + 1;
-
-        return {
+        ranked.push({
             ...player,
             rank,
-            rankingPoints: getRankingPoints(rank, list.length),
-        };
-    });
+            rankingPoints: getRankingPoints(rank, sorted.length),
+        });
+    }
+    return ranked;
 }
 
 export function filterByClass(players: PlayerScore[], classLevel: ClassLevel) {

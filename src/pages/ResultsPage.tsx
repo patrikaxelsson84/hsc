@@ -202,31 +202,28 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
                         </tr>
                     </thead>
                     <tbody>
-                        {(() => {
-                            const allPlayers = teams.flatMap((t) => t.players);
-                            const playedRounds = new Set(
-                                allPlayers.flatMap((p) => p.rounds.map((s, i) => s !== 0 ? i : -1).filter((i) => i >= 0))
+                        {teams.map((team) => {
+                            const rounds = Array.from({ length: 10 }, (_, i) =>
+                                team.players.reduce((s, p) => s + (p.rounds[i] ?? 0), 0)
                             );
-                            const cell = (score: number, idx: number) => playedRounds.has(idx) ? score : "";
-                            return teams.map((team) => {
-                                const rounds = Array.from({ length: 10 }, (_, i) =>
-                                    team.players.reduce((s, p) => s + (p.rounds[i] ?? 0), 0)
-                                );
-                                const firstHalf  = rounds.slice(0, 5).reduce((a, b) => a + b, 0);
-                                const secondHalf = rounds.slice(5, 10).reduce((a, b) => a + b, 0);
-                                return (
-                                    <tr key={team.id} className={team.rank <= 3 ? "top-rank" : undefined}>
-                                        <td className="rank-cell">{team.rank}</td>
-                                        <td><strong>{team.name}</strong></td>
-                                        {rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
-                                        <td className="results-subtotal">{playedRounds.size > 0 ? firstHalf : ""}</td>
-                                        {rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
-                                        <td className="results-subtotal">{playedRounds.size > 0 ? secondHalf : ""}</td>
-                                        <td className="results-subtotal"><strong>{playedRounds.size > 0 ? team.total : ""}</strong></td>
-                                    </tr>
-                                );
-                            });
-                        })()}
+                            const played = new Set(
+                                team.players.flatMap((p) => p.rounds.map((s, i) => s !== 0 ? i : -1).filter((i) => i >= 0))
+                            );
+                            const cell = (score: number, idx: number) => played.has(idx) ? score : "";
+                            const firstHalf  = rounds.slice(0, 5).reduce((a, b) => a + b, 0);
+                            const secondHalf = rounds.slice(5, 10).reduce((a, b) => a + b, 0);
+                            return (
+                                <tr key={team.id} className={team.rank <= 3 ? "top-rank" : undefined}>
+                                    <td className="rank-cell">{team.rank}</td>
+                                    <td><strong>{team.name}</strong></td>
+                                    {rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
+                                    <td className="results-subtotal">{played.size > 0 ? firstHalf : ""}</td>
+                                    {rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
+                                    <td className="results-subtotal">{played.size > 0 ? secondHalf : ""}</td>
+                                    <td className="results-subtotal"><strong>{played.size > 0 ? team.total : ""}</strong></td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

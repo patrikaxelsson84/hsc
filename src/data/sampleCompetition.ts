@@ -280,10 +280,8 @@ const playerRows: PlayerRow[] = [
     ["358", "Freja Odevik", "Viby Hsk", 4, "junior"],
     ["359", "Hanna Arvidsson", "Balders Hsk", 4, "dam"],
     ["360", "Jack Karlsson", "Balders Hsk", 4, "herr"],
-    ["361", "Markus Johansson", "Växjö Hsk", 4, "herr"],
     ["362", "Mikael Pettersson", "Viby Hsk", 4, "herr"],
     ["363", "Pablo Amigo", "Tingsryd Hsc", 4, "herr"],
-
     ["365", "Ronja Segersvärd", "Köping Hkf", 4, "junior"],
     ["366", "Yvonne Bohlin", "Viby Hsk", 4, "dam"],
     ["367", "Filip Olsson", "Dyna X Karlskrona", 4, "herr"],

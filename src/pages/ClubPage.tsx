@@ -771,6 +771,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [addPlayerLane,      setAddPlayerLane]      = useState<number>(1);
     const [addPlayerTab,       setAddPlayerTab]       = useState<"search" | "new">("search");
     const [newPlayerForm,      setNewPlayerForm]      = useState({ firstName: "", lastName: "", club: "", classLevel: 4 as ClassLevel, ageCategory: "herr" as AgeCategory });
+    const [editPlayerId,       setEditPlayerId]       = useState<string | null>(null);
+    const [editPlayerForm,     setEditPlayerForm]     = useState({ name: "", club: "", classLevel: 4 as ClassLevel, ageCategory: "herr" as AgeCategory });
+    const [juniorMode,   setJuniorMode]   = useState<Record<string, "junior" | "class" | "both">>({});
+    const [juniorGender, setJuniorGender] = useState<Record<string, "herr" | "dam">>({});
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
@@ -942,9 +946,24 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     }
 
     function startContest() {
-        const chosen = compPlayers
-            .filter((p) => selectedPlayerIds.includes(p.id))
-            .map((p) => ({ ...p, rounds: Array(10).fill(0) as number[], sevenMeters: 0 }));
+        const chosen: PlayerScore[] = [];
+        for (const p of compPlayers.filter((p) => selectedPlayerIds.includes(p.id))) {
+            const base = { ...p, rounds: Array(10).fill(0) as number[], sevenMeters: 0 };
+            if (p.ageCategory === "junior") {
+                const mode = juniorMode[p.id] ?? "junior";
+                const gender = juniorGender[p.id] ?? "herr";
+                if (mode === "junior") {
+                    chosen.push(base);
+                } else if (mode === "class") {
+                    chosen.push({ ...base, ageCategory: gender });
+                } else {
+                    chosen.push({ ...base, ageCategory: "junior" });
+                    chosen.push({ ...base, id: p.id + "-k", ageCategory: gender });
+                }
+            } else {
+                chosen.push(base);
+            }
+        }
         const runId = `${selectedCompId}__${buildTypeId(typeIds)}`;
         localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         localStorage.setItem(`${LIVE_PREFIX}-${runId}`, JSON.stringify(chosen));
@@ -1231,17 +1250,47 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <div className="team-player-grid">
                                     {clubPlayers.map((player) => {
                                         const on = selectedPlayerIds.includes(player.id);
+                                        const isJunior = player.ageCategory === "junior";
+                                        const mode = juniorMode[player.id] ?? "junior";
+                                        const gender = juniorGender[player.id] ?? "herr";
                                         return (
-                                            <button key={player.id} type="button"
-                                                className={on ? "team-player-card is-pending" : "team-player-card"}
-                                                aria-pressed={on}
-                                                onClick={() => setSelectedPlayerIds((cur) =>
-                                                    on ? cur.filter((x) => x !== player.id) : [...cur, player.id])}>
-                                                <span className="team-player-name">{player.name}</span>
-                                                <span className="team-player-meta">
-                                                    {t.sc_class_prefix} {player.classLevel} · {catLabel(player.ageCategory)}
-                                                </span>
-                                            </button>
+                                            <div key={player.id} className={on ? "team-player-card is-pending" : "team-player-card"}
+                                                style={{ display: "flex", flexDirection: "column", gap: "0.25rem", cursor: "default" }}>
+                                                <button type="button" style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
+                                                    aria-pressed={on}
+                                                    onClick={() => setSelectedPlayerIds((cur) =>
+                                                        on ? cur.filter((x) => x !== player.id) : [...cur, player.id])}>
+                                                    <span className="team-player-name">{player.name}</span>
+                                                    <span className="team-player-meta">
+                                                        {t.sc_class_prefix} {player.classLevel} · {catLabel(player.ageCategory)}
+                                                    </span>
+                                                </button>
+                                                {isJunior && on && (
+                                                    <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
+                                                        {(["junior", "class", "both"] as const).map((m) => (
+                                                            <button key={m} type="button"
+                                                                style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: mode === m ? 1 : 0.4, fontWeight: mode === m ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                onClick={() => setJuniorMode((cur) => ({ ...cur, [player.id]: m }))}>
+                                                                {m === "junior" ? "Junior" : m === "class" ? (lang === "sv" ? "Klass" : "Class") : (lang === "sv" ? "Båda" : "Both")}
+                                                            </button>
+                                                        ))}
+                                                        {(mode === "class" || mode === "both") && (
+                                                            <>
+                                                                <button type="button"
+                                                                    style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "herr" ? 1 : 0.4, fontWeight: gender === "herr" ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                    onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "herr" }))}>
+                                                                    {t.reg_mr}
+                                                                </button>
+                                                                <button type="button"
+                                                                    style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "dam" ? 1 : 0.4, fontWeight: gender === "dam" ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                    onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "dam" }))}>
+                                                                    {t.reg_mrs}
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         );
                                     })}
                                 </div>
@@ -1521,6 +1570,12 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     })}>
                     <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Domarprotokoll" : "Protocol"}
                 </button>
+                {teamAssignments.length > 0 && (
+                    <button className="secondary-action score-button" type="button"
+                        onClick={() => setView("teams")}>
+                        {lang === "sv" ? "Redigera lag" : "Edit teams"}
+                    </button>
+                )}
                 <button className="secondary-action score-button" type="button"
                     onClick={() => printLaguppställning({
                         competitionName: selectedComp?.name ?? "",
@@ -1615,7 +1670,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <td>{player.secondHalf}</td>
                                 <td><strong>{player.total}</strong></td>
                                 <td>{player.rank}</td>
-                                <td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <button type="button" className="player-remove-btn"
+                                        title={lang === "sv" ? "Redigera spelare" : "Edit player"}
+                                        onClick={() => {
+                                            setEditPlayerId(player.id);
+                                            setEditPlayerForm({ name: player.name, club: player.club, classLevel: player.classLevel, ageCategory: player.ageCategory });
+                                        }}>✎</button>
                                     <button type="button" className="player-remove-btn"
                                         title={lang === "sv" ? "Ta bort spelare" : "Remove player"}
                                         onClick={() => {
@@ -1655,6 +1716,17 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <h2><Plus size={20} /> {lang === "sv" ? "Lägg till spelare" : "Add player"}</h2>
                                 <button className="photo-modal-close" onClick={() => setAddPlayerOpen(false)}>✕</button>
                             </div>
+                            {laneCount > 1 && (
+                                <div className="add-player-lane-row">
+                                    <span>{lang === "sv" ? "Bana:" : "Lane:"}</span>
+                                    {Array.from({ length: laneCount }, (_, i) => i + 1).map((n) => (
+                                        <button key={n} type="button"
+                                            className={addPlayerLane === n ? "lane-count-btn active" : "lane-count-btn"}
+                                            onClick={() => setAddPlayerLane(n)}>{n}</button>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="add-player-tabs">
                                 <button type="button" className={addPlayerTab === "search" ? "active" : ""} onClick={() => setAddPlayerTab("search")}>
                                     {lang === "sv" ? "Sök i register" : "Search roster"}
@@ -1719,16 +1791,6 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 placeholder={lang === "sv" ? "Sök namn eller klubb…" : "Search name or club…"}
                                 value={addPlayerSearch}
                                 onChange={(e) => setAddPlayerSearch(e.target.value)} />
-                            {laneCount > 1 && (
-                                <div className="add-player-lane-row">
-                                    <span>{lang === "sv" ? "Bana:" : "Lane:"}</span>
-                                    {Array.from({ length: laneCount }, (_, i) => i + 1).map((n) => (
-                                        <button key={n} type="button"
-                                            className={addPlayerLane === n ? "lane-count-btn active" : "lane-count-btn"}
-                                            onClick={() => setAddPlayerLane(n)}>{n}</button>
-                                    ))}
-                                </div>
-                            )}
                             <div className="add-player-list">
                                 {candidates.length === 0
                                     ? <p className="form-message">{lang === "sv" ? "Inga spelare hittades." : "No players found."}</p>
@@ -1751,6 +1813,51 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </div>
                 );
             })()}
+
+            {/* ── Edit player modal ─────────────────────────────────────── */}
+            {editPlayerId && (
+                <div className="modal-overlay" onClick={() => setEditPlayerId(null)}>
+                    <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 360 }}>
+                        <div className="photo-modal-header">
+                            <h2>{lang === "sv" ? "Redigera spelare" : "Edit player"}</h2>
+                            <button className="photo-modal-close" onClick={() => setEditPlayerId(null)}>✕</button>
+                        </div>
+                        <div className="add-player-new-form">
+                            <div className="field-grid">
+                                <label>{lang === "sv" ? "Namn" : "Name"}
+                                    <input value={editPlayerForm.name} onChange={(e) => setEditPlayerForm((f) => ({ ...f, name: e.target.value }))} />
+                                </label>
+                                <label>{lang === "sv" ? "Klubb" : "Club"}
+                                    <input value={editPlayerForm.club} onChange={(e) => setEditPlayerForm((f) => ({ ...f, club: e.target.value }))} />
+                                </label>
+                                <label>{lang === "sv" ? "Klass" : "Class"}
+                                    <select value={editPlayerForm.classLevel} onChange={(e) => setEditPlayerForm((f) => ({ ...f, classLevel: Number(e.target.value) as ClassLevel }))}>
+                                        {([1,2,3,4] as ClassLevel[]).map((n) => <option key={n} value={n}>{n}</option>)}
+                                    </select>
+                                </label>
+                                <label>{lang === "sv" ? "Kategori" : "Category"}
+                                    <select value={editPlayerForm.ageCategory} onChange={(e) => setEditPlayerForm((f) => ({ ...f, ageCategory: e.target.value as AgeCategory }))}>
+                                        <option value="herr">{t.reg_mr}</option>
+                                        <option value="dam">{t.reg_mrs}</option>
+                                        <option value="junior">{t.reg_junior}</option>
+                                        <option value="minior">{t.reg_minior}</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div className="photo-actions">
+                                <button type="button" className="primary-action"
+                                    disabled={!editPlayerForm.name.trim()}
+                                    onClick={() => {
+                                        setPlayers((cur) => cur.map((p) => p.id === editPlayerId ? { ...p, ...editPlayerForm } : p));
+                                        setEditPlayerId(null);
+                                    }}>
+                                    {lang === "sv" ? "Spara" : "Save"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── CSV import modal ───────────────────────────────────────── */}
             {csvStep !== "closed" && (
@@ -2055,6 +2162,13 @@ export default function ClubPage() {
 
     function deletePlayer(id: string) {
         saveAndSet(players.filter((p) => p.id !== id));
+        if (id.startsWith("reg-")) {
+            const createdAt = id.slice(4);
+            try {
+                const regs: RegEntry[] = JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
+                localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify(regs.filter((r) => r.createdAt !== createdAt)));
+            } catch { /* empty */ }
+        }
     }
 
     function toggleRegPlayer(id: string) {
@@ -2255,9 +2369,19 @@ export default function ClubPage() {
                             <p className="club-empty">{t.club_no_comp}</p>
                         ) : (
                             <form className="club-comp-form" onSubmit={submitRegistration}>
-                                <p className="club-comp-pick-label">{t.club_choose_comp}</p>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                                    <p className="club-comp-pick-label" style={{ margin: 0 }}>{t.club_choose_comp}</p>
+                                    {selectedComp && (
+                                        <button type="button" className="secondary-action"
+                                            style={{ padding: "2px 10px", fontSize: "0.8rem" }}
+                                            onClick={() => { setSelectedComp(""); setSelectedPlayers([]); setRegStatus("idle"); setMixPairs([]); setMixP1(""); setMixP2(""); }}>
+                                            <ArrowLeft size={13} aria-hidden="true" style={{ verticalAlign: "middle", marginRight: 3 }} />
+                                            {lang === "sv" ? "Byt tävling" : "Change"}
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="club-comp-grid">
-                                    {competitions.map((c) => {
+                                    {competitions.filter((c) => !selectedComp || c.id === selectedComp).map((c) => {
                                         const d = new Date(c.date + "T12:00:00");
                                         const day = d.getDate();
                                         const mon = d.toLocaleString("sv-SE", { month: "short" }).toUpperCase();
