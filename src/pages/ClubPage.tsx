@@ -194,8 +194,8 @@ function isOrganizerOf(competitionOrganizer: string, clubName: string): boolean 
 
 // ── Pair / team types ─────────────────────────────────────────────────────────
 
-type PairCat = "mix-d" | "dubbel" | "mr-d" | "mrs-d" | "team-g";
-const PAIR_CATS: string[] = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g"];
+type PairCat = "mix-d" | "dubbel" | "mr-d" | "mrs-d" | "team-g" | "lag";
+const PAIR_CATS: string[] = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g", "lag"];
 const PAIR_TYPES: { id: PairCat; sv: string; en: string; size: 2 | 4 }[] = [
     { id: "mix-d",  sv: "Mixed",      en: "Mixed",       size: 2 },
     { id: "dubbel", sv: "Dubbel",     en: "Doubles",     size: 2 },
@@ -333,63 +333,129 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
                             </div>
                         </div>
                         {(() => {
-                            const pairEntries  = compRegs.filter(({ r }) => PAIR_CATS.includes(r.category));
-                            const indivRegs    = compRegs.filter(({ r }) => !PAIR_CATS.includes(r.category));
+                            if (compRegs.length === 0) return <p className="club-empty">{t.club_incoming_empty}</p>;
 
-                            // Build pair groups per 2-player type
-                            const pairsByType: Record<string, { name1: string; name2: string; key: string }[]> = {};
-                            for (const { id: cat } of PAIR_TYPES.filter((pt) => pt.size === 2)) {
-                                const entries = pairEntries.filter(({ r }) => r.category === cat);
+                            // ── Kategorisera ──────────────────────────────
+                            const lagEntries     = compRegs.filter(({ r }) => r.category === "lag" || r.category === "team-g");
+                            const mixEntries     = compRegs.filter(({ r }) => r.category === "mix-d");
+                            const dubbelEntries  = compRegs.filter(({ r }) => r.category === "dubbel");
+                            const indivEntries   = compRegs.filter(({ r }) => !["lag","team-g","mix-d","dubbel"].includes(r.category));
+
+                            // Lag: group by teamId/name
+                            const lagGroups: { key: string; label: string; members: { r: RegEntry; i: number }[] }[] = [];
+                            const seenLag = new Set<string>();
+                            for (const entry of lagEntries) {
+                                const key = entry.r.teamId ?? `${entry.r.firstName}-${entry.r.lastName}`;
+                                if (!seenLag.has(key)) {
+                                    seenLag.add(key);
+                                    const members = lagEntries.filter(({ r }) => (r.teamId ?? "") === (entry.r.teamId ?? ""));
+                                    lagGroups.push({ key, label: entry.r.teamId ?? (lang === "sv" ? "Lag" : "Team"), members });
+                                }
+                            }
+
+                            // Pairs: dedupe by sorted name pair
+                            function buildPairs(entries: { r: RegEntry; i: number }[]) {
                                 const seen = new Set<string>();
-                                const groups: { name1: string; name2: string; key: string }[] = [];
+                                const pairs: { name1: string; name2: string; club1: string; club2: string; key: string }[] = [];
                                 for (const { r } of entries) {
-                                    const name1 = `${r.firstName} ${r.lastName}`.trim();
-                                    const name2 = r.pairWith ?? "?";
-                                    const k = [name1, name2].sort().join("|");
-                                    if (!seen.has(k)) { seen.add(k); groups.push({ name1, name2, key: k }); }
+                                    const n1 = `${r.firstName} ${r.lastName}`.trim();
+                                    const n2 = r.pairWith ?? "?";
+                                    const k = [n1, n2].sort().join("|");
+                                    if (!seen.has(k)) { seen.add(k); pairs.push({ name1: n1, name2: n2, club1: r.club, club2: "", key: k }); }
                                 }
-                                if (groups.length > 0) pairsByType[cat] = groups;
+                                return pairs;
                             }
+                            const mixPairGroups    = buildPairs(mixEntries);
+                            const dubbelPairGroups = buildPairs(dubbelEntries);
 
-                            // Build team groups
-                            const teamEntries = pairEntries.filter(({ r }) => r.category === "team-g");
-                            const seenTeams = new Set<string>();
-                            const teamGroups: { members: string[]; teamId: string }[] = [];
-                            for (const { r } of teamEntries) {
-                                const tid = r.teamId ?? "";
-                                if (tid && !seenTeams.has(tid)) {
-                                    seenTeams.add(tid);
-                                    const members = teamEntries
-                                        .filter(({ r: tr }) => tr.teamId === tid)
-                                        .map(({ r: tr }) => `${tr.firstName} ${tr.lastName}`.trim());
-                                    teamGroups.push({ members, teamId: tid });
-                                }
+                            // Individuell: group by class
+                            const byClass = new Map<string, { r: RegEntry; i: number }[]>();
+                            for (const entry of indivEntries) {
+                                const k = entry.r.category;
+                                if (!byClass.has(k)) byClass.set(k, []);
+                                byClass.get(k)!.push(entry);
                             }
+                            const classGroups = [...byClass.entries()].sort(([a], [b]) => a.localeCompare(b));
 
-                            // Individual by club
-                            const indivByClub = new Map<string, { r: RegEntry; i: number }[]>();
-                            for (const entry of indivRegs) {
-                                const key = entry.r.club || "—";
-                                if (!indivByClub.has(key)) indivByClub.set(key, []);
-                                indivByClub.get(key)!.push(entry);
-                            }
-                            const indivClubGroups = [...indivByClub.entries()].sort(([a], [b]) => a.localeCompare(b, "sv"));
+                            const catHeader = (label: string, count: number) => (
+                                <div className="mix-incoming-title" style={{ marginTop: "1rem" }}>
+                                    {label}
+                                    <span className="club-tab-count">{count}</span>
+                                </div>
+                            );
 
-                            const hasPairings     = Object.keys(pairsByType).length > 0 || teamGroups.length > 0;
-                            const currentPairInfo = PAIR_TYPES.find((pt) => pt.id === pairingType)!;
+                            const pairRow = (name1: string, name2: string, key: string, cat: string) => (
+                                <div key={key} className="mix-incoming-pair-row">
+                                    <span>{name1}</span>
+                                    <span className="mix-pair-sep">+</span>
+                                    <span>{name2}</span>
+                                    <button type="button" className="reg-action-btn reg-action-delete"
+                                        style={{ marginLeft: "auto" }}
+                                        title={lang === "sv" ? "Ta bort par" : "Remove pair"}
+                                        onClick={() => deletePairGroup(cat, key, comp.id)}>
+                                        <Trash2 size={13} />
+                                    </button>
+                                </div>
+                            );
 
-                            return compRegs.length === 0 ? (
-                                <p className="club-empty">{t.club_incoming_empty}</p>
-                            ) : (
-                                <>
-                                    {indivRegs.length > 0 && (
-                                        <div className="club-incoming-clubs">
-                                            {indivClubGroups.map(([club, entries]) => (
-                                                <div key={club} className="club-incoming-club-group">
-                                                    <div className="club-incoming-club-name">
-                                                        <Users size={14} aria-hidden="true" />
-                                                        <strong>{club}</strong>
-                                                        <span className="club-tab-count">{entries.length}</span>
+                            return (
+                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                    {/* ── Lag ── */}
+                                    {lagGroups.length > 0 && (
+                                        <>
+                                            {catHeader(lang === "sv" ? "Lag" : "Teams", lagGroups.length)}
+                                            {lagGroups.map(({ key, label, members }) => (
+                                                <div key={key} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.6rem 0.75rem", marginBottom: "0.5rem" }}>
+                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                                                        <strong>{label}</strong>
+                                                        <button type="button" className="reg-action-btn reg-action-delete"
+                                                            title={lang === "sv" ? "Ta bort lag" : "Remove team"}
+                                                            onClick={() => {
+                                                                const cat = members[0]?.r.category === "team-g" ? "team-g" : "lag";
+                                                                if (cat === "team-g") deletePairGroup("team-g", key, comp.id);
+                                                                else persistRegs(allRegs.filter((r) => !(r.competitionId === comp.id && r.category === "lag" && r.teamId === key)));
+                                                            }}>
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                    <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                                                        {members.map(({ r, i: gi }) => (
+                                                            <li key={gi} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem" }}>
+                                                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--muted)", flexShrink: 0 }} />
+                                                                <span>{r.firstName} {r.lastName}</span>
+                                                                <span style={{ color: "var(--muted)", fontSize: "0.8rem" }}>{r.club}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+
+                                    {/* ── Mix Dubbel ── */}
+                                    {mixPairGroups.length > 0 && (
+                                        <>
+                                            {catHeader("Mix Dubbel", mixPairGroups.length)}
+                                            {mixPairGroups.map(({ name1, name2, key }) => pairRow(name1, name2, key, "mix-d"))}
+                                        </>
+                                    )}
+
+                                    {/* ── Dubbel ── */}
+                                    {dubbelPairGroups.length > 0 && (
+                                        <>
+                                            {catHeader("Dubbel", dubbelPairGroups.length)}
+                                            {dubbelPairGroups.map(({ name1, name2, key }) => pairRow(name1, name2, key, "dubbel"))}
+                                        </>
+                                    )}
+
+                                    {/* ── Individuell ── */}
+                                    {indivEntries.length > 0 && (
+                                        <>
+                                            {catHeader(lang === "sv" ? "Individuell" : "Individual", indivEntries.length)}
+                                            {classGroups.map(([cls, entries]) => (
+                                                <div key={cls} style={{ marginBottom: "0.75rem" }}>
+                                                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--muted)", marginBottom: "0.25rem" }}>
+                                                        {t.sc_class_prefix} {cls}
                                                     </div>
                                                     <ul className="club-incoming-player-list">
                                                         {entries.map(({ r, i: gi }) => (
@@ -432,10 +498,7 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
                                                                 ) : (
                                                                     <>
                                                                         <span className="club-incoming-player-name">{r.firstName} {r.lastName}</span>
-                                                                        <span className="club-incoming-player-meta">
-                                                                            {t.sc_class_prefix} {r.category}
-                                                                            {r.title && ` · ${r.title}`}
-                                                                        </span>
+                                                                        <span className="club-incoming-player-meta">{r.club}{r.title ? ` · ${r.title}` : ""}</span>
                                                                         <div className="reg-row-actions">
                                                                             <button type="button" className="reg-action-btn"
                                                                                 title={lang === "sv" ? "Ändra" : "Edit"}
@@ -455,122 +518,9 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
                                                     </ul>
                                                 </div>
                                             ))}
-                                        </div>
+                                        </>
                                     )}
-
-                                    {(hasPairings || pairingCompId === comp.id) && (
-                                        <div className="mix-incoming-section">
-                                            {/* Existing 2-player pair groups */}
-                                            {PAIR_TYPES.filter((pt) => pt.size === 2).map(({ id: cat, sv, en }) => {
-                                                const groups = pairsByType[cat];
-                                                if (!groups || groups.length === 0) return null;
-                                                return (
-                                                    <div key={cat} style={{ marginBottom: 8 }}>
-                                                        <div className="mix-incoming-title">
-                                                            {lang === "sv" ? sv : en}
-                                                            <span className="club-tab-count">{groups.length} {lang === "sv" ? "par" : "pairs"}</span>
-                                                        </div>
-                                                        {groups.map(({ name1, name2, key }, i) => (
-                                                            <div key={i} className="mix-incoming-pair-row">
-                                                                <span>{name1}</span>
-                                                                <span className="mix-pair-sep">+</span>
-                                                                <span>{name2}</span>
-                                                                <button type="button" className="reg-action-btn reg-action-delete"
-                                                                    style={{ marginLeft: "auto" }}
-                                                                    title={lang === "sv" ? "Ta bort par" : "Remove pair"}
-                                                                    onClick={() => deletePairGroup(cat, key, comp.id)}>
-                                                                    <Trash2 size={13} />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {/* Existing team groups */}
-                                            {teamGroups.length > 0 && (
-                                                <div style={{ marginBottom: 8 }}>
-                                                    <div className="mix-incoming-title">
-                                                        {lang === "sv" ? "Lag" : "Teams"}
-                                                        <span className="club-tab-count">{teamGroups.length}</span>
-                                                    </div>
-                                                    {teamGroups.map(({ members, teamId }, i) => (
-                                                        <div key={i} className="mix-incoming-pair-row">
-                                                            {members.map((m, j) => (
-                                                                <span key={j} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                                    {j > 0 && <span className="mix-pair-sep">+</span>}
-                                                                    {m}
-                                                                </span>
-                                                            ))}
-                                                            <button type="button" className="reg-action-btn reg-action-delete"
-                                                                style={{ marginLeft: "auto" }}
-                                                                title={lang === "sv" ? "Ta bort lag" : "Remove team"}
-                                                                onClick={() => deletePairGroup("team-g", teamId, comp.id)}>
-                                                                <Trash2 size={13} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Create pair/team panel */}
-                                            {pairingCompId === comp.id && (
-                                                <>
-                                                    <div className="mix-incoming-title" style={{ marginTop: hasPairings ? 10 : 0 }}>
-                                                        {lang === "sv" ? "Skapa nytt" : "Create new"}
-                                                    </div>
-                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                                                        {PAIR_TYPES.map((pt) => (
-                                                            <button key={pt.id} type="button"
-                                                                className={pairingType === pt.id ? "lane-chip active" : "lane-chip"}
-                                                                onClick={() => {
-                                                                    setPairingType(pt.id);
-                                                                    setPairSlots(Array(pt.size).fill(""));
-                                                                }}>
-                                                                {lang === "sv" ? pt.sv : pt.en}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                    {indivRegs.length < currentPairInfo.size ? (
-                                                        <p className="club-empty" style={{ margin: "4px 0 0" }}>
-                                                            {lang === "sv"
-                                                                ? `Minst ${currentPairInfo.size} individuellt anmälda spelare behövs.`
-                                                                : `Need at least ${currentPairInfo.size} individually registered players.`}
-                                                        </p>
-                                                    ) : (
-                                                        <div className="mix-pair-builder">
-                                                            {pairSlots.map((slot, slotIdx) => (
-                                                                <span key={slotIdx} style={{ display: "contents" }}>
-                                                                    {slotIdx > 0 && <span className="mix-pair-sep">+</span>}
-                                                                    <select value={slot}
-                                                                        onChange={(e) => setPairSlots((cur) => cur.map((s, j) => j === slotIdx ? e.target.value : s))}>
-                                                                        <option value="">
-                                                                            {lang === "sv" ? `— Spelare ${slotIdx + 1}` : `— Player ${slotIdx + 1}`}
-                                                                        </option>
-                                                                        {indivRegs
-                                                                            .filter(({ i }) => !pairSlots.some((s, j) => j !== slotIdx && s === String(i)))
-                                                                            .map(({ r, i }) => (
-                                                                                <option key={i} value={String(i)}>
-                                                                                    {r.firstName} {r.lastName} · {r.club} (kl. {r.category})
-                                                                                </option>
-                                                                            ))}
-                                                                    </select>
-                                                                </span>
-                                                            ))}
-                                                            <button type="button" className="primary-action score-button"
-                                                                disabled={pairSlots.some((s) => !s) || new Set(pairSlots).size !== pairSlots.length}
-                                                                onClick={() => addPairFromSlots(comp.id)}>
-                                                                {lang === "sv"
-                                                                    ? `+ Lägg till ${currentPairInfo.size === 4 ? "lag" : "par"}`
-                                                                    : `+ Add ${currentPairInfo.size === 4 ? "team" : "pair"}`}
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                </>
+                                </div>
                             );
                         })()}
                 </div>
@@ -1239,65 +1189,193 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </button>
                 </section>
 
-                {compPlayers.length === 0 ? (
-                    <p className="club-empty">{t.club_own_no_regs}</p>
-                ) : (
-                    compClubs.map((club) => {
-                        const clubPlayers = compPlayers.filter((p) => (p.club || "—") === club);
+                {(() => {
+                    const pairRegs = allRegs.filter((r) => r.competitionId === selectedCompId && PAIR_CATS.includes(r.category));
+                    const hasAny = compPlayers.length > 0 || pairRegs.length > 0;
+                    if (!hasAny) return <p className="club-empty">{t.club_own_no_regs}</p>;
+
+                    // All clubs present in either individual or pair/team registrations
+                    const allRegClubs = [...new Set([
+                        ...compPlayers.map((p) => p.club || "—"),
+                        ...pairRegs.map((r) => r.club || "—"),
+                    ])].sort((a, b) => a.localeCompare(b, "sv"));
+
+                    const chip = (label: string) => (
+                        <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "1px 5px", borderRadius: 3, background: "var(--accent, #6366f1)", color: "#fff", opacity: 0.85 }}>
+                            {label}
+                        </span>
+                    );
+
+                    return allRegClubs.map((club) => {
+                        const clubIndiv  = compPlayers.filter((p) => (p.club || "—") === club);
+                        const clubPairs  = pairRegs.filter((r) => (r.club || "—") === club);
+
+                        // Lag: group by teamId
+                        const lagGroups = new Map<string, string[]>();
+                        for (const r of clubPairs.filter((r) => r.category === "lag" || r.category === "team-g")) {
+                            const key = r.teamId ?? "?";
+                            if (!lagGroups.has(key)) lagGroups.set(key, []);
+                            lagGroups.get(key)!.push(`${r.firstName} ${r.lastName}`.trim());
+                        }
+
+                        // Mix pairs (dedupe)
+                        const mixSeen = new Set<string>();
+                        const mixPairs: { n1: string; n2: string }[] = [];
+                        for (const r of clubPairs.filter((r) => r.category === "mix-d")) {
+                            const n1 = `${r.firstName} ${r.lastName}`.trim();
+                            const n2 = r.pairWith ?? "?";
+                            const k = [n1, n2].sort().join("|");
+                            if (!mixSeen.has(k)) { mixSeen.add(k); mixPairs.push({ n1, n2 }); }
+                        }
+
+                        // Dubbel pairs (dedupe)
+                        const dubSeen = new Set<string>();
+                        const dubPairs: { n1: string; n2: string }[] = [];
+                        for (const r of clubPairs.filter((r) => r.category === "dubbel")) {
+                            const n1 = `${r.firstName} ${r.lastName}`.trim();
+                            const n2 = r.pairWith ?? "?";
+                            const k = [n1, n2].sort().join("|");
+                            if (!dubSeen.has(k)) { dubSeen.add(k); dubPairs.push({ n1, n2 }); }
+                        }
+
+                        // Names of lag members — for showing tags on individual cards
+                        const lagMemberMap = new Map<string, string>(); // name → teamName
+                        for (const [teamName, members] of lagGroups.entries()) {
+                            for (const m of members) lagMemberMap.set(m, teamName);
+                        }
+
+                        // Mix/dubbel/lag tags for individual player cards
+                        function indivTags(name: string) {
+                            const tags: string[] = [];
+                            const lagTeam = lagMemberMap.get(name);
+                            if (lagTeam) tags.push(`Lag · ${lagTeam}`);
+                            if (mixPairs.some(({ n1, n2 }) => n1 === name || n2 === name)) tags.push("Mix");
+                            if (dubPairs.some(({ n1, n2 }) => n1 === name || n2 === name)) tags.push("Dubbel");
+                            return tags;
+                        }
+
+                        // All individually-registered players (lag players also compete individually)
+                        const pureIndiv = clubIndiv;
+
+                        const subLabel = (text: string) => (
+                            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", margin: "0.6rem 0 0.3rem" }}>
+                                {text}
+                            </div>
+                        );
+
                         return (
                             <section key={club} className="team-club-section">
                                 <h3 className="team-club-title">{club}</h3>
-                                <div className="team-player-grid">
-                                    {clubPlayers.map((player) => {
-                                        const on = selectedPlayerIds.includes(player.id);
-                                        const isJunior = player.ageCategory === "junior";
-                                        const mode = juniorMode[player.id] ?? "junior";
-                                        const gender = juniorGender[player.id] ?? "herr";
-                                        return (
-                                            <div key={player.id} className={on ? "team-player-card is-pending" : "team-player-card"}
-                                                style={{ display: "flex", flexDirection: "column", gap: "0.25rem", cursor: "default" }}>
-                                                <button type="button" style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
-                                                    aria-pressed={on}
-                                                    onClick={() => setSelectedPlayerIds((cur) =>
-                                                        on ? cur.filter((x) => x !== player.id) : [...cur, player.id])}>
-                                                    <span className="team-player-name">{player.name}</span>
-                                                    <span className="team-player-meta">
-                                                        {t.sc_class_prefix} {player.classLevel} · {catLabel(player.ageCategory)}
-                                                    </span>
-                                                </button>
-                                                {isJunior && on && (
-                                                    <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
-                                                        {(["junior", "class", "both"] as const).map((m) => (
-                                                            <button key={m} type="button"
-                                                                style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: mode === m ? 1 : 0.4, fontWeight: mode === m ? 700 : 400, background: "none", cursor: "pointer" }}
-                                                                onClick={() => setJuniorMode((cur) => ({ ...cur, [player.id]: m }))}>
-                                                                {m === "junior" ? "Junior" : m === "class" ? (lang === "sv" ? "Klass" : "Class") : (lang === "sv" ? "Båda" : "Both")}
-                                                            </button>
+
+                                {/* ── Lag ── */}
+                                {lagGroups.size > 0 && (
+                                    <>
+                                        {subLabel(lang === "sv" ? "Lag" : "Team")}
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.25rem" }}>
+                                            {[...lagGroups.entries()].map(([teamName, members]) => (
+                                                <div key={teamName} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.6rem 0.75rem" }}>
+                                                    <strong style={{ fontSize: "0.82rem" }}>{teamName}</strong>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", marginTop: "0.3rem" }}>
+                                                        {members.map((m, i) => (
+                                                            <div key={i} style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                                                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--muted)", flexShrink: 0 }} />
+                                                                {m}
+                                                            </div>
                                                         ))}
-                                                        {(mode === "class" || mode === "both") && (
-                                                            <>
-                                                                <button type="button"
-                                                                    style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "herr" ? 1 : 0.4, fontWeight: gender === "herr" ? 700 : 400, background: "none", cursor: "pointer" }}
-                                                                    onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "herr" }))}>
-                                                                    {t.reg_mr}
-                                                                </button>
-                                                                <button type="button"
-                                                                    style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "dam" ? 1 : 0.4, fontWeight: gender === "dam" ? 700 : 400, background: "none", cursor: "pointer" }}
-                                                                    onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "dam" }))}>
-                                                                    {t.reg_mrs}
-                                                                </button>
-                                                            </>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* ── Mix ── */}
+                                {mixPairs.length > 0 && (
+                                    <>
+                                        {subLabel("Mix")}
+                                        {mixPairs.map(({ n1, n2 }, i) => (
+                                            <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.5rem 0.75rem", marginBottom: "0.3rem" }}>
+                                                <span style={{ fontSize: "0.85rem" }}>{n1} + {n2}</span>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+
+                                {/* ── Dubbel ── */}
+                                {dubPairs.length > 0 && (
+                                    <>
+                                        {subLabel("Dubbel")}
+                                        {dubPairs.map(({ n1, n2 }, i) => (
+                                            <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.5rem 0.75rem", marginBottom: "0.3rem" }}>
+                                                <span style={{ fontSize: "0.85rem" }}>{n1} + {n2}</span>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+
+                                {/* ── Individuell ── */}
+                                {pureIndiv.length > 0 && (
+                                    <>
+                                        {subLabel(lang === "sv" ? "Individuell" : "Individual")}
+                                        <div className="team-player-grid">
+                                            {pureIndiv.map((player) => {
+                                                const on = selectedPlayerIds.includes(player.id);
+                                                const isJunior = player.ageCategory === "junior";
+                                                const mode = juniorMode[player.id] ?? "junior";
+                                                const gender = juniorGender[player.id] ?? "herr";
+                                                const tags = indivTags(player.name);
+                                                return (
+                                                    <div key={player.id} className={on ? "team-player-card is-pending" : "team-player-card"}
+                                                        style={{ display: "flex", flexDirection: "column", gap: "0.25rem", cursor: "default" }}>
+                                                        <button type="button" style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
+                                                            aria-pressed={on}
+                                                            onClick={() => setSelectedPlayerIds((cur) =>
+                                                                on ? cur.filter((x) => x !== player.id) : [...cur, player.id])}>
+                                                            <span className="team-player-name">{player.name}</span>
+                                                            <span className="team-player-meta">
+                                                                {t.sc_class_prefix} {player.classLevel} · {catLabel(player.ageCategory)}
+                                                            </span>
+                                                        </button>
+                                                        {tags.length > 0 && (
+                                                            <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
+                                                                {tags.map((tag, i) => chip(tag))}
+                                                            </div>
+                                                        )}
+                                                        {isJunior && on && (
+                                                            <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
+                                                                {(["junior", "class", "both"] as const).map((m) => (
+                                                                    <button key={m} type="button"
+                                                                        style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: mode === m ? 1 : 0.4, fontWeight: mode === m ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                        onClick={() => setJuniorMode((cur) => ({ ...cur, [player.id]: m }))}>
+                                                                        {m === "junior" ? "Junior" : m === "class" ? (lang === "sv" ? "Klass" : "Class") : (lang === "sv" ? "Båda" : "Both")}
+                                                                    </button>
+                                                                ))}
+                                                                {(mode === "class" || mode === "both") && (
+                                                                    <>
+                                                                        <button type="button"
+                                                                            style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "herr" ? 1 : 0.4, fontWeight: gender === "herr" ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                            onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "herr" }))}>
+                                                                            {t.reg_mr}
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            style={{ fontSize: "0.7rem", padding: "1px 6px", borderRadius: 4, border: "1px solid currentColor", opacity: gender === "dam" ? 1 : 0.4, fontWeight: gender === "dam" ? 700 : 400, background: "none", cursor: "pointer" }}
+                                                                            onClick={() => setJuniorGender((cur) => ({ ...cur, [player.id]: "dam" }))}>
+                                                                            {t.reg_mrs}
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
                             </section>
                         );
-                    })
-                )}
+                    });
+                })()}
             </div>
         );
     }
@@ -2106,6 +2184,11 @@ export default function ClubPage() {
     const [mixPairs,        setMixPairs]        = useState<{ p1Id: string; p2Id: string }[]>([]);
     const [mixP1,           setMixP1]           = useState("");
     const [mixP2,           setMixP2]           = useState("");
+    const [regTab,          setRegTab]          = useState<"individual" | "lag" | "mix" | "dubbel">("individual");
+    const [regTeams,        setRegTeams]        = useState<{ id: string; name: string; playerIds: string[] }[]>([]);
+    const [regDubbel,       setRegDubbel]       = useState<{ p1Id: string; p2Id: string }[]>([]);
+    const [regDubbelP1,     setRegDubbelP1]     = useState("");
+    const [regDubbelP2,     setRegDubbelP2]     = useState("");
 
     if (!clubName) {
         return (
@@ -2177,38 +2260,60 @@ export default function ClubPage() {
         );
     }
 
+    function playerToTitle(p: ClubPlayer) {
+        return p.ageCategory === "dam" ? "mrs" : p.ageCategory === "junior" ? "junior" : p.ageCategory === "minior" ? "minior" : "mr";
+    }
+    function playerToEntry(p: ClubPlayer, cat: string, ts: string, extra?: Partial<RegEntry>): RegEntry {
+        const [firstName, ...rest] = p.name.split(" ");
+        return { firstName, lastName: rest.join(" "), club: p.club, category: cat, title: playerToTitle(p), createdAt: ts, competitionId: selectedComp ?? undefined, ...extra };
+    }
+
     function submitRegistration(e: FormEvent) {
         e.preventDefault();
-        if (!selectedComp || (selectedPlayers.length === 0 && mixPairs.length === 0)) return;
+        const hasAny = selectedPlayers.length > 0 || mixPairs.length > 0 || regDubbel.length > 0 || regTeams.some((t) => t.playerIds.length > 0);
+        if (!selectedComp || !hasAny) return;
         const existing: RegEntry[] = JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
-        const individualEntries: RegEntry[] = selectedPlayers.flatMap((pid) => {
+        const entries: RegEntry[] = [];
+
+        // Individual
+        for (const pid of selectedPlayers) {
             const p = players.find((pl) => pl.id === pid);
-            if (!p) return [];
-            const [firstName, ...rest] = p.name.split(" ");
-            return [{
-                firstName, lastName: rest.join(" "), club: p.club,
-                category: String(p.classLevel),
-                title: p.ageCategory === "dam" ? "mrs" : p.ageCategory === "junior" ? "junior" : p.ageCategory === "minior" ? "minior" : "mr",
-                createdAt: new Date().toISOString(),
-                competitionId: selectedComp,
-            }];
-        });
-        const pairEntries: RegEntry[] = mixPairs.flatMap(({ p1Id, p2Id }) => {
+            if (p) entries.push(playerToEntry(p, String(p.classLevel), new Date().toISOString()));
+        }
+        // Mix dubbel
+        for (const { p1Id, p2Id } of mixPairs) {
             const p1 = players.find((p) => p.id === p1Id);
             const p2 = players.find((p) => p.id === p2Id);
-            if (!p1 || !p2) return [];
+            if (!p1 || !p2) continue;
             const ts = new Date().toISOString();
-            const [fn1, ...rn1] = p1.name.split(" ");
-            const [fn2, ...rn2] = p2.name.split(" ");
-            return [
-                { firstName: fn1, lastName: rn1.join(" "), club: p1.club, category: "mix-d", title: p1.ageCategory === "dam" ? "mrs" : "mr", pairWith: p2.name, createdAt: ts, competitionId: selectedComp },
-                { firstName: fn2, lastName: rn2.join(" "), club: p2.club, category: "mix-d", title: p2.ageCategory === "dam" ? "mrs" : "mr", pairWith: p1.name, createdAt: ts + "-2", competitionId: selectedComp },
-            ];
-        });
-        localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify([...existing, ...individualEntries, ...pairEntries]));
+            entries.push(playerToEntry(p1, "mix-d", ts, { pairWith: p2.name }));
+            entries.push(playerToEntry(p2, "mix-d", ts + "-2", { pairWith: p1.name }));
+        }
+        // Dubbel
+        for (const { p1Id, p2Id } of regDubbel) {
+            const p1 = players.find((p) => p.id === p1Id);
+            const p2 = players.find((p) => p.id === p2Id);
+            if (!p1 || !p2) continue;
+            const ts = new Date().toISOString();
+            entries.push(playerToEntry(p1, "dubbel", ts, { pairWith: p2.name }));
+            entries.push(playerToEntry(p2, "dubbel", ts + "-2", { pairWith: p1.name }));
+        }
+        // Lag
+        for (const team of regTeams) {
+            if (team.playerIds.length === 0) continue;
+            const ts = new Date().toISOString();
+            team.playerIds.forEach((pid, i) => {
+                const p = players.find((pl) => pl.id === pid);
+                if (p) entries.push(playerToEntry(p, "lag", ts + `-${i}`, { teamId: team.name }));
+            });
+        }
+
+        localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify([...existing, ...entries]));
         setRegStatus("sent");
         setSelectedPlayers([]);
         setMixPairs([]); setMixP1(""); setMixP2("");
+        setRegDubbel([]); setRegDubbelP1(""); setRegDubbelP2("");
+        setRegTeams([]);
         setTimeout(() => setRegStatus("idle"), 4000);
     }
 
@@ -2374,7 +2479,7 @@ export default function ClubPage() {
                                     {selectedComp && (
                                         <button type="button" className="secondary-action"
                                             style={{ padding: "2px 10px", fontSize: "0.8rem" }}
-                                            onClick={() => { setSelectedComp(""); setSelectedPlayers([]); setRegStatus("idle"); setMixPairs([]); setMixP1(""); setMixP2(""); }}>
+                                            onClick={() => { setSelectedComp(""); setSelectedPlayers([]); setRegStatus("idle"); setMixPairs([]); setMixP1(""); setMixP2(""); setRegTab("individual"); setRegTeams([]); setRegDubbel([]); setRegDubbelP1(""); setRegDubbelP2(""); }}>
                                             <ArrowLeft size={13} aria-hidden="true" style={{ verticalAlign: "middle", marginRight: 3 }} />
                                             {lang === "sv" ? "Byt tävling" : "Change"}
                                         </button>
@@ -2390,7 +2495,7 @@ export default function ClubPage() {
                                         return (
                                             <button key={c.id} type="button"
                                                 className={active ? "club-comp-card active" : "club-comp-card"}
-                                                onClick={() => { setSelectedComp(c.id); setSelectedPlayers([]); setRegStatus("idle"); setMixPairs([]); setMixP1(""); setMixP2(""); }}
+                                                onClick={() => { setSelectedComp(c.id); setSelectedPlayers([]); setRegStatus("idle"); setMixPairs([]); setMixP1(""); setMixP2(""); setRegTab("individual"); setRegTeams([]); setRegDubbel([]); setRegDubbelP1(""); setRegDubbelP2(""); }}
                                                 aria-pressed={active}>
                                                 <span className="club-comp-date-badge">
                                                     <span>{mon}</span>
@@ -2409,37 +2514,94 @@ export default function ClubPage() {
 
                                 {selectedComp && (
                                     <>
-                                        {/* Individual players */}
-                                        <p className="club-comp-pick-label">
-                                            {t.club_choose_players} — {selectedPlayers.length} {t.club_selected}
-                                        </p>
-                                        {players.length === 0 ? (
-                                            <p className="club-empty">{t.club_no_players}</p>
-                                        ) : (
-                                            <div className="club-player-pick-grid">
-                                                {players.map((p) => {
-                                                    const checked = selectedPlayers.includes(p.id);
-                                                    return (
-                                                        <button key={p.id} type="button"
-                                                            className={checked ? "club-player-pick active" : "club-player-pick"}
-                                                            onClick={() => toggleRegPlayer(p.id)}
-                                                            aria-pressed={checked}>
-                                                            <strong>{p.name}</strong>
-                                                            <span>{t.sc_class_prefix} {p.classLevel} · {ageCatLabel(p.ageCategory, t)}</span>
-                                                        </button>
-                                                    );
-                                                })}
+                                        {/* Sub-tabs */}
+                                        <div className="club-tab-bar" style={{ marginTop: "1rem", marginBottom: "0.75rem" }}>
+                                            {(["individual", "lag", "mix", "dubbel"] as const).map((rt) => (
+                                                <button key={rt} type="button"
+                                                    className={regTab === rt ? "club-tab active" : "club-tab"}
+                                                    onClick={() => setRegTab(rt)}>
+                                                    {rt === "individual" ? (lang === "sv" ? "Individuell" : "Individual") :
+                                                     rt === "lag"        ? (lang === "sv" ? "Lag" : "Team") :
+                                                     rt === "mix"        ? "Mix" : "Dubbel"}
+                                                    {rt === "individual" && selectedPlayers.length > 0 && <span className="club-tab-count">{selectedPlayers.length}</span>}
+                                                    {rt === "lag"        && regTeams.length > 0           && <span className="club-tab-count">{regTeams.length}</span>}
+                                                    {rt === "mix"        && mixPairs.length > 0            && <span className="club-tab-count">{mixPairs.length}</span>}
+                                                    {rt === "dubbel"     && regDubbel.length > 0           && <span className="club-tab-count">{regDubbel.length}</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* ── Individuell ── */}
+                                        {regTab === "individual" && (
+                                            players.length === 0 ? (
+                                                <p className="club-empty">{t.club_no_players}</p>
+                                            ) : (
+                                                <div className="club-player-pick-grid">
+                                                    {players.map((p) => {
+                                                        const checked = selectedPlayers.includes(p.id);
+                                                        return (
+                                                            <button key={p.id} type="button"
+                                                                className={checked ? "club-player-pick active" : "club-player-pick"}
+                                                                onClick={() => toggleRegPlayer(p.id)}
+                                                                aria-pressed={checked}>
+                                                                <strong>{p.name}</strong>
+                                                                <span>{t.sc_class_prefix} {p.classLevel} · {ageCatLabel(p.ageCategory, t)}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )
+                                        )}
+
+                                        {/* ── Lag ── */}
+                                        {regTab === "lag" && (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                                {regTeams.map((team, ti) => (
+                                                    <div key={team.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.75rem" }}>
+                                                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                                                            <input value={team.name}
+                                                                style={{ flex: 1, fontWeight: 600 }}
+                                                                onChange={(e) => setRegTeams((cur) => cur.map((t, i) => i === ti ? { ...t, name: e.target.value } : t))} />
+                                                            <button type="button" className="team-slot-remove"
+                                                                onClick={() => setRegTeams((cur) => cur.filter((_, i) => i !== ti))}>×</button>
+                                                        </div>
+                                                        <div className="club-player-pick-grid">
+                                                            {players.map((p) => {
+                                                                const inThisTeam = team.playerIds.includes(p.id);
+                                                                const inOther    = regTeams.some((t, i) => i !== ti && t.playerIds.includes(p.id));
+                                                                const teamFull   = team.playerIds.length >= 4 && !inThisTeam;
+                                                                return (
+                                                                    <button key={p.id} type="button"
+                                                                        className={inThisTeam ? "club-player-pick active" : "club-player-pick"}
+                                                                        style={{ opacity: (inOther || teamFull) ? 0.35 : 1 }}
+                                                                        disabled={inOther || teamFull}
+                                                                        onClick={() => setRegTeams((cur) => cur.map((t, i) => i !== ti ? t : {
+                                                                            ...t, playerIds: inThisTeam
+                                                                                ? t.playerIds.filter((id) => id !== p.id)
+                                                                                : t.playerIds.length < 4 ? [...t.playerIds, p.id] : t.playerIds,
+                                                                        }))}>
+                                                                        <strong>{p.name}</strong>
+                                                                        <span>{t.sc_class_prefix} {p.classLevel}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <p style={{ fontSize: "0.8rem", color: team.playerIds.length === 4 ? "var(--color-success, #22c55e)" : "var(--muted)", margin: "0.4rem 0 0" }}>
+                                                            {team.playerIds.length} / 4 {lang === "sv" ? "spelare" : "players"}
+                                                            {team.playerIds.length === 4 && (lang === "sv" ? " — laget är fullt" : " — team is full")}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                                <button type="button" className="secondary-action score-button"
+                                                    onClick={() => setRegTeams((cur) => [...cur, { id: String(Date.now()), name: `${lang === "sv" ? "Lag" : "Team"} ${cur.length + 1}`, playerIds: [] }])}>
+                                                    + {lang === "sv" ? "Lägg till lag" : "Add team"}
+                                                </button>
                                             </div>
                                         )}
 
-                                        {/* Mix Dubbel pairs */}
-                                        <p className="club-comp-pick-label" style={{ marginTop: 20 }}>
-                                            {lang === "sv" ? "Mix Dubbel" : "Mixed Doubles"}
-                                            {mixPairs.length > 0 && <span className="club-tab-count" style={{ marginLeft: 8 }}>{mixPairs.length} {lang === "sv" ? "par" : "pairs"}</span>}
-                                        </p>
-
-                                        {mixPairs.length > 0 && (
-                                            <div className="mix-pair-list">
+                                        {/* ── Mix dubbel ── */}
+                                        {regTab === "mix" && (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                                                 {mixPairs.map(({ p1Id, p2Id }, i) => {
                                                     const p1 = players.find((p) => p.id === p1Id);
                                                     const p2 = players.find((p) => p.id === p2Id);
@@ -2449,48 +2611,75 @@ export default function ClubPage() {
                                                             <span className="mix-pair-sep">+</span>
                                                             <span>{p2?.name}</span>
                                                             <button type="button" className="team-slot-remove"
-                                                                onClick={() => setMixPairs((cur) => cur.filter((_, j) => j !== i))}>
-                                                                ×
-                                                            </button>
+                                                                onClick={() => setMixPairs((cur) => cur.filter((_, j) => j !== i))}>×</button>
                                                         </div>
                                                     );
                                                 })}
+                                                <div className="mix-pair-builder">
+                                                    <select value={mixP1} onChange={(e) => setMixP1(e.target.value)}>
+                                                        <option value="">{lang === "sv" ? "— Välj herr/junior" : "— Pick male/junior"}</option>
+                                                        {players.filter((p) => p.ageCategory !== "dam").map((p) => (
+                                                            <option key={p.id} value={p.id} disabled={p.id === mixP2}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <span className="mix-pair-sep">+</span>
+                                                    <select value={mixP2} onChange={(e) => setMixP2(e.target.value)}>
+                                                        <option value="">{lang === "sv" ? "— Välj dam" : "— Pick female"}</option>
+                                                        {players.filter((p) => p.ageCategory === "dam").map((p) => (
+                                                            <option key={p.id} value={p.id} disabled={p.id === mixP1}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button type="button" className="secondary-action score-button"
+                                                        disabled={!mixP1 || !mixP2}
+                                                        onClick={() => { setMixPairs((cur) => [...cur, { p1Id: mixP1, p2Id: mixP2 }]); setMixP1(""); setMixP2(""); }}>
+                                                        + {lang === "sv" ? "Lägg till par" : "Add pair"}
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
 
-                                        {players.length >= 2 && (
-                                            <div className="mix-pair-builder">
-                                                <select value={mixP1} onChange={(e) => setMixP1(e.target.value)}>
-                                                    <option value="">{lang === "sv" ? "— Välj spelare 1" : "— Pick player 1"}</option>
-                                                    {players.map((p) => (
-                                                        <option key={p.id} value={p.id} disabled={p.id === mixP2}>
-                                                            {p.name} · {ageCatLabel(p.ageCategory, t)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <span className="mix-pair-sep">+</span>
-                                                <select value={mixP2} onChange={(e) => setMixP2(e.target.value)}>
-                                                    <option value="">{lang === "sv" ? "— Välj spelare 2" : "— Pick player 2"}</option>
-                                                    {players.map((p) => (
-                                                        <option key={p.id} value={p.id} disabled={p.id === mixP1}>
-                                                            {p.name} · {ageCatLabel(p.ageCategory, t)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <button type="button" className="secondary-action score-button"
-                                                    disabled={!mixP1 || !mixP2 || mixP1 === mixP2}
-                                                    onClick={() => {
-                                                        setMixPairs((cur) => [...cur, { p1Id: mixP1, p2Id: mixP2 }]);
-                                                        setMixP1(""); setMixP2("");
-                                                    }}>
-                                                    {lang === "sv" ? "+ Lägg till par" : "+ Add pair"}
-                                                </button>
+                                        {/* ── Dubbel ── */}
+                                        {regTab === "dubbel" && (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                                {regDubbel.map(({ p1Id, p2Id }, i) => {
+                                                    const p1 = players.find((p) => p.id === p1Id);
+                                                    const p2 = players.find((p) => p.id === p2Id);
+                                                    return (
+                                                        <div key={i} className="mix-pair-row">
+                                                            <span>{p1?.name}</span>
+                                                            <span className="mix-pair-sep">+</span>
+                                                            <span>{p2?.name}</span>
+                                                            <button type="button" className="team-slot-remove"
+                                                                onClick={() => setRegDubbel((cur) => cur.filter((_, j) => j !== i))}>×</button>
+                                                        </div>
+                                                    );
+                                                })}
+                                                <div className="mix-pair-builder">
+                                                    <select value={regDubbelP1} onChange={(e) => setRegDubbelP1(e.target.value)}>
+                                                        <option value="">{lang === "sv" ? "— Välj spelare 1" : "— Pick player 1"}</option>
+                                                        {players.map((p) => (
+                                                            <option key={p.id} value={p.id} disabled={p.id === regDubbelP2}>{p.name} · {ageCatLabel(p.ageCategory, t)}</option>
+                                                        ))}
+                                                    </select>
+                                                    <span className="mix-pair-sep">+</span>
+                                                    <select value={regDubbelP2} onChange={(e) => setRegDubbelP2(e.target.value)}>
+                                                        <option value="">{lang === "sv" ? "— Välj spelare 2" : "— Pick player 2"}</option>
+                                                        {players.map((p) => (
+                                                            <option key={p.id} value={p.id} disabled={p.id === regDubbelP1}>{p.name} · {ageCatLabel(p.ageCategory, t)}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button type="button" className="secondary-action score-button"
+                                                        disabled={!regDubbelP1 || !regDubbelP2 || regDubbelP1 === regDubbelP2}
+                                                        onClick={() => { setRegDubbel((cur) => [...cur, { p1Id: regDubbelP1, p2Id: regDubbelP2 }]); setRegDubbelP1(""); setRegDubbelP2(""); }}>
+                                                        + {lang === "sv" ? "Lägg till par" : "Add pair"}
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
 
-                                        <div className="comp-form-actions">
+                                        <div className="comp-form-actions" style={{ marginTop: "1.25rem" }}>
                                             <button className="primary-action score-button" type="submit"
-                                                disabled={selectedPlayers.length === 0 && mixPairs.length === 0}>
+                                                disabled={selectedPlayers.length === 0 && mixPairs.length === 0 && regDubbel.length === 0 && !regTeams.some((t) => t.playerIds.length > 0)}>
                                                 <Send size={16} aria-hidden="true" />
                                                 {t.club_submit_reg}
                                             </button>
