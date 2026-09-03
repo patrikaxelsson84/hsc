@@ -5,6 +5,7 @@ import { useLanguage } from "../lib/language";
 const options = [
     { code: "sv" as const, flag: "🇸🇪", label: "Svenska" },
     { code: "en" as const, flag: "🇬🇧", label: "English" },
+    { code: "pl" as const, flag: "🇵🇱", label: "Polski" },
 ];
 
 export default function LangSelect() {
