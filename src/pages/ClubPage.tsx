@@ -2835,6 +2835,11 @@ export default function ClubPage() {
                         <label>{t.players_label_name}</label>
                         <input value={editPlayer.name}
                             onChange={(e) => setEditPlayer({ ...editPlayer, name: e.target.value })} />
+                        <label>{t.players_label_club}</label>
+                        <select value={editPlayer.club}
+                            onChange={(e) => setEditPlayer({ ...editPlayer, club: e.target.value })}>
+                            {knownClubs.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
                         <label>{t.players_label_class}</label>
                         <select value={editPlayer.classLevel}
                             onChange={(e) => setEditPlayer({ ...editPlayer, classLevel: Number(e.target.value) as ClassLevel })}>
