@@ -2451,6 +2451,9 @@ export default function ClubPage() {
             });
         }
 
+        // Ensure all entries carry the exact clubName so DELETE/INSERT match
+        const normalizedEntries = entries.map((e) => ({ ...e, club: clubName }));
+
         setRegStatus("saving");
 
         // Delete existing registrations for this club+competition before inserting new ones
@@ -2458,7 +2461,7 @@ export default function ClubPage() {
             .from('registrations')
             .delete()
             .eq('competition_id', selectedComp)
-            .eq('club', clubName);
+            .ilike('club', clubName);
         if (delError) {
             setRegStatus("error");
             setTimeout(() => setRegStatus("idle"), 6000);
@@ -2466,7 +2469,7 @@ export default function ClubPage() {
         }
 
         const results = await Promise.all(
-            entries.map((r) => supabase.from('registrations').insert(regEntryToRow(r)))
+            normalizedEntries.map((r) => supabase.from('registrations').insert(regEntryToRow(r)))
         );
         const failed = results.find((r) => r.error);
         if (failed?.error) {
