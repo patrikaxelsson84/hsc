@@ -2452,6 +2452,19 @@ export default function ClubPage() {
         }
 
         setRegStatus("saving");
+
+        // Delete existing registrations for this club+competition before inserting new ones
+        const { error: delError } = await supabase
+            .from('registrations')
+            .delete()
+            .eq('competition_id', selectedComp)
+            .eq('club', clubName);
+        if (delError) {
+            setRegStatus("error");
+            setTimeout(() => setRegStatus("idle"), 6000);
+            return;
+        }
+
         const results = await Promise.all(
             entries.map((r) => supabase.from('registrations').insert(regEntryToRow(r)))
         );
