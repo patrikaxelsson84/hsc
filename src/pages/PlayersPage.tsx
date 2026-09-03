@@ -50,7 +50,7 @@ function mergeWithRegistered(basePlayers: PlayerScore[]): PlayerScore[] {
 
 export default function PlayersPage() {
     const { t } = useLanguage();
-    const { players: basePlayers, loading } = usePlayers();
+    const { players: basePlayers, loading, savePlayers } = usePlayers();
 
     const [players, setPlayers] = useState<PlayerScore[]>([]);
 
@@ -82,9 +82,9 @@ export default function PlayersPage() {
 
     function savePlayer() {
         if (!editingPlayer) return;
-        setPlayers((current) =>
-            current.map((p) => (p.id === editingPlayer.id ? editingPlayer : p))
-        );
+        const updated = players.map((p) => p.id === editingPlayer.id ? editingPlayer : p);
+        setPlayers(updated);
+        savePlayers(updated);
         if (editingPlayer.club !== selectedTeam) setSelectedTeam(null);
         setEditingPlayer(null);
     }
