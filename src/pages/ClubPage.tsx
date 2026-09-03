@@ -2560,7 +2560,7 @@ export default function ClubPage() {
                                                         aria-label={`${t.players_edit_btn} ${p.name}`}
                                                         onClick={() => setEditPlayer({ ...p })}>
                                                         <Pencil size={14} aria-hidden="true" />
-                                                        {t.players_edit_btn}
+                                                        <span className="btn-label">{t.players_edit_btn}</span>
                                                     </button>
                                                     <button type="button" className="comp-delete-btn"
                                                         aria-label={`${t.comps_delete} ${p.name}`}

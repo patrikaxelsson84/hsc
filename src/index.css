@@ -2451,6 +2451,18 @@ a {
   .club-tabs .tab-label {
     display: none;
   }
+
+  /* Club players table — hide class & category columns, icon-only edit btn */
+  .club-players-panel th:nth-child(2),
+  .club-players-panel th:nth-child(3),
+  .club-players-panel td:nth-child(2),
+  .club-players-panel td:nth-child(3) {
+    display: none;
+  }
+
+  .club-player-actions .btn-label {
+    display: none;
+  }
 }
 
 @media (max-width: 560px) {
