@@ -1,4 +1,21 @@
+import bcrypt from 'bcryptjs'
 import { supabase } from './supabase'
+
+const SALT_ROUNDS = 10
+
+function isBcryptHash(s: string): boolean {
+    return s.startsWith('$2b$') || s.startsWith('$2a$')
+}
+
+async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, SALT_ROUNDS)
+}
+
+async function verifyPassword(plain: string, stored: string): Promise<boolean> {
+    if (isBcryptHash(stored)) return bcrypt.compare(plain, stored)
+    // Legacy plain-text passwords — compare directly (migration path)
+    return plain === stored
+}
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
@@ -8,22 +25,15 @@ export async function checkAdminPassword(password: string): Promise<boolean> {
         .select('password')
         .eq('id', 'admin')
         .single()
-    return (data?.password ?? 'admin') === password
+    if (!data) return false
+    return verifyPassword(password, data.password)
 }
 
 export async function setAdminPassword(password: string): Promise<void> {
+    const hashed = await hashPassword(password)
     await supabase
         .from('credentials')
-        .upsert({ id: 'admin', type: 'admin', password })
-}
-
-export async function getAdminPassword(): Promise<string> {
-    const { data } = await supabase
-        .from('credentials')
-        .select('password')
-        .eq('id', 'admin')
-        .single()
-    return data?.password ?? 'admin'
+        .upsert({ id: 'admin', type: 'admin', password: hashed })
 }
 
 // ── Clubs ─────────────────────────────────────────────────────────────────────
@@ -35,13 +45,15 @@ export async function checkClubPassword(club: string, password: string): Promise
         .eq('id', club)
         .eq('type', 'club')
         .single()
-    return (data?.password ?? '123') === password
+    if (!data) return false
+    return verifyPassword(password, data.password)
 }
 
 export async function setClubPassword(club: string, password: string): Promise<void> {
+    const hashed = await hashPassword(password)
     await supabase
         .from('credentials')
-        .upsert({ id: club, type: 'club', password })
+        .upsert({ id: club, type: 'club', password: hashed })
 }
 
 export async function listClubs(): Promise<string[]> {
@@ -53,19 +65,11 @@ export async function listClubs(): Promise<string[]> {
     return (data ?? []).map((r: { id: string }) => r.id)
 }
 
-export async function listClubsWithPasswords(): Promise<{ id: string; password: string }[]> {
-    const { data } = await supabase
-        .from('credentials')
-        .select('id, password')
-        .eq('type', 'club')
-        .order('id')
-    return data ?? []
-}
-
 export async function addClub(name: string, password = '123'): Promise<void> {
+    const hashed = await hashPassword(password)
     await supabase
         .from('credentials')
-        .upsert({ id: name, type: 'club', password }, { onConflict: 'id', ignoreDuplicates: true })
+        .upsert({ id: name, type: 'club', password: hashed }, { onConflict: 'id', ignoreDuplicates: true })
 }
 
 export async function removeClub(name: string): Promise<void> {
@@ -78,7 +82,8 @@ export async function removeClub(name: string): Promise<void> {
 
 export async function ensureClubsExist(knownClubs: string[]): Promise<void> {
     if (knownClubs.length === 0) return
-    const rows = knownClubs.map((c) => ({ id: c, type: 'club', password: '123' }))
+    const hashed = await hashPassword('123')
+    const rows = knownClubs.map((c) => ({ id: c, type: 'club', password: hashed }))
     await supabase
         .from('credentials')
         .upsert(rows, { onConflict: 'id', ignoreDuplicates: true })
