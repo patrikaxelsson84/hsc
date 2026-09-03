@@ -2468,31 +2468,32 @@ export default function ClubPage() {
                         type="button" role="tab" aria-selected={tab === "players"}
                         onClick={() => setTab("players")}>
                         <Users size={15} aria-hidden="true" />
-                        {t.club_tab_players}
+                        <span className="tab-label">{t.club_tab_players}</span>
                         <span className="club-tab-count">{players.length}</span>
                     </button>
                     <button className={tab === "competition" ? "club-tab active" : "club-tab"}
                         type="button" role="tab" aria-selected={tab === "competition"}
                         onClick={() => setTab("competition")}>
-                        {t.club_tab_competition}
+                        <ClipboardList size={15} aria-hidden="true" />
+                        <span className="tab-label">{t.club_tab_competition}</span>
                     </button>
                     <button className={tab === "own" ? "club-tab active" : "club-tab"}
                         type="button" role="tab" aria-selected={tab === "own"}
                         onClick={() => setTab("own")}>
                         <Trophy size={15} aria-hidden="true" />
-                        {t.club_tab_own}
+                        <span className="tab-label">{t.club_tab_own}</span>
                     </button>
                     <button className={tab === "incoming" ? "club-tab active" : "club-tab"}
                         type="button" role="tab" aria-selected={tab === "incoming"}
                         onClick={() => setTab("incoming")}>
                         <Inbox size={15} aria-hidden="true" />
-                        {t.club_tab_incoming}
+                        <span className="tab-label">{t.club_tab_incoming}</span>
                     </button>
                     <button className={tab === "settings" ? "club-tab active" : "club-tab"}
                         type="button" role="tab" aria-selected={tab === "settings"}
                         onClick={() => setTab("settings")}>
                         <Settings size={15} aria-hidden="true" />
-                        {t.club_tab_settings}
+                        <span className="tab-label">{t.club_tab_settings}</span>
                     </button>
                 </div>
 
