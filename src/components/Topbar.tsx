@@ -1,8 +1,12 @@
-import { Bell } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { useLanguage } from "../lib/language";
 import LangSelect from "./LangSelect";
 
-export default function Topbar() {
+interface TopbarProps {
+    onLogout?: () => void;
+}
+
+export default function Topbar({ onLogout }: TopbarProps) {
     const { t } = useLanguage();
 
     return (
@@ -30,6 +34,18 @@ export default function Topbar() {
                             <span>{t.topbar_role}</span>
                         </div>
                     </div>
+
+                    {onLogout && (
+                        <button
+                            className="icon-button"
+                            type="button"
+                            aria-label={t.admin_logout}
+                            title={t.admin_logout}
+                            onClick={onLogout}
+                        >
+                            <LogOut size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
         </header>

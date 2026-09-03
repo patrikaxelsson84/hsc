@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
@@ -10,12 +10,13 @@ import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
+import { checkClubPassword, ensureClubsExist, listClubs, setClubPassword } from "../lib/auth";
+import { supabase } from "../lib/supabase";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const CLUB_SESSION_KEY  = "hsc-club-session";
 const ROSTERS_KEY       = "hsc-club-rosters";
-const CREDENTIALS_KEY   = "hsc-club-credentials";
 const REGISTRATIONS_KEY = "hsc-registrations";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ interface ClubPlayer {
 }
 
 interface RegEntry {
+    id?: string;
     firstName: string;
     lastName: string;
     club: string;
@@ -40,29 +42,35 @@ interface RegEntry {
     teamId?: string;
 }
 
-// ── Credentials ──────────────────────────────────────────────────────────────
-
-function initCredentials(knownClubs: string[]) {
-    try {
-        const stored: Record<string, string> = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) ?? "{}");
-        let changed = false;
-        for (const club of knownClubs) {
-            if (!stored[club]) { stored[club] = "123"; changed = true; }
-        }
-        if (changed) localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(stored));
-    } catch {
-        const creds: Record<string, string> = {};
-        for (const club of knownClubs) creds[club] = "123";
-        localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(creds));
-    }
+function rowToRegEntry(row: Record<string, unknown>): RegEntry {
+    return {
+        id:            row.id as string,
+        firstName:     (row.first_name  as string) ?? '',
+        lastName:      (row.last_name   as string) ?? '',
+        club:          (row.club        as string) ?? '',
+        category:      (row.category    as string) ?? '',
+        title:         (row.title       as string) ?? '',
+        createdAt:     (row.created_at  as string) ?? new Date().toISOString(),
+        competitionId: (row.competition_id as string | null) ?? undefined,
+        pairWith:      (row.pair_with   as string | null) ?? undefined,
+        teamId:        (row.team_id     as string | null) ?? undefined,
+    };
 }
 
-function checkClubPassword(clubName: string, password: string): boolean {
-    try {
-        const creds: Record<string, string> = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) ?? "{}");
-        return (creds[clubName] ?? "123") === password;
-    } catch { return false; }
+function regEntryToRow(entry: Partial<RegEntry>): Record<string, unknown> {
+    return {
+        first_name:    entry.firstName,
+        last_name:     entry.lastName,
+        club:          entry.club,
+        category:      entry.category,
+        title:         entry.title     ?? null,
+        competition_id: entry.competitionId ?? null,
+        pair_with:     entry.pairWith  ?? null,
+        team_id:       entry.teamId    ?? null,
+    };
 }
+
+// ── Credentials — delegated to auth.ts ───────────────────────────────────────
 
 // ── Roster storage ───────────────────────────────────────────────────────────
 
@@ -101,22 +109,31 @@ function ageCatLabel(cat: AgeCategory, t: ReturnType<typeof useLanguage>["t"]): 
 
 function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => void; knownClubs: string[] }) {
     const { t } = useLanguage();
-    const [club,     setClub]     = useState("");
-    const [password, setPassword] = useState("");
-    const [error,    setError]    = useState(false);
+    const [club,      setClub]      = useState("");
+    const [password,  setPassword]  = useState("");
+    const [error,     setError]     = useState(false);
+    const [loading,   setLoading]   = useState(false);
+    const [authClubs, setAuthClubs] = useState<string[]>([]);
 
-    useEffect(() => { initCredentials(knownClubs); }, [knownClubs]);
+    useEffect(() => {
+        ensureClubsExist(knownClubs);
+        listClubs().then(setAuthClubs);
+    }, [knownClubs]);
 
-    function handleSubmit(e: FormEvent) {
+    const allClubs = [...new Set([...knownClubs, ...authClubs])].sort((a, b) => a.localeCompare(b, "sv"));
+
+    async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         if (!club) return;
-        if (checkClubPassword(club, password)) {
+        setLoading(true);
+        if (await checkClubPassword(club, password)) {
             sessionStorage.setItem(CLUB_SESSION_KEY, club);
             onLogin(club);
         } else {
             setError(true);
             setPassword("");
         }
+        setLoading(false);
     }
 
     return (
@@ -147,7 +164,7 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
                                 <select required value={club}
                                     onChange={(e) => { setClub(e.target.value); setError(false); }}>
                                     <option value="" disabled>{t.club_login_user_ph}</option>
-                                    {knownClubs.map((c) => (
+                                    {allClubs.map((c) => (
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
@@ -163,9 +180,9 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
                             </div>
                         </label>
                         {error && <p className="club-login-error">{t.club_login_error}</p>}
-                        <button className="primary-action club-login-btn" type="submit">
+                        <button className="primary-action club-login-btn" type="submit" disabled={loading}>
                             <LogIn size={18} aria-hidden="true" />
-                            {t.club_login_btn}
+                            {loading ? "…" : t.club_login_btn}
                         </button>
                     </form>
 
@@ -213,19 +230,35 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
     const allComps = loadCompetitions();
     const myComps  = allComps.filter((c) => isOrganizerOf(c.organizer, clubName));
 
-    const [allRegs, setAllRegs] = useState<RegEntry[]>(() => {
-        try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
-        catch { return []; }
-    });
+    const [allRegs, setAllRegs] = useState<RegEntry[]>([]);
+    const [regsLoading, setRegsLoading] = useState(true);
     const [editIdx,       setEditIdx]       = useState<number | null>(null);
     const [editForm,      setEditForm]      = useState<RegEntry | null>(null);
     const [pairingCompId, setPairingCompId] = useState<string | null>(null);
     const [pairingType,   setPairingType]   = useState<PairCat>("mix-d");
     const [pairSlots,     setPairSlots]     = useState<string[]>(["", ""]);
 
-    function persistRegs(next: RegEntry[]) {
-        localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify(next));
-        setAllRegs(next);
+    useEffect(() => {
+        supabase.from('registrations').select('*').order('created_at').then(({ data }) => {
+            setAllRegs((data ?? []).map(rowToRegEntry));
+            setRegsLoading(false);
+        });
+    }, []);
+
+    async function persistRegs(next: RegEntry[]) {
+        const prevIds = new Set(allRegs.map((r) => r.id).filter(Boolean));
+        const toInsert = next.filter((r) => !r.id);
+        const toDelete = allRegs.filter((r) => r.id && !next.find((n) => n.id === r.id));
+        const toUpdate = next.filter((r) => r.id && prevIds.has(r.id));
+
+        await Promise.all([
+            ...toInsert.map((r) => supabase.from('registrations').insert(regEntryToRow(r))),
+            ...toDelete.map((r) => supabase.from('registrations').delete().eq('id', r.id!)),
+            ...toUpdate.map((r) => supabase.from('registrations').update(regEntryToRow(r)).eq('id', r.id!)),
+        ]);
+
+        const { data } = await supabase.from('registrations').select('*').order('created_at');
+        setAllRegs((data ?? []).map(rowToRegEntry));
     }
 
     function startEdit(globalIdx: number) {
@@ -235,23 +268,23 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
 
     function cancelEdit() { setEditIdx(null); setEditForm(null); }
 
-    function saveEdit() {
+    async function saveEdit() {
         if (editIdx === null || !editForm) return;
-        persistRegs(allRegs.map((r, i) => i === editIdx ? editForm : r));
+        await persistRegs(allRegs.map((r, i) => i === editIdx ? editForm : r));
         setEditIdx(null);
         setEditForm(null);
     }
 
-    function deleteReg(globalIdx: number) {
+    async function deleteReg(globalIdx: number) {
         if (!window.confirm(lang === "sv" ? "Ta bort anmälan?" : "Remove registration?")) return;
-        persistRegs(allRegs.filter((_, i) => i !== globalIdx));
+        await persistRegs(allRegs.filter((_, i) => i !== globalIdx));
     }
 
     function setField<K extends keyof RegEntry>(key: K, val: RegEntry[K]) {
         setEditForm((f) => f ? { ...f, [key]: val } : f);
     }
 
-    function addPairFromSlots(compId: string) {
+    async function addPairFromSlots(compId: string) {
         const pairInfo = PAIR_TYPES.find((pt) => pt.id === pairingType);
         if (!pairInfo) return;
         const indices = pairSlots.map((s) => parseInt(s));
@@ -279,7 +312,7 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
         setPairSlots(Array(pairInfo.size).fill(""));
     }
 
-    function deletePairGroup(cat: string, key: string, compId: string) {
+    async function deletePairGroup(cat: string, key: string, compId: string) {
         if (cat === "team-g") {
             persistRegs(allRegs.filter((r) => !(r.competitionId === compId && r.category === "team-g" && r.teamId === key)));
         } else {
@@ -291,6 +324,7 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
         }
     }
 
+    if (regsLoading) return <p className="club-empty">…</p>;
     if (myComps.length === 0) {
         return <p className="club-empty">{t.club_incoming_none_comp}</p>;
     }
@@ -682,6 +716,79 @@ function buildTypeId(ids: string[]) { return ids.join(TYPE_SEP); }
 function parseTypeId(raw: string)   { return raw.split(TYPE_SEP).filter(Boolean); }
 
 type OwnView = "pick" | "type" | "registration" | "lanes" | "teams" | "scoring";
+
+// ── Club settings (password change) ──────────────────────────────────────────
+
+function ClubSettings({ clubName }: { clubName: string }) {
+    const { t, lang } = useLanguage();
+    const [current,  setCurrent]  = useState("");
+    const [next1,    setNext1]    = useState("");
+    const [next2,    setNext2]    = useState("");
+    const [status,   setStatus]   = useState<"idle" | "ok" | "wrongCurrent" | "mismatch">("idle");
+
+    function handleSave(e: React.FormEvent) {
+        e.preventDefault();
+        if (!checkClubPassword(clubName, current)) { setStatus("wrongCurrent"); return; }
+        if (next1 !== next2) { setStatus("mismatch"); return; }
+        if (!next1.trim()) return;
+        setClubPassword(clubName, next1);
+        setCurrent(""); setNext1(""); setNext2("");
+        setStatus("ok");
+    }
+
+    const msg =
+        status === "ok"          ? (lang === "sv" ? "Lösenordet uppdaterat!" : "Password updated!") :
+        status === "wrongCurrent"? (lang === "sv" ? "Nuvarande lösenord stämmer inte." : "Current password is wrong.") :
+        status === "mismatch"    ? (lang === "sv" ? "Nya lösenorden matchar inte." : "New passwords do not match.") : "";
+
+    return (
+        <div className="club-comp-section">
+            <div className="club-section-header">
+                <div>
+                    <p className="eyebrow">{t.club_settings_eyebrow}</p>
+                    <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)" }}>{t.club_settings_desc}</p>
+                </div>
+            </div>
+            <section className="admin-panel" style={{ maxWidth: 420 }}>
+                <div className="panel-title-row"><h2>{t.club_settings_pw_heading}</h2></div>
+                <form className="club-login-form" onSubmit={handleSave}>
+                    <label>
+                        {t.club_settings_pw_current}
+                        <div className="club-login-field">
+                            <Lock size={16} aria-hidden="true" />
+                            <input type="password" required value={current} placeholder="••••••••"
+                                onChange={(e) => { setCurrent(e.target.value); setStatus("idle"); }} />
+                        </div>
+                    </label>
+                    <label>
+                        {t.club_settings_pw_new}
+                        <div className="club-login-field">
+                            <Lock size={16} aria-hidden="true" />
+                            <input type="password" required value={next1} placeholder="••••••••"
+                                onChange={(e) => { setNext1(e.target.value); setStatus("idle"); }} />
+                        </div>
+                    </label>
+                    <label>
+                        {t.club_settings_pw_confirm}
+                        <div className="club-login-field">
+                            <Lock size={16} aria-hidden="true" />
+                            <input type="password" required value={next2} placeholder="••••••••"
+                                onChange={(e) => { setNext2(e.target.value); setStatus("idle"); }} />
+                        </div>
+                    </label>
+                    {msg && (
+                        <p className={status === "ok" ? "form-message" : "club-login-error"}>{msg}</p>
+                    )}
+                    <button className="primary-action club-login-btn" type="submit"
+                        disabled={!current || !next1 || !next2}>
+                        <Save size={16} aria-hidden="true" />
+                        {t.club_settings_pw_save}
+                    </button>
+                </form>
+            </section>
+        </div>
+    );
+}
 
 // ── Club own competition (full setup flow) ────────────────────────────────────
 
@@ -2141,7 +2248,7 @@ export default function ClubPage() {
     );
 
     const [clubName, setClubName] = useState<string | null>(getSavedSession);
-    const [tab, setTab]           = useState<"players" | "competition" | "own" | "incoming">("players");
+    const [tab, setTab]           = useState<"players" | "competition" | "own" | "incoming" | "settings">("players");
     const [players,  setPlayers]  = useState<ClubPlayer[]>([]);
     const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -2379,6 +2486,12 @@ export default function ClubPage() {
                         onClick={() => setTab("incoming")}>
                         <Inbox size={15} aria-hidden="true" />
                         {t.club_tab_incoming}
+                    </button>
+                    <button className={tab === "settings" ? "club-tab active" : "club-tab"}
+                        type="button" role="tab" aria-selected={tab === "settings"}
+                        onClick={() => setTab("settings")}>
+                        <Settings size={15} aria-hidden="true" />
+                        {t.club_tab_settings}
                     </button>
                 </div>
 
@@ -2708,6 +2821,11 @@ export default function ClubPage() {
                         </div>
                         <IncomingRegistrations clubName={clubName} />
                     </div>
+                )}
+
+                {/* ── Settings tab ── */}
+                {tab === "settings" && (
+                    <ClubSettings clubName={clubName} />
                 )}
             </div>
 

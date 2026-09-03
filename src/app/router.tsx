@@ -10,6 +10,7 @@ import PlayersPage from "../pages/PlayersPage";
 import RegistrationPage from "../pages/RegistrationPage";
 import ResultsPage from "../pages/ResultsPage";
 import ScoringPage from "../pages/ScoringPage";
+import AdminUsersPage from "../pages/AdminUsersPage";
 
 export const router = createBrowserRouter([
     {
@@ -59,6 +60,10 @@ export const router = createBrowserRouter([
             {
                 path: "results",
                 element: <ResultsPage />,
+            },
+            {
+                path: "users",
+                element: <AdminUsersPage />,
             },
         ],
     },

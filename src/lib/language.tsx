@@ -291,6 +291,43 @@ const en = {
     club_incoming_empty:    "No registrations yet.",
     club_incoming_count:    "registered",
     club_incoming_time:     "Registered",
+
+    // ── Club settings tab ──────────────────────────────────────────
+    club_tab_settings:          "Settings",
+    club_settings_eyebrow:      "Club settings",
+    club_settings_desc:         "Manage your club account.",
+    club_settings_pw_heading:   "Change password",
+    club_settings_pw_current:   "Current password",
+    club_settings_pw_new:       "New password",
+    club_settings_pw_confirm:   "Confirm new password",
+    club_settings_pw_save:      "Save new password",
+
+    // ── Admin login ────────────────────────────────────────────────
+    admin_login_eyebrow:    "Admin access",
+    admin_login_heading:    "Login as Admin",
+    admin_login_desc:       "Enter the admin password to manage competitions.",
+    admin_login_pass:       "Password",
+    admin_login_error:      "Wrong password.",
+    admin_login_btn:        "Login",
+    admin_logout:           "Logout",
+
+    // ── Admin users page ───────────────────────────────────────────
+    admin_users_eyebrow:        "User management",
+    admin_users_heading:        "Clubs & accounts",
+    admin_users_desc:           "Manage club accounts and change the admin password.",
+    admin_users_clubs_heading:  "Club accounts",
+    admin_users_add_club:       "Add club",
+    admin_users_club_name_ph:   "Club name",
+    admin_users_club_pw_ph:     "Password",
+    admin_users_add_btn:        "Add",
+    admin_users_reset_pw:       "Reset password",
+    admin_users_remove:         "Remove club",
+    admin_users_no_clubs:       "No clubs registered yet.",
+    admin_users_admin_heading:  "Admin password",
+    admin_users_admin_new:      "New admin password",
+    admin_users_admin_save:     "Save",
+    admin_users_saved:          "Saved!",
+    menu_users:                 "Users",
 } as const;
 
 const sv: typeof en = {
@@ -582,6 +619,43 @@ const sv: typeof en = {
     club_incoming_empty:    "Inga anmälningar ännu.",
     club_incoming_count:    "anmälda",
     club_incoming_time:     "Anmäldes",
+
+    // ── Club settings tab ──────────────────────────────────────────
+    club_tab_settings:          "Inställningar",
+    club_settings_eyebrow:      "Klubbinställningar",
+    club_settings_desc:         "Hantera ditt klubbkonto.",
+    club_settings_pw_heading:   "Ändra lösenord",
+    club_settings_pw_current:   "Nuvarande lösenord",
+    club_settings_pw_new:       "Nytt lösenord",
+    club_settings_pw_confirm:   "Bekräfta nytt lösenord",
+    club_settings_pw_save:      "Spara nytt lösenord",
+
+    // ── Admin login ────────────────────────────────────────────────
+    admin_login_eyebrow:    "Adminåtkomst",
+    admin_login_heading:    "Logga in som Admin",
+    admin_login_desc:       "Ange adminlösenordet för att hantera tävlingar.",
+    admin_login_pass:       "Lösenord",
+    admin_login_error:      "Fel lösenord.",
+    admin_login_btn:        "Logga in",
+    admin_logout:           "Logga ut",
+
+    // ── Admin users page ───────────────────────────────────────────
+    admin_users_eyebrow:        "Användarhantering",
+    admin_users_heading:        "Klubbar & konton",
+    admin_users_desc:           "Hantera klubbkonton och ändra adminlösenordet.",
+    admin_users_clubs_heading:  "Klubbkonton",
+    admin_users_add_club:       "Lägg till klubb",
+    admin_users_club_name_ph:   "Klubbnamn",
+    admin_users_club_pw_ph:     "Lösenord",
+    admin_users_add_btn:        "Lägg till",
+    admin_users_reset_pw:       "Återställ lösenord",
+    admin_users_remove:         "Ta bort klubb",
+    admin_users_no_clubs:       "Inga klubbar registrerade ännu.",
+    admin_users_admin_heading:  "Adminlösenord",
+    admin_users_admin_new:      "Nytt adminlösenord",
+    admin_users_admin_save:     "Spara",
+    admin_users_saved:          "Sparat!",
+    menu_users:                 "Användare",
 };
 
 const translations = { en, sv } as const;

@@ -6,6 +6,7 @@ import { loadCompetitions } from "../data/competitions";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
+import { supabase } from "../lib/supabase";
 
 type RegistrationStatus = "idle" | "submitted";
 
@@ -28,16 +29,21 @@ export default function RegistrationPage() {
     const competitions = loadCompetitions().filter((c) => c.registrationOpen);
     const selectedComp = competitions.find((c) => c.id === compId) ?? null;
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const entry = Object.fromEntries(formData.entries());
-        const existing = JSON.parse(localStorage.getItem("hsc-registrations") ?? "[]") as unknown[];
+        const entry = Object.fromEntries(formData.entries()) as Record<string, string>;
 
-        localStorage.setItem(
-            "hsc-registrations",
-            JSON.stringify([...existing, { ...entry, createdAt: new Date().toISOString() }])
-        );
+        await supabase.from('registrations').insert({
+            first_name:     entry.firstName  ?? entry.first_name  ?? '',
+            last_name:      entry.lastName   ?? entry.last_name   ?? '',
+            club:           entry.club       ?? '',
+            category:       entry.category   ?? '',
+            title:          entry.title      || null,
+            competition_id: entry.competitionId ?? entry.competition_id ?? null,
+            pair_with:      entry.pairWith   ?? entry.pair_with   ?? null,
+            team_id:        entry.teamId     ?? entry.team_id     ?? null,
+        });
 
         setStatus("submitted");
         event.currentTarget.reset();
