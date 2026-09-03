@@ -2248,7 +2248,7 @@ export default function ClubPage() {
     );
 
     const [clubName, setClubName] = useState<string | null>(getSavedSession);
-    const [tab, setTab]           = useState<"players" | "competition" | "own" | "incoming" | "settings">("players");
+    const [tab, setTab]           = useState<"players" | "competition" | "our" | "settings">("players");
     const [players,  setPlayers]  = useState<ClubPlayer[]>([]);
     const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -2477,17 +2477,11 @@ export default function ClubPage() {
                         <ClipboardList size={15} aria-hidden="true" />
                         <span className="tab-label">{t.club_tab_competition}</span>
                     </button>
-                    <button className={tab === "own" ? "club-tab active" : "club-tab"}
-                        type="button" role="tab" aria-selected={tab === "own"}
-                        onClick={() => setTab("own")}>
+                    <button className={tab === "our" ? "club-tab active" : "club-tab"}
+                        type="button" role="tab" aria-selected={tab === "our"}
+                        onClick={() => setTab("our")}>
                         <Trophy size={15} aria-hidden="true" />
-                        <span className="tab-label">{t.club_tab_own}</span>
-                    </button>
-                    <button className={tab === "incoming" ? "club-tab active" : "club-tab"}
-                        type="button" role="tab" aria-selected={tab === "incoming"}
-                        onClick={() => setTab("incoming")}>
-                        <Inbox size={15} aria-hidden="true" />
-                        <span className="tab-label">{t.club_tab_incoming}</span>
+                        <span className="tab-label">{t.club_tab_our}</span>
                     </button>
                     <button className={tab === "settings" ? "club-tab active" : "club-tab"}
                         type="button" role="tab" aria-selected={tab === "settings"}
@@ -2809,19 +2803,20 @@ export default function ClubPage() {
                     </div>
                 )}
 
-                {/* ── Own competition tab ── */}
-                {tab === "own" && <OwnCompetition clubName={clubName} />}
-
-                {/* ── Incoming registrations tab ── */}
-                {tab === "incoming" && (
-                    <div className="club-comp-section">
-                        <div className="club-section-header">
-                            <div>
-                                <p className="eyebrow">{t.club_incoming_eyebrow}</p>
-                                <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)" }}>{t.club_incoming_desc}</p>
+                {/* ── Our competition tab (merged incoming + own) ── */}
+                {tab === "our" && (
+                    <div>
+                        <div className="club-comp-section">
+                            <div className="club-section-header">
+                                <div>
+                                    <p className="eyebrow">{t.club_incoming_eyebrow}</p>
+                                    <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)" }}>{t.club_incoming_desc}</p>
+                                </div>
                             </div>
+                            <IncomingRegistrations clubName={clubName} />
                         </div>
-                        <IncomingRegistrations clubName={clubName} />
+                        <hr style={{ margin: "1.5rem 0", border: "none", borderTop: "1px solid var(--line)" }} />
+                        <OwnCompetition clubName={clubName} />
                     </div>
                 )}
 
