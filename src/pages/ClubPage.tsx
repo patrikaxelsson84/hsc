@@ -2317,6 +2317,18 @@ export default function ClubPage() {
     const [regDubbel,       setRegDubbel]       = useState<{ p1Id: string; p2Id: string }[]>([]);
     const [regDubbelP1,     setRegDubbelP1]     = useState("");
     const [regDubbelP2,     setRegDubbelP2]     = useState("");
+    const [myRegs,          setMyRegs]          = useState<RegEntry[]>([]);
+
+    useEffect(() => {
+        if (!selectedComp || !clubName) { setMyRegs([]); return; }
+        supabase
+            .from('registrations')
+            .select('*')
+            .eq('competition_id', selectedComp)
+            .eq('club', clubName)
+            .order('created_at')
+            .then(({ data }) => setMyRegs((data ?? []).map(rowToRegEntry)));
+    }, [selectedComp, clubName]);
 
     if (!clubName) {
         return (
@@ -2449,6 +2461,15 @@ export default function ClubPage() {
             setTimeout(() => setRegStatus("idle"), 6000);
             return;
         }
+
+        // Refresh "my registrations" list
+        const { data: fresh } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('competition_id', selectedComp)
+            .eq('club', clubName)
+            .order('created_at');
+        setMyRegs((fresh ?? []).map(rowToRegEntry));
 
         setRegStatus("sent");
         setSelectedPlayers([]);
@@ -2833,6 +2854,22 @@ export default function ClubPage() {
                                             <p className="form-message" style={{ color: "var(--color-error, red)" }}>
                                                 {lang === "sv" ? "⚠ Kunde inte skicka anmälan. Försök igen." : "⚠ Could not submit registration. Please try again."}
                                             </p>
+                                        )}
+
+                                        {myRegs.length > 0 && (
+                                            <div style={{ marginTop: "1.25rem", borderTop: "1px solid var(--line)", paddingTop: "1rem" }}>
+                                                <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>
+                                                    {lang === "sv" ? "Redan anmälda:" : "Already registered:"}
+                                                </p>
+                                                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                                    {myRegs.filter((r) => !PAIR_CATS.includes(r.category)).map((r) => (
+                                                        <li key={r.id ?? r.createdAt} style={{ fontSize: "0.85rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                                                            <span>{r.firstName} {r.lastName}</span>
+                                                            <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>Klass {r.category} · {r.title}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
                                         )}
                                     </>
                                 )}
