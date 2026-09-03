@@ -1890,7 +1890,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             {addPlayerOpen && (() => {
                 const currentIds = new Set(players.map((p) => p.id));
                 const q = addPlayerSearch.toLowerCase().trim();
-                const candidates = basePlayers
+                const candidates = compPlayers
                     .filter((p) => !currentIds.has(p.id))
                     .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.club ?? "").toLowerCase().includes(q))
                     .slice(0, 30);
@@ -2310,6 +2310,7 @@ export default function ClubPage() {
     }
 
     function saveAndSet(next: ClubPlayer[]) {
+        if (!clubName) return;
         saveClubRoster(clubName, next);
         setPlayers(next);
         setSyncError(null);
@@ -2336,7 +2337,7 @@ export default function ClubPage() {
         saveAndSet([...players, {
             id: `club-${Date.now()}`,
             name: newName.trim(),
-            club: clubName,
+            club: clubName ?? "",
             classLevel: newClass,
             ageCategory: newCategory,
         }]);

@@ -288,7 +288,7 @@ export default function ScoringPage() {
                     const defaultName = `${lang === "sv" ? "Lag" : "Team"} ${teamIndex + 1}`;
                     if (name === defaultName) {
                         const club = registrationPlayers.find((p) => p.id === playerId)?.club || t.sc_no_team;
-                        const sibling = cur.filter((t) => t.id !== team.id && t.playerIds.length > 0 && (registrationPlayers.find((p) => p.id === t.playerIds[0])?.club || t.sc_no_team) === club).length;
+                        const sibling = cur.filter((ta) => ta.id !== team.id && ta.playerIds.length > 0 && (registrationPlayers.find((p) => p.id === ta.playerIds[0])?.club || t.sc_no_team) === club).length;
                         name = sibling === 0 ? club : `${club} ${sibling + 1}`;
                     }
                 }
@@ -397,7 +397,7 @@ export default function ScoringPage() {
             .forEach((k) => localStorage.removeItem(k));
         localStorage.removeItem(activeContestKey);
         setOldContestIds([]);
-        setPlayers(loadAllPlayers());
+        setPlayers(loadAllPlayers(basePlayers));
         setTeamAssignments([]); setActiveTeamId(null);
         setLaneAssignments({}); setActiveLane(null);
         setStatus("reset");

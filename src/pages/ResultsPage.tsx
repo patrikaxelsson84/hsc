@@ -452,7 +452,7 @@ export default function ResultsPage() {
                 </div>
                 <button className="secondary-action score-button" type="button" onClick={toggleFullscreen}>
                     {isFullscreen ? <Minimize size={17} aria-hidden="true" /> : <Maximize size={17} aria-hidden="true" />}
-                    {isFullscreen ? (t.lang === "sv" ? "Minimera" : "Exit fullscreen") : (t.lang === "sv" ? "Helskärm" : "Fullscreen")}
+                    {isFullscreen ? (lang === "sv" ? "Minimera" : "Exit fullscreen") : (lang === "sv" ? "Helskärm" : "Fullscreen")}
                 </button>
                 <button className="secondary-action score-button" type="button" onClick={() => window.print()}>
                     <Printer size={17} aria-hidden="true" />

@@ -328,6 +328,8 @@ const en = {
     admin_users_admin_save:     "Save",
     admin_users_saved:          "Saved!",
     menu_users:                 "Users",
+    reg_competition:            "Competition",
+    reg_select_competition:     "Select competition…",
 } as const;
 
 const sv: Record<keyof typeof en, string> = {
@@ -656,10 +658,12 @@ const sv: Record<keyof typeof en, string> = {
     admin_users_admin_save:     "Spara",
     admin_users_saved:          "Sparat!",
     menu_users:                 "Användare",
+    reg_competition:            "Tävling",
+    reg_select_competition:     "Välj tävling…",
 };
 
-const translations = { en, sv } as const;
-type Translations = typeof en;
+const translations = { en, sv };
+type Translations = { [K in keyof typeof en]: string };
 
 interface LangContextValue {
     lang: Lang;
