@@ -79,14 +79,26 @@ export default function PlayersPage() {
 
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [editingPlayer, setEditingPlayer] = useState<PlayerScore | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
-    function savePlayer() {
+    async function savePlayer() {
         if (!editingPlayer) return;
+        setSaving(true);
+        setSaveError(null);
         const updated = players.map((p) => p.id === editingPlayer.id ? editingPlayer : p);
         setPlayers(updated);
-        savePlayers(updated);
-        if (editingPlayer.club !== selectedTeam) setSelectedTeam(null);
-        setEditingPlayer(null);
+        // only save real GitHub players, not pending localStorage registrations
+        const toSave = updated.filter((p) => !p.id.startsWith("reg-"));
+        try {
+            await savePlayers(toSave);
+            if (editingPlayer.club !== selectedTeam) setSelectedTeam(null);
+            setEditingPlayer(null);
+        } catch (err) {
+            setSaveError(err instanceof Error ? err.message : "Kunde inte spara till GitHub");
+        } finally {
+            setSaving(false);
+        }
     }
 
     const selectedPlayers = selectedTeam ? playersByTeam[selectedTeam] ?? [] : [];
@@ -191,6 +203,12 @@ export default function PlayersPage() {
                 </section>
             )}
 
+            {saveError && (
+                <p style={{ color: "var(--color-error, red)", marginBottom: "0.75rem", fontSize: "0.875rem" }}>
+                    ⚠ GitHub-fel: {saveError}
+                </p>
+            )}
+
             {editingPlayer && (
                 <div className="modal-overlay">
                     <div className="modal-card">
@@ -245,8 +263,8 @@ export default function PlayersPage() {
                         </select>
 
                         <div className="modal-buttons">
-                            <button className="primary-action" onClick={savePlayer}>
-                                {t.players_save}
+                            <button className="primary-action" onClick={savePlayer} disabled={saving}>
+                                {saving ? "Sparar…" : t.players_save}
                             </button>
                             <button className="secondary-action" onClick={() => setEditingPlayer(null)}>
                                 {t.players_cancel}

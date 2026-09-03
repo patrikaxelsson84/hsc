@@ -238,12 +238,18 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
     const [pairingType,   setPairingType]   = useState<PairCat>("mix-d");
     const [pairSlots,     setPairSlots]     = useState<string[]>(["", ""]);
 
-    useEffect(() => {
+    const [refreshing, setRefreshing] = useState(false);
+
+    function fetchRegs(initial = false) {
+        if (initial) setRegsLoading(true); else setRefreshing(true);
         supabase.from('registrations').select('*').order('created_at').then(({ data }) => {
             setAllRegs((data ?? []).map(rowToRegEntry));
             setRegsLoading(false);
+            setRefreshing(false);
         });
-    }, []);
+    }
+
+    useEffect(() => { fetchRegs(true); }, []);
 
     async function persistRegs(next: RegEntry[]) {
         const prevIds = new Set(allRegs.map((r) => r.id).filter(Boolean));
@@ -331,6 +337,17 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
 
     return (
         <div className="club-incoming-section">
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem" }}>
+                <button
+                    type="button"
+                    className="secondary-action"
+                    style={{ fontSize: "0.8rem", padding: "4px 10px" }}
+                    disabled={refreshing}
+                    onClick={() => fetchRegs(false)}
+                >
+                    {refreshing ? "…" : (lang === "sv" ? "Uppdatera" : "Refresh")}
+                </button>
+            </div>
             {myComps.map((comp) => {
                 // Keep global indices so edits/deletes target the right entry
                 const compRegs = allRegs
@@ -798,10 +815,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     const myComps = loadCompetitions().filter((c) => isOrganizerOf(c.organizer, clubName));
 
-    const allRegs: RegEntry[] = (() => {
-        try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
-        catch { return []; }
-    })();
+    const [allRegs, setAllRegs] = useState<RegEntry[]>([]);
+
+    useEffect(() => {
+        supabase.from('registrations').select('*').order('created_at').then(({ data }) => {
+            setAllRegs((data ?? []).map(rowToRegEntry));
+        });
+    }, []);
 
     const [view,               setView]               = useState<OwnView>("pick");
     const [selectedCompId,     setSelectedCompId]     = useState<string | null>(null);
@@ -2288,7 +2308,7 @@ export default function ClubPage() {
         .sort((a, b) => a.date.localeCompare(b.date));
     const [selectedComp,    setSelectedComp]    = useState("");
     const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-    const [regStatus,       setRegStatus]       = useState<"idle" | "sent">("idle");
+    const [regStatus,       setRegStatus]       = useState<"idle" | "sent" | "saving" | "error">("idle");
     const [mixPairs,        setMixPairs]        = useState<{ p1Id: string; p2Id: string }[]>([]);
     const [mixP1,           setMixP1]           = useState("");
     const [mixP2,           setMixP2]           = useState("");
@@ -2380,11 +2400,10 @@ export default function ClubPage() {
         return { firstName, lastName: rest.join(" "), club: p.club, category: cat, title: playerToTitle(p), createdAt: ts, competitionId: selectedComp ?? undefined, ...extra };
     }
 
-    function submitRegistration(e: FormEvent) {
+    async function submitRegistration(e: FormEvent) {
         e.preventDefault();
         const hasAny = selectedPlayers.length > 0 || mixPairs.length > 0 || regDubbel.length > 0 || regTeams.some((t) => t.playerIds.length > 0);
         if (!selectedComp || !hasAny) return;
-        const existing: RegEntry[] = JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
         const entries: RegEntry[] = [];
 
         // Individual
@@ -2420,7 +2439,17 @@ export default function ClubPage() {
             });
         }
 
-        localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify([...existing, ...entries]));
+        setRegStatus("saving");
+        const results = await Promise.all(
+            entries.map((r) => supabase.from('registrations').insert(regEntryToRow(r)))
+        );
+        const failed = results.find((r) => r.error);
+        if (failed?.error) {
+            setRegStatus("error");
+            setTimeout(() => setRegStatus("idle"), 6000);
+            return;
+        }
+
         setRegStatus("sent");
         setSelectedPlayers([]);
         setMixPairs([]); setMixP1(""); setMixP2("");
@@ -2792,13 +2821,18 @@ export default function ClubPage() {
 
                                         <div className="comp-form-actions" style={{ marginTop: "1.25rem" }}>
                                             <button className="primary-action score-button" type="submit"
-                                                disabled={selectedPlayers.length === 0 && mixPairs.length === 0 && regDubbel.length === 0 && !regTeams.some((t) => t.playerIds.length > 0)}>
+                                                disabled={regStatus === "saving" || (selectedPlayers.length === 0 && mixPairs.length === 0 && regDubbel.length === 0 && !regTeams.some((t) => t.playerIds.length > 0))}>
                                                 <Send size={16} aria-hidden="true" />
-                                                {t.club_submit_reg}
+                                                {regStatus === "saving" ? (lang === "sv" ? "Skickar…" : "Sending…") : t.club_submit_reg}
                                             </button>
                                         </div>
                                         {regStatus === "sent" && (
                                             <p className="form-message">{t.club_reg_sent}</p>
+                                        )}
+                                        {regStatus === "error" && (
+                                            <p className="form-message" style={{ color: "var(--color-error, red)" }}>
+                                                {lang === "sv" ? "⚠ Kunde inte skicka anmälan. Försök igen." : "⚠ Could not submit registration. Please try again."}
+                                            </p>
                                         )}
                                     </>
                                 )}
