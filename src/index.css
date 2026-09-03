@@ -2406,10 +2406,32 @@ a {
 
   .admin-shell aside {
     border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .admin-shell aside > div:first-child {
+    display: none;
   }
 
   .admin-shell nav {
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .admin-shell nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-link {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
   }
 
   .metric-grid,
