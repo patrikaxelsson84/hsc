@@ -2348,7 +2348,10 @@ export default function ClubPage() {
 
     function saveEdit() {
         if (!editPlayer) return;
-        saveAndSet(players.map((p) => p.id === editPlayer.id ? editPlayer : p));
+        const updated = players.map((p) => p.id === editPlayer.id ? editPlayer : p);
+        // Remove player from this club's list if their club was changed
+        const filtered = updated.filter((p) => p.club.toLowerCase() === (clubName ?? "").toLowerCase());
+        saveAndSet(filtered);
         setEditPlayer(null);
     }
 
