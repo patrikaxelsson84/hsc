@@ -726,12 +726,13 @@ function ClubSettings({ clubName }: { clubName: string }) {
     const [next2,    setNext2]    = useState("");
     const [status,   setStatus]   = useState<"idle" | "ok" | "wrongCurrent" | "mismatch">("idle");
 
-    function handleSave(e: React.FormEvent) {
+    async function handleSave(e: React.FormEvent) {
         e.preventDefault();
-        if (!checkClubPassword(clubName, current)) { setStatus("wrongCurrent"); return; }
         if (next1 !== next2) { setStatus("mismatch"); return; }
         if (!next1.trim()) return;
-        setClubPassword(clubName, next1);
+        const ok = await checkClubPassword(clubName, current);
+        if (!ok) { setStatus("wrongCurrent"); return; }
+        await setClubPassword(clubName, next1);
         setCurrent(""); setNext1(""); setNext2("");
         setStatus("ok");
     }
