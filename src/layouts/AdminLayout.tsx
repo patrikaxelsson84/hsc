@@ -1,4 +1,4 @@
-import { ArrowLeft, Lock, LogIn, LogOut, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Lock, LogIn, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, Outlet } from "react-router-dom";
 import LangSelect from "../components/LangSelect";

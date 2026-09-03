@@ -330,7 +330,7 @@ const en = {
     menu_users:                 "Users",
 } as const;
 
-const sv: typeof en = {
+const sv: Record<keyof typeof en, string> = {
     // ── Header / brand ─────────────────────────────────────────────
     brand_subtitle:         "Tävlingsportal",
 
