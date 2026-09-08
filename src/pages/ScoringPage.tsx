@@ -1,10 +1,11 @@
-import { ArrowLeft, Archive, ClipboardList, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
+import { ArrowLeft, Archive, CalendarDays, ClipboardList, MapPin, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
 import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
+import { loadCompetitions } from "../data/competitions";
 
 function titleToAgeCategory(title: string): AgeCategory {
     if (title === "mrs") return "dam";
@@ -46,21 +47,9 @@ type ClassFilter = ClassLevel | typeof allClasses;
 type LaneFilter  = number | "all";
 type ContestView = "menu" | "start" | "type" | "registration" | "lanes" | "teams" | "old" | "scoring";
 
-const contestNames = [
-    "Tingsryd Open","Björkenäs Open","Jämjö Open","SM ute","Lilltorp Open",
-    "Roslagen Open","Wezet Open","Dynapac Open","Viby Open","Växjö Open inne",
-    "Höstskon Carlskrona","Cup Sibbamåla Open","Värendspokalen","Moheda Open",
-    "Växjö Open","Smålandsmästaren ute","Blekinge DM ute","Svealand DM ute",
-    "Smålandsmästaren inne","Blekinge DM inne","Svealand DM inne","SM inne",
-    "Gotland Open","Vaxholm Open","Åseda Open","Färsna Cup","Septemberskon",
-    "Novemberkampen","Gotland DM inne","Gotland DM ute","Vaxholm Indoor Cup",
-    "Sibbamålamästerskapet","Moheda-Ringen","Ölandsmästaren","Cementa Open",
-];
-
-const contests = contestNames.map((name) => ({
-    id: name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),
-    name,
-}));
+function slugifyContest(name: string) {
+    return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
 
 const contestTypes = [
     "Mixed","Dubbel","Team","Mr.","Mrs.","Junior","Minions",
@@ -127,8 +116,8 @@ function getSavedContestIds() {
             } catch { return false; }
         });
     return [...scoreRunIds, ...liveRunIds].filter((runId) => {
-        const [contestId, typeId] = runId.split("__");
-        return Boolean(contests.find((c) => c.id === contestId)) && parseTypeSelection(typeId).ids.length > 0;
+        const [, typeId] = runId.split("__");
+        return parseTypeSelection(typeId).ids.length > 0;
     });
 }
 
@@ -136,8 +125,19 @@ export default function ScoringPage() {
     const { t, lang } = useLanguage();
     const { players: basePlayers, loading: baseLoading } = usePlayers();
 
+    const today = new Date().toISOString().slice(0, 10);
+    const allComps = useMemo(() => loadCompetitions().sort((a, b) => a.date.localeCompare(b.date)), []);
+    const contests = useMemo(() => allComps.map((c) => ({
+        id: slugifyContest(c.name),
+        name: c.name,
+        date: c.date,
+        organizer: c.organizer,
+        location: c.location,
+    })), [allComps]);
+    const upcomingContests = contests.filter((c) => c.date >= today);
+
     const [view,                    setView]                    = useState<ContestView>("menu");
-    const [competitionId,           setCompetitionId]           = useState(contests[0].id);
+    const [competitionId,           setCompetitionId]           = useState(() => (contests[0]?.id ?? ""));
     const [selectedContestTypeIds,  setSelectedContestTypeIds]  = useState<string[]>([]);
     const [contestTypeId,           setContestTypeId]           = useState("");
     const [selectedPlayerIds,       setSelectedPlayerIds]       = useState<string[]>([]);
@@ -445,6 +445,7 @@ export default function ScoringPage() {
 
     // ── CHOOSE CONTEST ───────────────────────────────────────────────────────
     if (view === "start") {
+        const pastContests = contests.filter((c) => c.date < today);
         return (
             <div className="admin-page">
                 <div className="admin-page-header">
@@ -459,14 +460,47 @@ export default function ScoringPage() {
                     </button>
                 </div>
 
-                <section className="contest-grid" aria-label={t.sc_heading_choose}>
-                    {contests.map((contest) => (
-                        <button className="contest-card" key={contest.id} type="button" onClick={() => chooseContest(contest.id)}>
-                            <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
-                            <span>{contest.name}</span>
-                        </button>
-                    ))}
-                </section>
+                {upcomingContests.length > 0 && (
+                    <section className="contest-grid" aria-label={t.sc_heading_choose}>
+                        {upcomingContests.map((contest) => (
+                            <button className="contest-card" key={contest.id} type="button" onClick={() => chooseContest(contest.id)}>
+                                <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
+                                <span>
+                                    {contest.name}
+                                    <span className="contest-card-meta">
+                                        <CalendarDays size={12} aria-hidden="true" />
+                                        {contest.date}
+                                        {contest.location && <><MapPin size={12} aria-hidden="true" />{contest.location}</>}
+                                    </span>
+                                </span>
+                            </button>
+                        ))}
+                    </section>
+                )}
+
+                {pastContests.length > 0 && (
+                    <>
+                        <p className="sc-section-label">{lang === "sv" ? "Tidigare tävlingar" : "Past competitions"}</p>
+                        <section className="contest-grid contest-grid--past" aria-label={lang === "sv" ? "Tidigare tävlingar" : "Past competitions"}>
+                            {pastContests.slice().reverse().map((contest) => (
+                                <button className="contest-card contest-card--past" key={contest.id} type="button" onClick={() => chooseContest(contest.id)}>
+                                    <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
+                                    <span>
+                                        {contest.name}
+                                        <span className="contest-card-meta">
+                                            <CalendarDays size={12} aria-hidden="true" />
+                                            {contest.date}
+                                        </span>
+                                    </span>
+                                </button>
+                            ))}
+                        </section>
+                    </>
+                )}
+
+                {contests.length === 0 && (
+                    <p className="form-message">{lang === "sv" ? "Inga tävlingar har lagts till ännu." : "No competitions added yet."}</p>
+                )}
             </div>
         );
     }

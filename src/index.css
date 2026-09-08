@@ -1216,6 +1216,42 @@ a {
   opacity: 1;
 }
 
+.contest-card > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.contest-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.contest-card--past {
+  opacity: 0.65;
+}
+
+.contest-card--past:hover {
+  opacity: 1;
+}
+
+.sc-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 20px 0 8px;
+}
+
+.contest-grid--past {
+  opacity: 0.9;
+}
+
 .admin-panel {
   padding: 22px;
 }
