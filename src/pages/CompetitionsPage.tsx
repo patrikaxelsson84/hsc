@@ -67,6 +67,29 @@ function activateRun(runId: string, compName: string) {
     localStorage.setItem("hsc-active-v1", JSON.stringify({ runId, contestName: compName, typeName: typePart }));
 }
 
+const BASE = "https://www.svhkf.se/images/logos/";
+const CLUB_LOGOS: Record<string, string> = {
+    "Tingsryd Hsc":       BASE + "THSC_100.png",
+    "Lanternan":          BASE + "Lanternan_100.png",
+    "Lanternan Hsk":      BASE + "Lanternan_100.png",
+    "Jämjö Hsk":          BASE + "Jamjo_100.png",
+    "SvHKF":              BASE + "SvHKF_transparent_100w.png",
+    "Balders Hsk":        BASE + "balder_100.png",
+    "Viby Hsk":           BASE + "VibyHsk_100.png",
+    "Wezet Hsk":          BASE + "WezetHSK_100.png",
+    "Dynapac Hsk":        BASE + "Dynax.png",
+    "Dyna X Karlskrona":  BASE + "Dynax.png",
+    "Korpen Nybro":       BASE + "KorpenNybro_100.png",
+    "Carlskrona Hsc":     BASE + "carlskrona_100.png",
+    "Korpen Åseda":       BASE + "korpenaseda_100.png",
+    "Värends Hsk":        BASE + "VarendsHsk_100.png",
+    "Vaxholm Hsk":        BASE + "Vaxholm_100.png",
+    "Växjö Hsk":          BASE + "Smalandskastare_100.png",
+    "Växjö":              BASE + "Smalandskastare_100.png",
+    "Team Småland Hsk":   BASE + "Smalandskastare_100.png",
+    "Sibbamåla If":       BASE + "SvHKF_transparent_100w.png",
+};
+
 const LOGO_COLORS = [
     "#0f766e","#0369a1","#7c3aed","#b45309","#be123c",
     "#15803d","#9a3412","#1d4ed8","#6d28d9","#0f766e",
@@ -361,12 +384,18 @@ const pastByYear = useMemo(() => {
                                         onClick={() => openCompResults(c)}
                                         title="Visa resultat"
                                     >
-                                        <div
-                                            className="past-comp-logo"
-                                            style={{ background: clubColor(c.organizer || c.name) }}
-                                        >
-                                            {clubInitials(c.organizer || c.name)}
-                                        </div>
+                                        {CLUB_LOGOS[c.organizer] ? (
+                                            <div className="past-comp-logo past-comp-logo--img">
+                                                <img src={CLUB_LOGOS[c.organizer]} alt={c.organizer} />
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className="past-comp-logo"
+                                                style={{ background: clubColor(c.organizer || c.name) }}
+                                            >
+                                                {clubInitials(c.organizer || c.name)}
+                                            </div>
+                                        )}
                                         <p className="past-comp-name">{c.name}</p>
                                         <div className="past-comp-meta">
                                             <span>{c.date}</span>

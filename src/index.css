@@ -2354,6 +2354,17 @@ a {
   text-align: center;
 }
 
+.past-comp-logo--img {
+  background: transparent;
+  overflow: hidden;
+}
+
+.past-comp-logo--img img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 .past-comp-name {
   font-size: 0.78rem;
   font-weight: 600;
