@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
-import { submitPendingChange } from "../lib/pendingChanges";
+import { submitPendingChange, loadRejectedAddIds } from "../lib/pendingChanges";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -2286,26 +2286,37 @@ export default function ClubPage() {
 
     useEffect(() => {
         if (baseLoading || !clubName) return;
-        const roster = loadClubRoster(clubName, basePlayers);
-        const regs: RegEntry[] = (() => {
-            try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
-            catch { return []; }
+        const name = clubName;
+        (async () => {
+            const rejectedIds = await loadRejectedAddIds(name);
+            let roster = loadClubRoster(name, basePlayers);
+            if (rejectedIds.size > 0) {
+                const cleaned = roster.filter((p) => !rejectedIds.has(p.id));
+                if (cleaned.length !== roster.length) {
+                    saveClubRoster(name, cleaned);
+                }
+                roster = cleaned;
+            }
+            const regs: RegEntry[] = (() => {
+                try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
+                catch { return []; }
+            })();
+            const rosterNames = new Set(roster.map((p) => p.name.toLowerCase()));
+            const fromRegs: ClubPlayer[] = regs
+                .filter((r) => r.club?.toLowerCase() === name.toLowerCase())
+                .filter((r) => !PAIR_CATS.includes(r.category))
+                .filter((r) => !rosterNames.has(`${r.firstName} ${r.lastName}`.trim().toLowerCase()))
+                .map((r) => ({
+                    id: `reg-${r.createdAt ?? Date.now()}`,
+                    name: `${r.firstName} ${r.lastName}`.trim(),
+                    club: r.club,
+                    classLevel: (Number(r.category) || 4) as ClassLevel,
+                    ageCategory: titleToAgeCategory(r.title),
+                }));
+            const merged = fromRegs.length === 0 ? roster : [...roster, ...fromRegs];
+            if (fromRegs.length > 0) saveClubRoster(name, merged);
+            setPlayers(merged);
         })();
-        const rosterNames = new Set(roster.map((p) => p.name.toLowerCase()));
-        const fromRegs: ClubPlayer[] = regs
-            .filter((r) => r.club?.toLowerCase() === clubName.toLowerCase())
-            .filter((r) => !PAIR_CATS.includes(r.category))
-            .filter((r) => !rosterNames.has(`${r.firstName} ${r.lastName}`.trim().toLowerCase()))
-            .map((r) => ({
-                id: `reg-${r.createdAt ?? Date.now()}`,
-                name: `${r.firstName} ${r.lastName}`.trim(),
-                club: r.club,
-                classLevel: (Number(r.category) || 4) as ClassLevel,
-                ageCategory: titleToAgeCategory(r.title),
-            }));
-        const merged = fromRegs.length === 0 ? roster : [...roster, ...fromRegs];
-        if (fromRegs.length > 0) saveClubRoster(clubName, merged);
-        setPlayers(merged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [baseLoading, clubName]);
     const [showAdd,     setShowAdd]     = useState(false);

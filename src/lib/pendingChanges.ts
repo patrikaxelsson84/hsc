@@ -38,6 +38,16 @@ export async function loadPendingChanges(): Promise<PendingChange[]> {
     return (data ?? []) as PendingChange[];
 }
 
+export async function loadRejectedAddIds(clubName: string): Promise<Set<string>> {
+    const { data } = await supabase
+        .from("pending_player_changes")
+        .select("player_id")
+        .eq("club_name", clubName)
+        .eq("change_type", "add")
+        .eq("status", "rejected");
+    return new Set((data ?? []).map((r: { player_id: string }) => r.player_id));
+}
+
 export async function resolveChange(id: string, status: "approved" | "rejected"): Promise<void> {
     await supabase.from("pending_player_changes").update({ status }).eq("id", id);
 }
