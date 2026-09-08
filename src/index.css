@@ -2321,6 +2321,21 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.past-comp-card:hover {
+  border-color: rgba(15, 118, 110, 0.36);
+  box-shadow: 0 6px 24px rgba(31, 41, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+.past-comp-card:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.22);
+  outline-offset: 2px;
 }
 
 .past-comp-logo {

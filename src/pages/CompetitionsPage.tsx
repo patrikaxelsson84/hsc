@@ -1,6 +1,6 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useMemo } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { type Competition, loadCompetitions, saveCompetitions } from "../data/competitions";
 import { useLanguage } from "../lib/language";
 
@@ -42,6 +42,31 @@ async function fetchSvhkfCompetitions(): Promise<Omit<Competition, "id" | "regis
     return results;
 }
 
+function slugify(name: string) {
+    return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function findRunIds(compName: string): string[] {
+    const prefix = slugify(compName) + "__";
+    const ids: string[] = [];
+    for (const key of Object.keys(localStorage)) {
+        let runId: string | null = null;
+        if (key.startsWith("hsc-scores-v3-")) runId = key.slice("hsc-scores-v3-".length);
+        else if (key.startsWith("hsc-live-v1-"))  runId = key.slice("hsc-live-v1-".length);
+        if (runId && runId.startsWith(prefix) && !ids.includes(runId)) ids.push(runId);
+    }
+    return ids;
+}
+
+function activateRun(runId: string, compName: string) {
+    const saved = localStorage.getItem(`hsc-scores-v3-${runId}`);
+    const live  = localStorage.getItem(`hsc-live-v1-${runId}`);
+    const data  = saved || live;
+    if (data) localStorage.setItem(`hsc-live-v1-${runId}`, data);
+    const typePart = runId.split("__")[1] ?? "";
+    localStorage.setItem("hsc-active-v1", JSON.stringify({ runId, contestName: compName, typeName: typePart }));
+}
+
 const LOGO_COLORS = [
     "#0f766e","#0369a1","#7c3aed","#b45309","#be123c",
     "#15803d","#9a3412","#1d4ed8","#6d28d9","#0f766e",
@@ -61,7 +86,9 @@ const emptyForm = { name: "", date: "", organizer: "", location: "" };
 
 export default function CompetitionsPage() {
     const { t } = useLanguage();
+    const navigate = useNavigate();
     const [competitions, setCompetitions] = useState<Competition[]>(loadCompetitions);
+    const [noResultsFor, setNoResultsFor] = useState<string | null>(null);
     const [showForm,    setShowForm]    = useState(false);
     const [form,        setForm]        = useState(emptyForm);
     const [syncStatus,  setSyncStatus]  = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -138,6 +165,17 @@ export default function CompetitionsPage() {
         syncStatus === "done"    ? t.comps_sync_done    :
         syncStatus === "error"   ? t.comps_sync_error   :
         t.comps_sync_btn;
+
+    function openCompResults(comp: Competition) {
+        const runs = findRunIds(comp.name);
+        if (runs.length === 0) {
+            setNoResultsFor(comp.id);
+            setTimeout(() => setNoResultsFor(null), 3000);
+            return;
+        }
+        activateRun(runs[0], comp.name);
+        navigate("/admin/results");
+    }
 
     const today = new Date().toISOString().slice(0, 10);
 const sorted = [...competitions].sort((a, b) => a.date.localeCompare(b.date));
@@ -316,11 +354,16 @@ const pastByYear = useMemo(() => {
                             <h2 className="past-comps-year-heading">Tävlingar {year}</h2>
                             <div className="past-comps-grid">
                                 {comps.map((c) => (
-                                    <div key={c.id} className="past-comp-card">
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        className="past-comp-card"
+                                        onClick={() => openCompResults(c)}
+                                        title="Visa resultat"
+                                    >
                                         <div
                                             className="past-comp-logo"
                                             style={{ background: clubColor(c.organizer || c.name) }}
-                                            title={c.organizer || c.name}
                                         >
                                             {clubInitials(c.organizer || c.name)}
                                         </div>
@@ -329,8 +372,11 @@ const pastByYear = useMemo(() => {
                                             <span>{c.date}</span>
                                             {c.organizer && <span>{c.organizer}</span>}
                                             {c.location && <span>{c.location}</span>}
+                                            {noResultsFor === c.id && (
+                                                <span style={{ color: "var(--muted)", fontStyle: "italic" }}>Inga sparade resultat</span>
+                                            )}
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </div>
