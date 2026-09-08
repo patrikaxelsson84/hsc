@@ -2271,7 +2271,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
 export default function ClubPage() {
     const { t, lang } = useLanguage();
-    const { players: basePlayers, loading: baseLoading, savePlayers } = usePlayers();
+    const { players: basePlayers, loading: baseLoading } = usePlayers();
     const { competitions: allCompetitions } = useCompetitions();
     const knownClubs = useMemo(
         () => [...new Set(basePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b, "sv")),
@@ -2357,16 +2357,6 @@ export default function ClubPage() {
         saveClubRoster(clubName, next);
         setPlayers(next);
         setSyncError(null);
-        const others = basePlayers.filter(
-            (p) => p.club.toLowerCase() !== clubName.toLowerCase(),
-        );
-        const merged = [
-            ...others,
-            ...next.map((p) => ({ ...p, rounds: [0,0,0,0,0,0,0,0,0,0] as number[], sevenMeters: 0 })),
-        ];
-        savePlayers(merged).catch((err: unknown) => {
-            setSyncError(err instanceof Error ? err.message : "GitHub save failed");
-        });
     }
 
     function handleLogout() {
