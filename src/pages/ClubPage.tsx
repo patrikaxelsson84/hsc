@@ -4,7 +4,7 @@ import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions } from "../data/competitions";
+import { loadCompetitions, isCompetitionOpen } from "../data/competitions";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -2304,7 +2304,7 @@ export default function ClubPage() {
     const [newCategory, setNewCategory] = useState<AgeCategory>("herr");
 
     const competitions = loadCompetitions()
-        .filter((c) => c.registrationOpen)
+        .filter((c) => isCompetitionOpen(c))
         .sort((a, b) => a.date.localeCompare(b.date));
     const [selectedComp,    setSelectedComp]    = useState("");
     const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);

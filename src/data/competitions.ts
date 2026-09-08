@@ -60,3 +60,8 @@ export function loadCompetitions(): Competition[] {
 export function saveCompetitions(list: Competition[]) {
     localStorage.setItem(storageKey, JSON.stringify(list));
 }
+
+export function isCompetitionOpen(comp: Competition): boolean {
+    const today = new Date().toISOString().slice(0, 10);
+    return comp.registrationOpen && comp.date >= today;
+}

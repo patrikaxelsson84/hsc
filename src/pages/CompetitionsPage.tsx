@@ -1,7 +1,7 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { type Competition, loadCompetitions, saveCompetitions } from "../data/competitions";
+import { type Competition, loadCompetitions, saveCompetitions, isCompetitionOpen } from "../data/competitions";
 import { useLanguage } from "../lib/language";
 
 function parseSvhkfDate(raw: string): string {
@@ -347,10 +347,10 @@ const pastByYear = useMemo(() => {
                                     <td>
                                         <button
                                             type="button"
-                                            className={comp.registrationOpen ? "success-pill comp-pill-btn" : "comp-pill-btn comp-pill-closed"}
+                                            className={isCompetitionOpen(comp) ? "success-pill comp-pill-btn" : "comp-pill-btn comp-pill-closed"}
                                             onClick={() => toggleRegistration(comp.id)}
                                         >
-                                            {comp.registrationOpen ? t.status_open : t.status_closed}
+                                            {isCompetitionOpen(comp) ? t.status_open : t.status_closed}
                                         </button>
                                     </td>
                                     <td>

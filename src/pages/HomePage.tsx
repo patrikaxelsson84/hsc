@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions, type Competition } from "../data/competitions";
+import { loadCompetitions, isCompetitionOpen, type Competition } from "../data/competitions";
 import HorseshoeArt from "../components/HorseshoeArt";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
@@ -138,8 +138,8 @@ export default function HomePage() {
                                             {comp.location || full}
                                         </span>
                                     </div>
-                                    <span className={comp.registrationOpen ? "comp-status status-open" : "comp-status status-closed"}>
-                                        {comp.registrationOpen ? t.status_open : t.status_closed}
+                                    <span className={isCompetitionOpen(comp) ? "comp-status status-open" : "comp-status status-closed"}>
+                                        {isCompetitionOpen(comp) ? t.status_open : t.status_closed}
                                     </span>
                                 </li>
                             );

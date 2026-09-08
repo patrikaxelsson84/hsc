@@ -1,7 +1,7 @@
 import { ArrowLeft, MapPin } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions, type Competition } from "../data/competitions";
+import { loadCompetitions, isCompetitionOpen, type Competition } from "../data/competitions";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 
@@ -73,7 +73,7 @@ export default function CompetitionsPublicPage() {
                                             {comp.ranking && (
                                                 <span className="comp-ranking-badge">{t.ranking}</span>
                                             )}
-                                            {comp.registrationOpen ? (
+                                            {isCompetitionOpen(comp) ? (
                                                 <Link
                                                     className="comp-register-btn"
                                                     to={`/registration?comp=${comp.id}`}
