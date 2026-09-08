@@ -2313,8 +2313,18 @@ export default function ClubPage() {
                     classLevel: (Number(r.category) || 4) as ClassLevel,
                     ageCategory: titleToAgeCategory(r.title),
                 }));
-            const merged = fromRegs.length === 0 ? roster : [...roster, ...fromRegs];
+            let merged = fromRegs.length === 0 ? roster : [...roster, ...fromRegs];
             if (fromRegs.length > 0) saveClubRoster(name, merged);
+
+            // If an add-request was approved, the player exists in basePlayers with a player-* ID.
+            // Remove the old club-* duplicate so the player doesn't appear twice.
+            const baseNames = new Set(basePlayers.map((p) => p.name.toLowerCase()));
+            const deduped = merged.filter((p) => !p.id.startsWith("club-") || !baseNames.has(p.name.toLowerCase()));
+            if (deduped.length !== merged.length) {
+                saveClubRoster(name, deduped);
+                merged = deduped;
+            }
+
             setPlayers(merged);
         })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
