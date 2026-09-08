@@ -1,4 +1,5 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useMemo } from "react";
 import { useState } from "react";
 import { type Competition, loadCompetitions, saveCompetitions } from "../data/competitions";
 import { useLanguage } from "../lib/language";
@@ -39,6 +40,21 @@ async function fetchSvhkfCompetitions(): Promise<Omit<Competition, "id" | "regis
     });
 
     return results;
+}
+
+const LOGO_COLORS = [
+    "#0f766e","#0369a1","#7c3aed","#b45309","#be123c",
+    "#15803d","#9a3412","#1d4ed8","#6d28d9","#0f766e",
+];
+
+function clubColor(name: string): string {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+    return LOGO_COLORS[h % LOGO_COLORS.length];
+}
+
+function clubInitials(name: string): string {
+    return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
 const emptyForm = { name: "", date: "", organizer: "", location: "" };
@@ -123,7 +139,20 @@ export default function CompetitionsPage() {
         syncStatus === "error"   ? t.comps_sync_error   :
         t.comps_sync_btn;
 
-    const sorted = [...competitions].sort((a, b) => a.date.localeCompare(b.date));
+    const today = new Date().toISOString().slice(0, 10);
+const sorted = [...competitions].sort((a, b) => a.date.localeCompare(b.date));
+
+const pastByYear = useMemo(() => {
+    const past = competitions.filter((c) => c.date < today);
+    past.sort((a, b) => b.date.localeCompare(a.date));
+    const map: Record<string, typeof past> = {};
+    for (const c of past) {
+        const yr = c.date.slice(0, 4);
+        map[yr] ??= [];
+        map[yr].push(c);
+    }
+    return Object.entries(map).sort(([a], [b]) => Number(b) - Number(a));
+}, [competitions]);
 
     return (
         <div className="admin-page">
@@ -277,6 +306,35 @@ export default function CompetitionsPage() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {pastByYear.length > 0 && (
+                <div className="past-comps-section">
+                    {pastByYear.map(([year, comps]) => (
+                        <div key={year}>
+                            <h2 className="past-comps-year-heading">Tävlingar {year}</h2>
+                            <div className="past-comps-grid">
+                                {comps.map((c) => (
+                                    <div key={c.id} className="past-comp-card">
+                                        <div
+                                            className="past-comp-logo"
+                                            style={{ background: clubColor(c.organizer || c.name) }}
+                                            title={c.organizer || c.name}
+                                        >
+                                            {clubInitials(c.organizer || c.name)}
+                                        </div>
+                                        <p className="past-comp-name">{c.name}</p>
+                                        <div className="past-comp-meta">
+                                            <span>{c.date}</span>
+                                            {c.organizer && <span>{c.organizer}</span>}
+                                            {c.location && <span>{c.location}</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>
