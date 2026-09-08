@@ -120,11 +120,16 @@ function ageCatLabel(cat: AgeCategory, t: ReturnType<typeof useLanguage>["t"]): 
 
 function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => void; knownClubs: string[] }) {
     const { t } = useLanguage();
-    const [club,      setClub]      = useState("");
-    const [password,  setPassword]  = useState("");
-    const [error,     setError]     = useState(false);
-    const [loading,   setLoading]   = useState(false);
-    const [authClubs, setAuthClubs] = useState<string[]>([]);
+    const [club,           setClub]           = useState("");
+    const [password,       setPassword]       = useState("");
+    const [error,          setError]          = useState(false);
+    const [loading,        setLoading]        = useState(false);
+    const [authClubs,      setAuthClubs]      = useState<string[]>([]);
+    const [reqOpen,        setReqOpen]        = useState(false);
+    const [reqName,        setReqName]        = useState("");
+    const [reqContact,     setReqContact]     = useState("");
+    const [reqSending,     setReqSending]     = useState(false);
+    const [reqSent,        setReqSent]        = useState(false);
 
     useEffect(() => {
         ensureClubsExist(knownClubs);
@@ -145,6 +150,22 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
             setPassword("");
         }
         setLoading(false);
+    }
+
+    async function handleClubRequest(e: FormEvent) {
+        e.preventDefault();
+        if (!reqName.trim()) return;
+        setReqSending(true);
+        await submitPendingChange({
+            change_type: "new_club",
+            player_id:   `club-request-${Date.now()}`,
+            player_name: reqName.trim(),
+            club_name:   reqContact.trim() || lang === "sv" ? "Ej angiven" : "Not provided",
+            old_data:    null,
+            new_data:    null,
+        });
+        setReqSending(false);
+        setReqSent(true);
     }
 
     return (
@@ -201,6 +222,49 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
                         <ArrowLeft size={15} aria-hidden="true" />
                         {t.club_back}
                     </Link>
+
+                    <div className="club-request-section">
+                        <button
+                            type="button"
+                            className="club-request-toggle"
+                            onClick={() => { setReqOpen((v) => !v); setReqSent(false); setReqName(""); setReqContact(""); }}
+                        >
+                            {lang === "sv" ? "Registrera en ny klubb?" : "Register a new club?"}
+                        </button>
+
+                        {reqOpen && (
+                            reqSent ? (
+                                <p className="club-request-sent">
+                                    {lang === "sv"
+                                        ? "Förfrågan skickad! Admin granskar och sätter upp inloggning."
+                                        : "Request sent! Admin will review and set up login."}
+                                </p>
+                            ) : (
+                                <form className="club-request-form" onSubmit={handleClubRequest}>
+                                    <label>
+                                        {lang === "sv" ? "Klubbnamn" : "Club name"}
+                                        <input
+                                            required
+                                            value={reqName}
+                                            onChange={(e) => setReqName(e.target.value)}
+                                            placeholder={lang === "sv" ? "t.ex. Linköping HSK" : "e.g. Linköping HSK"}
+                                        />
+                                    </label>
+                                    <label>
+                                        {lang === "sv" ? "Kontaktperson (valfritt)" : "Contact person (optional)"}
+                                        <input
+                                            value={reqContact}
+                                            onChange={(e) => setReqContact(e.target.value)}
+                                            placeholder={lang === "sv" ? "Namn eller e-post" : "Name or email"}
+                                        />
+                                    </label>
+                                    <button className="primary-action" type="submit" disabled={reqSending}>
+                                        {reqSending ? "…" : lang === "sv" ? "Skicka förfrågan" : "Send request"}
+                                    </button>
+                                </form>
+                            )
+                        )}
+                    </div>
                 </div>
             </div>
         </main>

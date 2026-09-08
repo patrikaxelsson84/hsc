@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
+import { addClub } from "./auth";
 
-export type ChangeType = "add" | "edit" | "delete";
+export type ChangeType = "add" | "edit" | "delete" | "new_club";
 export type ChangeStatus = "pending" | "approved" | "rejected";
 
 export interface PlayerData {
@@ -69,6 +70,11 @@ export async function resolveChange(id: string, status: "approved" | "rejected")
 }
 
 export async function applyAndApprove(change: PendingChange): Promise<void> {
+    if (change.change_type === "new_club") {
+        await addClub(change.player_name);
+        await resolveChange(change.id, "approved");
+        return;
+    }
     if (change.change_type === "delete") {
         await supabase.from("players").delete().eq("id", change.player_id);
     } else if (change.change_type === "edit" && change.new_data) {

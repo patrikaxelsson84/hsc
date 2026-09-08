@@ -130,6 +130,8 @@ export default function PlayersPage() {
     const selectedClassCount = new Set(selectedPlayers.map((p) => p.classLevel)).size;
 
     function changeLabel(c: PendingChange): string {
+        if (c.change_type === "new_club")
+            return `Ny klubb: ${c.player_name}${c.club_name && c.club_name !== "Ej angiven" ? ` — kontakt: ${c.club_name}` : ""}`;
         if (c.change_type === "delete")
             return `${c.club_name} vill ta bort ${c.player_name} (klass ${c.old_data?.classLevel ?? "?"}, ${c.old_data?.ageCategory ?? "?"})`;
         if (c.change_type === "add")
@@ -158,7 +160,10 @@ export default function PlayersPage() {
                         {pendingChanges.map((c) => (
                             <li key={c.id} className="pending-change-row">
                                 <span className={`pending-change-type pending-type-${c.change_type}`}>
-                                    {c.change_type === "delete" ? "Ta bort" : c.change_type === "add" ? "Lägg till" : "Ändra"}
+                                    {c.change_type === "delete" ? "Ta bort"
+                                        : c.change_type === "add" ? "Lägg till"
+                                        : c.change_type === "new_club" ? "Ny klubb"
+                                        : "Ändra"}
                                 </span>
                                 <span className="pending-change-desc">{changeLabel(c)}</span>
                                 <div className="pending-change-actions">
