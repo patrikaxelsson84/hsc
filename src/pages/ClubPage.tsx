@@ -75,15 +75,23 @@ function regEntryToRow(entry: Partial<RegEntry>): Record<string, unknown> {
 // ── Roster storage ───────────────────────────────────────────────────────────
 
 function loadClubRoster(clubName: string, basePlayers: PlayerScore[]): ClubPlayer[] {
-    try {
-        const stored: Record<string, ClubPlayer[]> = JSON.parse(localStorage.getItem(ROSTERS_KEY) ?? "{}");
-        if (stored[clubName]) return stored[clubName];
-    } catch { /* fall through */ }
-    const seeded = basePlayers
+    const fromBase = basePlayers
         .filter((p) => p.club.toLowerCase() === clubName.toLowerCase())
         .map((p) => ({ id: p.id, name: p.name, club: p.club, classLevel: p.classLevel, ageCategory: p.ageCategory }));
-    saveClubRoster(clubName, seeded);
-    return seeded;
+    try {
+        const stored: Record<string, ClubPlayer[]> = JSON.parse(localStorage.getItem(ROSTERS_KEY) ?? "{}");
+        if (stored[clubName]) {
+            // Keep locally-added/edited players, but always merge in new players from the master list
+            const storedIds = new Set(stored[clubName].map((p) => p.id));
+            const newFromBase = fromBase.filter((p) => !storedIds.has(p.id));
+            if (newFromBase.length === 0) return stored[clubName];
+            const merged = [...stored[clubName], ...newFromBase];
+            saveClubRoster(clubName, merged);
+            return merged;
+        }
+    } catch { /* fall through */ }
+    saveClubRoster(clubName, fromBase);
+    return fromBase;
 }
 
 function saveClubRoster(clubName: string, roster: ClubPlayer[]) {
