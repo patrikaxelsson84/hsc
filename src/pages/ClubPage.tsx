@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
+import { submitPendingChange } from "../lib/pendingChanges";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -2367,23 +2368,43 @@ export default function ClubPage() {
     function addPlayer(e: FormEvent) {
         e.preventDefault();
         if (!newName.trim()) return;
-        saveAndSet([...players, {
+        const newPlayer = {
             id: `club-${Date.now()}`,
             name: newName.trim(),
             club: clubName ?? "",
             classLevel: newClass,
             ageCategory: newCategory,
-        }]);
+        };
+        saveAndSet([...players, newPlayer]);
+        void submitPendingChange({
+            change_type: "add",
+            player_id:   newPlayer.id,
+            player_name: newPlayer.name,
+            club_name:   clubName ?? "",
+            old_data:    null,
+            new_data:    newPlayer,
+        });
         setNewName(""); setNewClass(4); setNewCategory("herr");
         setShowAdd(false);
     }
 
     function saveEdit() {
         if (!editPlayer) return;
+        const before = players.find((p) => p.id === editPlayer.id);
         const updated = players.map((p) => p.id === editPlayer.id ? editPlayer : p);
         // Remove player from this club's list if their club was changed
         const filtered = updated.filter((p) => p.club.toLowerCase() === (clubName ?? "").toLowerCase());
         saveAndSet(filtered);
+        if (before && editPlayer.id.startsWith("player-")) {
+            void submitPendingChange({
+                change_type: "edit",
+                player_id:   editPlayer.id,
+                player_name: editPlayer.name,
+                club_name:   clubName ?? "",
+                old_data:    { id: before.id, name: before.name, club: before.club, classLevel: before.classLevel, ageCategory: before.ageCategory },
+                new_data:    { id: editPlayer.id, name: editPlayer.name, club: editPlayer.club, classLevel: editPlayer.classLevel, ageCategory: editPlayer.ageCategory },
+            });
+        }
         setEditPlayer(null);
     }
 
@@ -2395,6 +2416,16 @@ export default function ClubPage() {
             : `Are you sure you want to remove ${name} from the club?`;
         if (!window.confirm(msg)) return;
         saveAndSet(players.filter((p) => p.id !== id));
+        if (player && id.startsWith("player-")) {
+            void submitPendingChange({
+                change_type: "delete",
+                player_id:   id,
+                player_name: player.name,
+                club_name:   clubName ?? "",
+                old_data:    { id, name: player.name, club: player.club, classLevel: player.classLevel, ageCategory: player.ageCategory },
+                new_data:    null,
+            });
+        }
         if (id.startsWith("reg-")) {
             const createdAt = id.slice(4);
             try {

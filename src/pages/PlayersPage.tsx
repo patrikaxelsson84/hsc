@@ -1,8 +1,10 @@
-import { ArrowLeft, ArrowRight, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ClassLevel, AgeCategory, PlayerScore } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
+import { loadPendingChanges, resolveChange, applyAndApprove } from "../lib/pendingChanges";
+import type { PendingChange } from "../lib/pendingChanges";
 
 interface RegistrationEntry {
     firstName: string;
@@ -50,7 +52,7 @@ function mergeWithRegistered(basePlayers: PlayerScore[]): PlayerScore[] {
 
 export default function PlayersPage() {
     const { t } = useLanguage();
-    const { players: basePlayers, loading, savePlayers } = usePlayers();
+    const { players: basePlayers, loading, savePlayers, refresh } = usePlayers();
 
     const [players, setPlayers] = useState<PlayerScore[]>([]);
 
@@ -82,6 +84,29 @@ export default function PlayersPage() {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
+    const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+    useEffect(() => {
+        loadPendingChanges().then(setPendingChanges);
+    }, []);
+
+    async function handleApprove(change: PendingChange) {
+        setResolvingId(change.id);
+        await applyAndApprove(change);
+        setPendingChanges((cur) => cur.filter((c) => c.id !== change.id));
+        setResolvingId(null);
+        // Refresh master player list
+        await refresh();
+    }
+
+    async function handleReject(change: PendingChange) {
+        setResolvingId(change.id);
+        await resolveChange(change.id, "rejected");
+        setPendingChanges((cur) => cur.filter((c) => c.id !== change.id));
+        setResolvingId(null);
+    }
+
     async function savePlayer() {
         if (!editingPlayer) return;
         setSaving(true);
@@ -104,8 +129,63 @@ export default function PlayersPage() {
     const selectedPlayers = selectedTeam ? playersByTeam[selectedTeam] ?? [] : [];
     const selectedClassCount = new Set(selectedPlayers.map((p) => p.classLevel)).size;
 
+    function changeLabel(c: PendingChange): string {
+        if (c.change_type === "delete")
+            return `${c.club_name} vill ta bort ${c.player_name} (klass ${c.old_data?.classLevel ?? "?"}, ${c.old_data?.ageCategory ?? "?"})`;
+        if (c.change_type === "add")
+            return `${c.club_name} vill lägga till ${c.player_name} (klass ${c.new_data?.classLevel ?? "?"}, ${c.new_data?.ageCategory ?? "?"})`;
+        if (c.change_type === "edit") {
+            const parts: string[] = [];
+            if (c.old_data?.name !== c.new_data?.name) parts.push(`namn: ${c.old_data?.name} → ${c.new_data?.name}`);
+            if (c.old_data?.classLevel !== c.new_data?.classLevel) parts.push(`klass: ${c.old_data?.classLevel} → ${c.new_data?.classLevel}`);
+            if (c.old_data?.ageCategory !== c.new_data?.ageCategory) parts.push(`kategori: ${c.old_data?.ageCategory} → ${c.new_data?.ageCategory}`);
+            return `${c.club_name} vill ändra ${c.player_name}: ${parts.join(", ")}`;
+        }
+        return `${c.club_name}: ${c.change_type} ${c.player_name}`;
+    }
+
     return (
         <div className="admin-page">
+            {pendingChanges.length > 0 && (
+                <section className="admin-panel pending-changes-panel">
+                    <div className="panel-title-row">
+                        <h2>Väntande ändringar från klubbar</h2>
+                        <span className="success-pill" style={{ background: "var(--color-warning, #b45309)", color: "#fff" }}>
+                            {pendingChanges.length} st
+                        </span>
+                    </div>
+                    <ul className="pending-changes-list">
+                        {pendingChanges.map((c) => (
+                            <li key={c.id} className="pending-change-row">
+                                <span className={`pending-change-type pending-type-${c.change_type}`}>
+                                    {c.change_type === "delete" ? "Ta bort" : c.change_type === "add" ? "Lägg till" : "Ändra"}
+                                </span>
+                                <span className="pending-change-desc">{changeLabel(c)}</span>
+                                <div className="pending-change-actions">
+                                    <button
+                                        className="primary-action score-button"
+                                        type="button"
+                                        disabled={resolvingId === c.id}
+                                        onClick={() => handleApprove(c)}
+                                    >
+                                        <Check size={14} aria-hidden="true" />
+                                        Godkänn
+                                    </button>
+                                    <button
+                                        className="danger-action score-button"
+                                        type="button"
+                                        disabled={resolvingId === c.id}
+                                        onClick={() => handleReject(c)}
+                                    >
+                                        <X size={14} aria-hidden="true" />
+                                        Avvisa
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
             <div className="admin-page-header">
                 <div>
                     <p className="eyebrow">{t.players_eyebrow}</p>
