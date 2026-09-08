@@ -201,7 +201,9 @@ export default function CompetitionsPage() {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-const sorted = [...competitions].sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...competitions]
+        .filter((c) => c.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date));
 
 const pastByYear = useMemo(() => {
     const past = competitions.filter((c) => c.date < today);
