@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
-import { submitPendingChange, loadRejectedAddIds } from "../lib/pendingChanges";
+import { submitPendingChange, loadRejectedAddIds, loadResolvedDeleteChanges } from "../lib/pendingChanges";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -29,6 +29,7 @@ interface ClubPlayer {
     club: string;
     classLevel: ClassLevel;
     ageCategory: AgeCategory;
+    pendingDelete?: boolean;
 }
 
 interface RegEntry {
@@ -2288,14 +2289,30 @@ export default function ClubPage() {
         if (baseLoading || !clubName) return;
         const name = clubName;
         (async () => {
-            const rejectedIds = await loadRejectedAddIds(name);
+            const [rejectedAddIds, { approvedIds: approvedDelIds, rejectedIds: rejectedDelIds }] = await Promise.all([
+                loadRejectedAddIds(name),
+                loadResolvedDeleteChanges(name),
+            ]);
             let roster = loadClubRoster(name, basePlayers);
-            if (rejectedIds.size > 0) {
-                const cleaned = roster.filter((p) => !rejectedIds.has(p.id));
-                if (cleaned.length !== roster.length) {
-                    saveClubRoster(name, cleaned);
-                }
+
+            // Remove club-* players whose add was rejected
+            if (rejectedAddIds.size > 0) {
+                const cleaned = roster.filter((p) => !rejectedAddIds.has(p.id));
+                if (cleaned.length !== roster.length) saveClubRoster(name, cleaned);
                 roster = cleaned;
+            }
+
+            // Admin approved delete → actually remove from roster
+            // Admin rejected delete → restore (unmark pendingDelete)
+            if (approvedDelIds.size > 0 || rejectedDelIds.size > 0) {
+                let changed = false;
+                roster = roster
+                    .filter((p) => { if (approvedDelIds.has(p.id)) { changed = true; return false; } return true; })
+                    .map((p) => {
+                        if (p.pendingDelete && rejectedDelIds.has(p.id)) { changed = true; return { ...p, pendingDelete: false }; }
+                        return p;
+                    });
+                if (changed) saveClubRoster(name, roster);
             }
             const regs: RegEntry[] = (() => {
                 try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
@@ -2431,13 +2448,11 @@ export default function ClubPage() {
 
     function deletePlayer(id: string) {
         const player = players.find((p) => p.id === id);
-        const name = player?.name ?? (lang === "sv" ? "spelaren" : "the player");
-        const msg = lang === "sv"
-            ? `Är du säker på att du vill ta bort ${name} från klubben?`
-            : `Are you sure you want to remove ${name} from the club?`;
-        if (!window.confirm(msg)) return;
-        saveAndSet(players.filter((p) => p.id !== id));
-        if (player && id.startsWith("player-")) {
+        if (!player) return;
+
+        if (id.startsWith("player-")) {
+            // Master-registry player — submit for approval, mark as pending
+            saveAndSet(players.map((p) => p.id === id ? { ...p, pendingDelete: true } : p));
             void submitPendingChange({
                 change_type: "delete",
                 player_id:   id,
@@ -2446,7 +2461,16 @@ export default function ClubPage() {
                 old_data:    { id, name: player.name, club: player.club, classLevel: player.classLevel, ageCategory: player.ageCategory },
                 new_data:    null,
             });
+            return;
         }
+
+        // Locally-added (club-* / reg-*) players: remove immediately, no approval needed
+        const name = player.name ?? (lang === "sv" ? "spelaren" : "the player");
+        const msg = lang === "sv"
+            ? `Är du säker på att du vill ta bort ${name} från klubben?`
+            : `Are you sure you want to remove ${name} from the club?`;
+        if (!window.confirm(msg)) return;
+        saveAndSet(players.filter((p) => p.id !== id));
         if (id.startsWith("reg-")) {
             const createdAt = id.slice(4);
             try {
@@ -2678,22 +2702,30 @@ export default function ClubPage() {
                                     </thead>
                                     <tbody>
                                         {players.map((p) => (
-                                            <tr key={p.id}>
-                                                <td><strong>{p.name}</strong></td>
+                                            <tr key={p.id} className={p.pendingDelete ? "club-player-row--pending-delete" : ""}>
+                                                <td><strong style={p.pendingDelete ? { textDecoration: "line-through", opacity: 0.5 } : {}}>{p.name}</strong></td>
                                                 <td>{t.sc_class_prefix} {p.classLevel}</td>
                                                 <td>{ageCatLabel(p.ageCategory, t)}</td>
                                                 <td className="club-player-actions">
-                                                    <button type="button" className="secondary-action"
-                                                        aria-label={`${t.players_edit_btn} ${p.name}`}
-                                                        onClick={() => setEditPlayer({ ...p })}>
-                                                        <Pencil size={14} aria-hidden="true" />
-                                                        <span className="btn-label">{t.players_edit_btn}</span>
-                                                    </button>
-                                                    <button type="button" className="comp-delete-btn"
-                                                        aria-label={`${t.comps_delete} ${p.name}`}
-                                                        onClick={() => deletePlayer(p.id)}>
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                                    {p.pendingDelete ? (
+                                                        <span className="pending-delete-label">
+                                                            {lang === "sv" ? "Väntar på admin…" : "Awaiting admin…"}
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <button type="button" className="secondary-action"
+                                                                aria-label={`${t.players_edit_btn} ${p.name}`}
+                                                                onClick={() => setEditPlayer({ ...p })}>
+                                                                <Pencil size={14} aria-hidden="true" />
+                                                                <span className="btn-label">{t.players_edit_btn}</span>
+                                                            </button>
+                                                            <button type="button" className="comp-delete-btn"
+                                                                aria-label={`${t.comps_delete} ${p.name}`}
+                                                                onClick={() => deletePlayer(p.id)}>
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

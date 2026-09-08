@@ -48,6 +48,22 @@ export async function loadRejectedAddIds(clubName: string): Promise<Set<string>>
     return new Set((data ?? []).map((r: { player_id: string }) => r.player_id));
 }
 
+export async function loadResolvedDeleteChanges(clubName: string): Promise<{ approvedIds: Set<string>; rejectedIds: Set<string> }> {
+    const { data } = await supabase
+        .from("pending_player_changes")
+        .select("player_id, status")
+        .eq("club_name", clubName)
+        .eq("change_type", "delete")
+        .in("status", ["approved", "rejected"]);
+    const approvedIds = new Set<string>();
+    const rejectedIds = new Set<string>();
+    for (const r of (data ?? []) as { player_id: string; status: string }[]) {
+        if (r.status === "approved") approvedIds.add(r.player_id);
+        else rejectedIds.add(r.player_id);
+    }
+    return { approvedIds, rejectedIds };
+}
+
 export async function resolveChange(id: string, status: "approved" | "rejected"): Promise<void> {
     await supabase.from("pending_player_changes").update({ status }).eq("id", id);
 }

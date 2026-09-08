@@ -1343,6 +1343,16 @@ a {
   filter: brightness(1.1);
 }
 
+.club-player-row--pending-delete {
+  opacity: 0.6;
+}
+
+.pending-delete-label {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
 .panel-title-row h2 {
   color: var(--text-strong);
 }
