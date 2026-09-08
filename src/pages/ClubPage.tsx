@@ -2452,7 +2452,7 @@ export default function ClubPage() {
         }
 
         // Ensure all entries carry the exact clubName so DELETE/INSERT match
-        const normalizedEntries = entries.map((e) => ({ ...e, club: clubName }));
+        const normalizedEntries = entries.map((e) => ({ ...e, club: clubName ?? "" }));
 
         setRegStatus("saving");
 
@@ -2461,7 +2461,7 @@ export default function ClubPage() {
             .from('registrations')
             .delete()
             .eq('competition_id', selectedComp)
-            .ilike('club', clubName);
+            .ilike('club', clubName ?? "");
         if (delError) {
             setRegStatus("error");
             setTimeout(() => setRegStatus("idle"), 6000);
