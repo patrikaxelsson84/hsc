@@ -1,7 +1,7 @@
 import { ArrowLeft, MapPin } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions, isCompetitionOpen, type Competition } from "../data/competitions";
+import { isCompetitionOpen } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 
@@ -15,7 +15,7 @@ function fmtDate(iso: string) {
 }
 
 export default function CompetitionsPublicPage() {
-    const [competitions] = useState<Competition[]>(loadCompetitions);
+    const { competitions } = useCompetitions();
     const { t } = useLanguage();
 
     const today = new Date().toISOString().slice(0, 10);

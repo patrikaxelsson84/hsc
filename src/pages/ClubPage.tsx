@@ -4,7 +4,8 @@ import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions, isCompetitionOpen } from "../data/competitions";
+import { isCompetitionOpen } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -235,7 +236,7 @@ const TITLE_OPTIONS = ["mr", "mrs", "junior", "minior"] as const;
 
 function IncomingRegistrations({ clubName }: { clubName: string }) {
     const { t, lang } = useLanguage();
-    const allComps = loadCompetitions();
+    const { competitions: allComps } = useCompetitions();
     const myComps  = allComps.filter((c) => isOrganizerOf(c.organizer, clubName));
 
     const [allRegs, setAllRegs] = useState<RegEntry[]>([]);
@@ -820,8 +821,8 @@ function ClubSettings({ clubName }: { clubName: string }) {
 
 function OwnCompetition({ clubName }: { clubName: string }) {
     const { t, lang } = useLanguage();
-
-    const myComps = loadCompetitions().filter((c) => isOrganizerOf(c.organizer, clubName));
+    const { competitions } = useCompetitions();
+    const myComps = competitions.filter((c) => isOrganizerOf(c.organizer, clubName));
 
     const [allRegs, setAllRegs] = useState<RegEntry[]>([]);
 
@@ -2271,6 +2272,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 export default function ClubPage() {
     const { t, lang } = useLanguage();
     const { players: basePlayers, loading: baseLoading, savePlayers } = usePlayers();
+    const { competitions: allCompetitions } = useCompetitions();
     const knownClubs = useMemo(
         () => [...new Set(basePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b, "sv")),
         [basePlayers],
@@ -2311,7 +2313,7 @@ export default function ClubPage() {
     const [newClass,    setNewClass]    = useState<ClassLevel>(4);
     const [newCategory, setNewCategory] = useState<AgeCategory>("herr");
 
-    const competitions = loadCompetitions()
+    const competitions = allCompetitions
         .filter((c) => isCompetitionOpen(c))
         .sort((a, b) => a.date.localeCompare(b.date));
     const [selectedComp,    setSelectedComp]    = useState("");

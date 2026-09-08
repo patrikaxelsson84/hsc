@@ -8,18 +8,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadCompetitions, isCompetitionOpen, type Competition } from "../data/competitions";
+import { isCompetitionOpen } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 import HorseshoeArt from "../components/HorseshoeArt";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
-
-function loadUpcoming() {
-    const today = new Date().toISOString().slice(0, 10);
-    return loadCompetitions()
-        .filter((c) => c.date >= today)
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 5);
-}
 
 function fmtDate(iso: string) {
     const d = new Date(iso + "T12:00:00");
@@ -82,8 +75,13 @@ function LoginMenu() {
 }
 
 export default function HomePage() {
-    const [upcoming] = useState<Competition[]>(loadUpcoming);
+    const { competitions } = useCompetitions();
     const { t } = useLanguage();
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = competitions
+        .filter((c) => c.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 5);
 
     return (
         <main className="public-page">

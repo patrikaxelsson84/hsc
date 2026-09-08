@@ -5,7 +5,7 @@ import { usePlayers } from "../contexts/PlayersContext";
 import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
-import { loadCompetitions } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 
 function titleToAgeCategory(title: string): AgeCategory {
     if (title === "mrs") return "dam";
@@ -125,8 +125,9 @@ export default function ScoringPage() {
     const { t, lang } = useLanguage();
     const { players: basePlayers, loading: baseLoading } = usePlayers();
 
+    const { competitions: rawComps } = useCompetitions();
     const today = new Date().toISOString().slice(0, 10);
-    const allComps = useMemo(() => loadCompetitions().sort((a, b) => a.date.localeCompare(b.date)), []);
+    const allComps = useMemo(() => [...rawComps].sort((a, b) => a.date.localeCompare(b.date)), [rawComps]);
     const contests = useMemo(() => allComps.map((c) => ({
         id: slugifyContest(c.name),
         name: c.name,

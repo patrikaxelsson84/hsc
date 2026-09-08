@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { getFile, isConfigured, putFile } from "../lib/github";
+import { supabase } from "../lib/supabase";
+import { getFile, isConfigured } from "../lib/github";
 import { samplePlayers } from "../data/sampleCompetition";
 import type { PlayerScore } from "../lib/scoring";
 
@@ -14,15 +15,25 @@ interface StoredPlayer {
     ageCategory: string;
 }
 
-function toPlayerScore(p: StoredPlayer): PlayerScore {
+function rowToPlayerScore(row: Record<string, unknown>): PlayerScore {
     return {
-        id: p.id,
-        name: p.name,
-        club: p.club,
-        classLevel: p.classLevel as PlayerScore["classLevel"],
-        ageCategory: p.ageCategory as PlayerScore["ageCategory"],
-        rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        id:          row.id as string,
+        name:        row.name as string,
+        club:        (row.club as string) ?? "",
+        classLevel:  ((row.class_level as number) ?? 4) as PlayerScore["classLevel"],
+        ageCategory: ((row.age_category as string) ?? "herr") as PlayerScore["ageCategory"],
+        rounds:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         sevenMeters: 0,
+    };
+}
+
+function playerToRow(p: PlayerScore): Record<string, unknown> {
+    return {
+        id:           p.id,
+        name:         p.name,
+        club:         p.club,
+        class_level:  p.classLevel,
+        age_category: p.ageCategory,
     };
 }
 
@@ -37,22 +48,51 @@ interface PlayersContextValue {
 const PlayersContext = createContext<PlayersContextValue | null>(null);
 
 export function PlayersProvider({ children }: { children: ReactNode }) {
-    const [players, setPlayers] = useState<PlayerScore[]>(
-        isConfigured ? [] : samplePlayers,
-    );
-    const [loading, setLoading] = useState(isConfigured);
+    const [players, setPlayers] = useState<PlayerScore[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError]     = useState<string | null>(null);
-    const shaRef                = useRef<string | undefined>(undefined);
 
     const refresh = useCallback(async () => {
-        if (!isConfigured) return;
         setLoading(true);
         setError(null);
         try {
-            const file = await getFile(PLAYERS_PATH);
-            shaRef.current = file.sha;
-            const stored = JSON.parse(file.content) as StoredPlayer[];
-            setPlayers(stored.map(toPlayerScore));
+            const { data, error: dbErr } = await supabase
+                .from("players")
+                .select("*")
+                .order("name");
+            if (dbErr) throw dbErr;
+
+            if (data && data.length > 0) {
+                setPlayers(data.map(rowToPlayerScore));
+            } else if (isConfigured) {
+                // First run: migrate from GitHub JSON
+                const file = await getFile(PLAYERS_PATH);
+                const stored = JSON.parse(file.content) as StoredPlayer[];
+                if (stored.length > 0) {
+                    await supabase.from("players").upsert(
+                        stored.map((p) => ({
+                            id:           p.id,
+                            name:         p.name,
+                            club:         p.club,
+                            class_level:  p.classLevel,
+                            age_category: p.ageCategory,
+                        }))
+                    );
+                    setPlayers(stored.map((p) => ({
+                        id:          p.id,
+                        name:        p.name,
+                        club:        p.club,
+                        classLevel:  p.classLevel as PlayerScore["classLevel"],
+                        ageCategory: p.ageCategory as PlayerScore["ageCategory"],
+                        rounds:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        sevenMeters: 0,
+                    })));
+                } else {
+                    setPlayers(samplePlayers);
+                }
+            } else {
+                setPlayers(samplePlayers);
+            }
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             setError(msg);
@@ -65,19 +105,16 @@ export function PlayersProvider({ children }: { children: ReactNode }) {
     useEffect(() => { void refresh(); }, [refresh]);
 
     const savePlayers = useCallback(async (updated: PlayerScore[]) => {
-        if (!isConfigured) return;
-        const stored: StoredPlayer[] = updated.map((p) => ({
-            id: p.id,
-            name: p.name,
-            club: p.club,
-            classLevel: p.classLevel,
-            ageCategory: p.ageCategory,
-        }));
-        const content = JSON.stringify(stored, null, 2);
-        await putFile(PLAYERS_PATH, content, shaRef.current, "update players");
-        shaRef.current = undefined;
-        await refresh();
-    }, [refresh]);
+        const currentIds = new Set(players.map((p) => p.id));
+        const updatedIds = new Set(updated.map((p) => p.id));
+        const removed    = [...currentIds].filter((id) => !updatedIds.has(id));
+
+        if (removed.length > 0) {
+            await supabase.from("players").delete().in("id", removed);
+        }
+        await supabase.from("players").upsert(updated.map(playerToRow));
+        setPlayers(updated);
+    }, [players]);
 
     return (
         <PlayersContext.Provider value={{ players, loading, error, refresh, savePlayers }}>

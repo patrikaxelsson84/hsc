@@ -1,7 +1,8 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { type Competition, loadCompetitions, saveCompetitions, isCompetitionOpen } from "../data/competitions";
+import { type Competition, isCompetitionOpen } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 import { useLanguage } from "../lib/language";
 
 function parseSvhkfDate(raw: string): string {
@@ -110,13 +111,13 @@ const emptyForm = { name: "", date: "", organizer: "", location: "" };
 export default function CompetitionsPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
-    const [competitions, setCompetitions] = useState<Competition[]>(loadCompetitions);
+    const { competitions, saveCompetitions } = useCompetitions();
     const [noResultsFor, setNoResultsFor] = useState<string | null>(null);
     const [showForm,    setShowForm]    = useState(false);
     const [form,        setForm]        = useState(emptyForm);
     const [syncStatus,  setSyncStatus]  = useState<"idle" | "loading" | "done" | "error">("idle");
 
-    function handleAdd() {
+    async function handleAdd() {
         if (!form.name.trim() || !form.date) return;
         const next: Competition[] = [
             ...competitions,
@@ -131,51 +132,43 @@ export default function CompetitionsPage() {
                 source: "manual",
             },
         ];
-        saveCompetitions(next);
-        setCompetitions(next);
+        await saveCompetitions(next);
         setForm(emptyForm);
         setShowForm(false);
     }
 
-    function handleDelete(id: string) {
-        const next = competitions.filter((c) => c.id !== id);
-        saveCompetitions(next);
-        setCompetitions(next);
+    async function handleDelete(id: string) {
+        await saveCompetitions(competitions.filter((c) => c.id !== id));
     }
 
-    function toggleRegistration(id: string) {
-        const next = competitions.map((c) =>
-            c.id === id ? { ...c, registrationOpen: !c.registrationOpen } : c
+    async function toggleRegistration(id: string) {
+        await saveCompetitions(
+            competitions.map((c) => c.id === id ? { ...c, registrationOpen: !c.registrationOpen } : c)
         );
-        saveCompetitions(next);
-        setCompetitions(next);
     }
 
     async function syncFromSvhkf() {
         setSyncStatus("loading");
         try {
             const fetched = await fetchSvhkfCompetitions();
-            setCompetitions((current) => {
-                const next = [...current];
-                for (const incoming of fetched) {
-                    const existing = next.find(
-                        (c) => c.name.toLowerCase() === incoming.name.toLowerCase() && c.source === "svhkf"
-                    );
-                    if (existing) {
-                        Object.assign(existing, {
-                            date: incoming.date,
-                            organizer: incoming.organizer,
-                            location: incoming.location,
-                            ranking: incoming.ranking,
-                        });
-                    } else {
-                        next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: true });
-                    }
+            const next = [...competitions];
+            for (const incoming of fetched) {
+                const existing = next.find(
+                    (c) => c.name.toLowerCase() === incoming.name.toLowerCase() && c.source === "svhkf"
+                );
+                if (existing) {
+                    Object.assign(existing, {
+                        date: incoming.date,
+                        organizer: incoming.organizer,
+                        location: incoming.location,
+                        ranking: incoming.ranking,
+                    });
+                } else {
+                    next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: true });
                 }
-                next.sort((a, b) => a.date.localeCompare(b.date));
-                saveCompetitions(next);
-                return next;
-            });
+            }
+            next.sort((a, b) => a.date.localeCompare(b.date));
+            await saveCompetitions(next);
             setSyncStatus("done");
         } catch {
             setSyncStatus("error");

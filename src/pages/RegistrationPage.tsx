@@ -2,7 +2,8 @@ import { ArrowLeft, Check, Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { loadCompetitions, isCompetitionOpen } from "../data/competitions";
+import { isCompetitionOpen } from "../data/competitions";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
@@ -23,10 +24,11 @@ export default function RegistrationPage() {
         () => [...new Set(players.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
         [players],
     );
+    const { competitions: allComps } = useCompetitions();
     const sessionClub = sessionStorage.getItem(CLUB_SESSION_KEY);
     const [searchParams] = useSearchParams();
     const compId = searchParams.get("comp") ?? "";
-    const competitions = loadCompetitions().filter((c) => isCompetitionOpen(c));
+    const competitions = allComps.filter((c) => isCompetitionOpen(c));
     const selectedComp = competitions.find((c) => c.id === compId) ?? null;
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {

@@ -11,7 +11,7 @@ export interface Competition {
     source: "manual" | "svhkf";
 }
 
-const seedCompetitions: Omit<Competition, "id" | "registrationOpen">[] = [
+export const seedCompetitions: Omit<Competition, "id" | "registrationOpen">[] = [
     { name: "Tingsryd Open",         date: "2026-05-16", organizer: "Tingsryd Hsc",   location: "Kurorten",                    ranking: true,  source: "svhkf" },
     { name: "Smålandsmästaren ute",  date: "2026-05-16", organizer: "Tingsryd Hsc",   location: "Kurorten",                    ranking: true,  source: "svhkf" },
     { name: "Björkenäs Open",        date: "2026-05-30", organizer: "Lanternan",       location: "Björkenäs camping",           ranking: true,  source: "svhkf" },
