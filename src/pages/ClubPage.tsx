@@ -2398,6 +2398,12 @@ export default function ClubPage() {
     }
 
     function deletePlayer(id: string) {
+        const player = players.find((p) => p.id === id);
+        const name = player?.name ?? (lang === "sv" ? "spelaren" : "the player");
+        const msg = lang === "sv"
+            ? `Är du säker på att du vill ta bort ${name} från klubben?`
+            : `Are you sure you want to remove ${name} from the club?`;
+        if (!window.confirm(msg)) return;
         saveAndSet(players.filter((p) => p.id !== id));
         if (id.startsWith("reg-")) {
             const createdAt = id.slice(4);
