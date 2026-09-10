@@ -158,21 +158,16 @@ export default function HomePage() {
             <footer className="site-footer">
                 <div className="site-footer-inner">
                     <span className="site-footer-copy">
-                        © {new Date().getFullYear()} HSC &mdash; Hästskokastarklubben
+                        © {new Date().getFullYear()} hscontest.se. All rights reserved.
                     </span>
-                    <span className="site-footer-divider" aria-hidden="true" />
-                    <a
-                        className="site-footer-link"
-                        href="https://www.svhkf.se/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Svenska Hästskokastarförbundet
-                    </a>
-                    <span className="site-footer-divider" aria-hidden="true" />
+                    <span className="site-footer-pipe" aria-hidden="true">|</span>
                     <Link className="site-footer-link" to="/privacy">
                         {t.footer_privacy}
                     </Link>
+                    <span className="site-footer-pipe" aria-hidden="true">|</span>
+                    <span className="site-footer-dev">
+                        Designed and developed by Patrik Axelsson.
+                    </span>
                 </div>
             </footer>
         </main>

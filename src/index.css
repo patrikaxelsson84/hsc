@@ -3921,17 +3921,18 @@ a {
     flex-wrap: wrap;
 }
 
-.site-footer-copy {
+.site-footer-copy,
+.site-footer-dev {
     font-size: 0.82rem;
     color: rgba(255, 255, 255, 0.38);
     letter-spacing: 0.01em;
 }
 
-.site-footer-divider {
-    width: 1px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.15);
+.site-footer-pipe {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.18);
     flex-shrink: 0;
+    user-select: none;
 }
 
 .site-footer-link {
