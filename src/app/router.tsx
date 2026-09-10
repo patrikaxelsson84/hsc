@@ -11,11 +11,16 @@ import RegistrationPage from "../pages/RegistrationPage";
 import ResultsPage from "../pages/ResultsPage";
 import ScoringPage from "../pages/ScoringPage";
 import AdminUsersPage from "../pages/AdminUsersPage";
+import PrivacyPage from "../pages/PrivacyPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <HomePage />,
+    },
+    {
+        path: "/privacy",
+        element: <PrivacyPage />,
     },
     {
         path: "/registration",
