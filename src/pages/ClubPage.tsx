@@ -119,7 +119,7 @@ function ageCatLabel(cat: AgeCategory, t: ReturnType<typeof useLanguage>["t"]): 
 // ── Login screen ─────────────────────────────────────────────────────────────
 
 function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => void; knownClubs: string[] }) {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [club,           setClub]           = useState("");
     const [password,       setPassword]       = useState("");
     const [error,          setError]          = useState(false);
