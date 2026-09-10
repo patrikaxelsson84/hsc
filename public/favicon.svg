@@ -1,34 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="metal" x1="15%" y1="5%" x2="85%" y2="95%">
-      <stop offset="0%"   stop-color="#FFD84A"/>
-      <stop offset="45%"  stop-color="#C8820C"/>
-      <stop offset="100%" stop-color="#7A4A08"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"  stop-color="#FFFADD" stop-opacity="0.55"/>
-      <stop offset="60%" stop-color="#FFFADD" stop-opacity="0"/>
+    <linearGradient id="gold" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%"   stop-color="#FFE066"/>
+      <stop offset="40%"  stop-color="#D4920E"/>
+      <stop offset="100%" stop-color="#9A6508"/>
     </linearGradient>
   </defs>
-  <!-- Horseshoe body: open at bottom, arched at top -->
+  <!--
+    Classic horseshoe: thick U-arch, open at bottom, no nail holes.
+    Outer radius 36, inner radius 20, center at (50, 44).
+    Legs run straight down to y=94.
+  -->
   <path
-    fill="url(#metal)"
-    stroke="#5C3506"
-    stroke-width="1.5"
-    stroke-linejoin="round"
-    d="M 16,96 L 16,42 A 34,34 0 0,1 84,42 L 84,96 L 72,96 L 72,42 A 22,22 0 0,0 28,42 L 28,96 Z"
+    fill="url(#gold)"
+    d="
+      M 14,94
+      L 14,44
+      A 36,36 0 0,1 86,44
+      L 86,94
+      L 70,94
+      L 70,44
+      A 20,20 0 0,0 30,44
+      L 30,94
+      Z
+    "
   />
-  <!-- Metallic highlight on top arc -->
-  <path
-    fill="url(#shine)"
-    d="M 20,42 A 30,30 0 0,1 80,42 L 72,42 A 22,22 0 0,0 28,42 Z"
-    opacity="0.6"
-  />
-  <!-- Nail holes: 3 per leg -->
-  <circle cx="22" cy="54" r="3.2" fill="#3A1F02"/>
-  <circle cx="22" cy="67" r="3.2" fill="#3A1F02"/>
-  <circle cx="22" cy="80" r="3.2" fill="#3A1F02"/>
-  <circle cx="78" cy="54" r="3.2" fill="#3A1F02"/>
-  <circle cx="78" cy="67" r="3.2" fill="#3A1F02"/>
-  <circle cx="78" cy="80" r="3.2" fill="#3A1F02"/>
 </svg>
