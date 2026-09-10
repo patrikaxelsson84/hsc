@@ -330,6 +330,9 @@ const en = {
     menu_users:                 "Users",
     reg_competition:            "Competition",
     reg_select_competition:     "Select competition…",
+
+    // ── Footer ─────────────────────────────────────────────────────
+    footer_privacy:             "Privacy Policy",
 } as const;
 
 const sv: Record<keyof typeof en, string> = {
@@ -660,6 +663,9 @@ const sv: Record<keyof typeof en, string> = {
     menu_users:                 "Användare",
     reg_competition:            "Tävling",
     reg_select_competition:     "Välj tävling…",
+
+    // ── Footer ─────────────────────────────────────────────────────
+    footer_privacy:             "Integritetspolicy",
 };
 
 const pl: Record<keyof typeof en, string> = {
@@ -990,6 +996,9 @@ const pl: Record<keyof typeof en, string> = {
     menu_users:                 "Użytkownicy",
     reg_competition:            "Zawody",
     reg_select_competition:     "Wybierz zawody…",
+
+    // ── Footer ─────────────────────────────────────────────────────
+    footer_privacy:             "Polityka prywatności",
 };
 
 const translations = { en, sv, pl };

@@ -169,6 +169,10 @@ export default function HomePage() {
                     >
                         Svenska Hästskokastarförbundet
                     </a>
+                    <span className="site-footer-divider" aria-hidden="true" />
+                    <Link className="site-footer-link" to="/privacy">
+                        {t.footer_privacy}
+                    </Link>
                 </div>
             </footer>
         </main>
