@@ -154,6 +154,23 @@ export default function HomePage() {
             <section className="art-section">
                 <HorseshoeArt />
             </section>
+
+            <footer className="site-footer">
+                <div className="site-footer-inner">
+                    <span className="site-footer-copy">
+                        © {new Date().getFullYear()} HSC &mdash; Hästskokastarklubben
+                    </span>
+                    <span className="site-footer-divider" aria-hidden="true" />
+                    <a
+                        className="site-footer-link"
+                        href="https://www.svhkf.se/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Svenska Hästskokastarförbundet
+                    </a>
+                </div>
+            </footer>
         </main>
     );
 }
