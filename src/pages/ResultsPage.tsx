@@ -1,6 +1,6 @@
 import { GripVertical, Maximize, Minimize, Printer, Trophy } from "lucide-react";
 import { fetchLiveResults } from "../lib/liveResults";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
@@ -292,6 +292,7 @@ export default function ResultsPage() {
     const [dragKey, setDragKey] = useState<SectionKey | null>(null);
     const [dropTarget, setDropTarget] = useState<{ col: ColId; before: SectionKey | null } | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const autoFullscreenDone = useRef(false);
     const [colCount, setColCount] = useState<number>(() => {
         const saved = localStorage.getItem("hsc-results-colcount");
         return saved ? Number(saved) : 4;
@@ -307,6 +308,13 @@ export default function ResultsPage() {
         document.addEventListener("fullscreenchange", onChange);
         return () => document.removeEventListener("fullscreenchange", onChange);
     }, []);
+
+    useEffect(() => {
+        if (liveData && !autoFullscreenDone.current && !document.fullscreenElement) {
+            autoFullscreenDone.current = true;
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    }, [liveData]);
 
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
