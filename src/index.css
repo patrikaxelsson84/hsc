@@ -206,16 +206,27 @@ a {
     align-items: center;
     gap: 8px;
     margin-top: 24px;
-    padding: 10px 20px;
-    background: var(--accent);
+    padding: 10px 22px;
+    background: var(--brand);
     color: #fff;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95rem;
     text-decoration: none;
-    transition: opacity 0.15s;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.35);
 }
-.live-results-hero-btn:hover { opacity: 0.85; }
+.live-results-hero-btn:hover {
+    background: var(--brand-strong);
+    transform: translateY(-1px);
+}
+.live-results-hero-btn svg {
+    animation: live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
 
 .hero-actions {
     display: flex;
