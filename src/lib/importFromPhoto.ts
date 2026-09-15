@@ -1,6 +1,7 @@
 export interface RecognizedScore {
     name: string;
     rounds: number[];
+    bonusRounds: boolean[];
 }
 
 export async function extractScoresFromImage(
@@ -11,13 +12,14 @@ export async function extractScoresFromImage(
     const mediaType = (header.match(/data:([^;]+)/)?.[1] ?? "image/jpeg") as
         "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
-    const prompt = `This is a handwritten competition scorecard (bowling or similar).
-Extract every player name and their round scores from columns labeled 1, 2, 3, 4, 5.
+    const prompt = `This is a handwritten competition scorecard for a Swedish horseshoe throwing competition (hästskokastning).
+Each player throws 5 horseshoes per round. Extract every player name, their round scores, and whether all 5 throws scored in each round (bonus).
 Return ONLY valid JSON — no explanation, no markdown — exactly in this shape:
-{"players": [{"name": "Player Name", "rounds": [n1, n2, n3, n4, n5]}]}
+{"players": [{"name": "Player Name", "rounds": [n1, n2, n3, n4, n5], "bonusRounds": [b1, b2, b3, b4, b5]}]}
 Rules:
-- Each player must have exactly 5 score values
-- Use 0 for empty or illegible cells
+- Each player must have exactly 5 score values and exactly 5 bonus booleans
+- Use 0 for empty or illegible score cells
+- bonusRounds[i] is true if there is a mark/checkmark/circle/B/bonus indicator for that round showing all 5 throws scored, otherwise false
 - Include all visible player rows, even if partially filled`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {

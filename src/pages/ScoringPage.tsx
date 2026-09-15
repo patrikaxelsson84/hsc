@@ -26,6 +26,7 @@ function loadAllPlayers(basePlayers: PlayerScore[]): PlayerScore[] {
                   classLevel: (Number(e.category) || 4) as ClassLevel,
                   ageCategory: titleToAgeCategory(e.title),
                   rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  bonusHits: Array(10).fill(false),
                   sevenMeters: 0,
               }))
             : [];
@@ -98,7 +99,7 @@ function getStoredScores(runId: string, basePlayers: PlayerScore[]): PlayerScore
 }
 
 function resetPlayerScores(players: PlayerScore[]) {
-    return players.map((p) => ({ ...p, rounds: Array.from({ length: 10 }, () => 0), sevenMeters: 0 }));
+    return players.map((p) => ({ ...p, rounds: Array.from({ length: 10 }, () => 0), bonusHits: Array(10).fill(false), sevenMeters: 0 }));
 }
 
 function getSavedContestIds() {

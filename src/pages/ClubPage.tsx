@@ -674,6 +674,7 @@ function regToPlayerScore(r: RegEntry, idx: number): PlayerScore {
         classLevel:  (Number(r.category) || 4) as ClassLevel,
         ageCategory: titleToAgeCategory(r.title),
         rounds:      Array(10).fill(0),
+        bonusHits:   Array(10).fill(false),
         sevenMeters: 0,
     };
 }
@@ -1038,7 +1039,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 if (!match) return p;
                 const next = [...p.rounds];
                 match.rounds.forEach((score, i) => { next[offset + i] = score; });
-                return { ...p, rounds: next };
+                const nextBonus = [...(p.bonusHits ?? Array(10).fill(false))];
+                (match.bonusRounds ?? []).forEach((hit, i) => { nextBonus[offset + i] = hit; });
+                return { ...p, rounds: next, bonusHits: nextBonus };
             })
         );
         setPhotoStep("closed");
@@ -1102,7 +1105,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     function startContest() {
         const chosen: PlayerScore[] = [];
         for (const p of compPlayers.filter((p) => selectedPlayerIds.includes(p.id))) {
-            const base = { ...p, rounds: Array(10).fill(0) as number[], sevenMeters: 0 };
+            const base = { ...p, rounds: Array(10).fill(0) as number[], bonusHits: Array(10).fill(false) as boolean[], sevenMeters: 0 };
             if (p.ageCategory === "junior") {
                 const mode = juniorMode[p.id] ?? "junior";
                 const gender = juniorGender[p.id] ?? "herr";

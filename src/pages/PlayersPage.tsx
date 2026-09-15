@@ -36,6 +36,7 @@ function loadRegisteredPlayers(): PlayerScore[] {
             classLevel: (Number(e.category) || 4) as ClassLevel,
             ageCategory: titleToAgeCategory(e.title),
             rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            bonusHits: Array(10).fill(false),
             sevenMeters: 0,
         }));
     } catch {

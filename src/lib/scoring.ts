@@ -8,6 +8,7 @@ export interface PlayerScore {
     classLevel: ClassLevel;
     ageCategory: AgeCategory;
     rounds: number[];
+    bonusHits: boolean[];
     sevenMeters: number;
 }
 
@@ -26,11 +27,8 @@ export function sumRounds(rounds: number[], start: number, end: number) {
     return rounds.slice(start, end).reduce((total, score) => total + score, 0);
 }
 
-export function calculateBonusPoints(rounds: number[]) {
-    let bonus = 0;
-    if (rounds.slice(0, 5).every((s) => s > 0)) bonus++;
-    if (rounds.slice(5, 10).every((s) => s > 0)) bonus++;
-    return bonus;
+export function calculateBonusPoints(bonusHits: boolean[]) {
+    return bonusHits.filter(Boolean).length;
 }
 
 export function getRankingPoints(rank: number, participantCount: number) {
@@ -50,7 +48,7 @@ export function rankPlayers(players: PlayerScore[]): RankedPlayer[] {
             total: sumRounds(player.rounds, 0, 10),
             rank: 0,
             rankingPoints: 0,
-            bonusPoints: calculateBonusPoints(player.rounds),
+            bonusPoints: calculateBonusPoints(player.bonusHits ?? []),
         }))
         .sort((a, b) => b.total - a.total || b.sevenMeters - a.sevenMeters || a.name.localeCompare(b.name));
 
