@@ -28,7 +28,7 @@ export function sumRounds(rounds: number[], start: number, end: number) {
 }
 
 export function calculateBonusPoints(bonusHits: boolean[]) {
-    return bonusHits.filter(Boolean).length;
+    return bonusHits.filter(Boolean).length * 5;
 }
 
 export function getRankingPoints(rank: number, participantCount: number) {
