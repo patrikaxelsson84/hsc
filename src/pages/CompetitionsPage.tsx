@@ -106,7 +106,7 @@ function clubInitials(name: string): string {
     return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
-const emptyForm = { name: "", date: "", organizer: "", location: "" };
+const emptyForm = { name: "", date: "", organizer: "", location: "", country: "SE" as "SE" | "PL" };
 
 export default function CompetitionsPage() {
     const { t } = useLanguage();
@@ -130,6 +130,7 @@ export default function CompetitionsPage() {
                 ranking: false,
                 registrationOpen: true,
                 source: "manual",
+                country: form.country,
             },
         ];
         await saveCompetitions(next);
@@ -164,7 +165,7 @@ export default function CompetitionsPage() {
                         ranking: incoming.ranking,
                     });
                 } else {
-                    next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: true });
+                    next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: true, country: "SE" });
                 }
             }
             next.sort((a, b) => a.date.localeCompare(b.date));
@@ -279,6 +280,16 @@ const pastByYear = useMemo(() => {
                                 value={form.location}
                                 onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
                             />
+                        </label>
+                        <label>
+                            Land
+                            <select
+                                value={form.country}
+                                onChange={(e) => setForm((f) => ({ ...f, country: e.target.value as "SE" | "PL" }))}
+                            >
+                                <option value="SE">🇸🇪 Sverige</option>
+                                <option value="PL">🇵🇱 Polen</option>
+                            </select>
                         </label>
                     </div>
                     <div className="comp-form-actions">

@@ -291,6 +291,27 @@ a {
   gap: 20px;
 }
 
+.cal-country-toggle {
+    display: flex;
+    gap: 4px;
+}
+.cal-country-btn {
+    padding: 4px 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.cal-country-btn.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
 .event-panel h2,
 .registration-form h2,
 .season-section h2,

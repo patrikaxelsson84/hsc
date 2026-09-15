@@ -79,8 +79,15 @@ export default function HomePage() {
     const { competitions } = useCompetitions();
     const { t } = useLanguage();
     const today = new Date().toISOString().slice(0, 10);
+    const [calCountry, setCalCountry] = useState<"SE" | "PL">(() => {
+        return (localStorage.getItem("hsc-cal-country") as "SE" | "PL") ?? "SE";
+    });
+    function switchCountry(c: "SE" | "PL") {
+        setCalCountry(c);
+        localStorage.setItem("hsc-cal-country", c);
+    }
     const upcoming = competitions
-        .filter((c) => c.date >= today)
+        .filter((c) => c.date >= today && (c.country ?? "SE") === calCountry)
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5);
 
@@ -117,7 +124,18 @@ export default function HomePage() {
                             <p className="panel-kicker">{t.panel_kicker}</p>
                             <h2>{t.panel_heading}</h2>
                         </div>
-                        <CalendarDays size={26} aria-hidden="true" />
+                        <div className="cal-country-toggle">
+                            <button
+                                type="button"
+                                className={calCountry === "SE" ? "cal-country-btn active" : "cal-country-btn"}
+                                onClick={() => switchCountry("SE")}
+                            >🇸🇪 SE</button>
+                            <button
+                                type="button"
+                                className={calCountry === "PL" ? "cal-country-btn active" : "cal-country-btn"}
+                                onClick={() => switchCountry("PL")}
+                            >🇵🇱 PL</button>
+                        </div>
                     </div>
 
                     <ul className="competition-list">
