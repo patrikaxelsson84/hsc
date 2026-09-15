@@ -55,7 +55,7 @@ export function loadCompetitions(): Competition[] {
         const raw = localStorage.getItem(storageKey);
         if (raw) {
             const list = JSON.parse(raw) as Competition[];
-            return list.map((c) => ({ country: "SE" as const, ...c }));
+            return list.map((c) => ({ ...c, country: (c.country ?? "SE") as "SE" | "PL" }));
         }
     } catch { /* empty */ }
     return [];

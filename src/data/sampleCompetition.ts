@@ -298,5 +298,6 @@ export const samplePlayers: PlayerScore[] = playerRows.map(([code, name, club, c
     classLevel,
     ageCategory,
     rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    bonusHits: Array(10).fill(false),
     sevenMeters: 0,
 }));

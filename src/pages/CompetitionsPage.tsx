@@ -37,7 +37,7 @@ async function fetchSvhkfCompetitions(): Promise<Omit<Competition, "id" | "regis
         if (!name || !dateRaw) return;
         const date = parseSvhkfDate(dateRaw);
         if (!date) return;
-        results.push({ name, date, organizer, location, ranking: rankingText.toLowerCase().startsWith("ja"), source: "svhkf" });
+        results.push({ name, date, organizer, location, ranking: rankingText.toLowerCase().startsWith("ja"), source: "svhkf", country: "SE" });
     });
 
     return results;

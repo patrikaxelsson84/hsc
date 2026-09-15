@@ -2060,6 +2060,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                                     classLevel: newPlayerForm.classLevel,
                                                     ageCategory: newPlayerForm.ageCategory,
                                                     rounds: Array(10).fill(0),
+                                                    bonusHits: Array(10).fill(false),
                                                     sevenMeters: 0,
                                                 };
                                                 setPlayers((cur) => [...cur, newP]);

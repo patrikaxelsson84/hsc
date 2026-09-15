@@ -23,6 +23,7 @@ function rowToComp(row: Record<string, unknown>): Competition {
         ranking:          (row.ranking   as boolean) ?? false,
         registrationOpen: (row.registration_open as boolean) ?? true,
         source:           ((row.source as string) ?? "manual") as "manual" | "svhkf",
+        country:          ((row.country as string) ?? "SE") as "SE" | "PL",
     };
 }
 

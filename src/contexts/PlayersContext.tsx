@@ -23,6 +23,7 @@ function rowToPlayerScore(row: Record<string, unknown>): PlayerScore {
         classLevel:  ((row.class_level as number) ?? 4) as PlayerScore["classLevel"],
         ageCategory: ((row.age_category as string) ?? "herr") as PlayerScore["ageCategory"],
         rounds:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        bonusHits:   Array(10).fill(false),
         sevenMeters: 0,
     };
 }
@@ -85,6 +86,7 @@ export function PlayersProvider({ children }: { children: ReactNode }) {
                         classLevel:  p.classLevel as PlayerScore["classLevel"],
                         ageCategory: p.ageCategory as PlayerScore["ageCategory"],
                         rounds:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        bonusHits:   Array(10).fill(false),
                         sevenMeters: 0,
                     })));
                 } else {
