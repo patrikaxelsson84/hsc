@@ -13,13 +13,15 @@ export async function extractScoresFromImage(
         "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
     const prompt = `This is a handwritten competition scorecard for a Swedish horseshoe throwing competition (hästskokastning).
-Each player throws 5 horseshoes per round. Extract every player name, their round scores, and whether all 5 throws scored in each round (bonus).
+Each player has 5 rounds. Each round contains 5 individual throw scores written in separate cells.
+Extract every player name, the SUM of the 5 throws for each round, and whether all 5 throw scores in that round were greater than 0.
 Return ONLY valid JSON — no explanation, no markdown — exactly in this shape:
-{"players": [{"name": "Player Name", "rounds": [n1, n2, n3, n4, n5], "bonusRounds": [b1, b2, b3, b4, b5]}]}
+{"players": [{"name": "Player Name", "rounds": [sum1, sum2, sum3, sum4, sum5], "bonusRounds": [b1, b2, b3, b4, b5]}]}
 Rules:
-- Each player must have exactly 5 score values and exactly 5 bonus booleans
-- Use 0 for empty or illegible score cells
-- bonusRounds[i] is true if there is a mark/checkmark/circle/B/bonus indicator for that round showing all 5 throws scored, otherwise false
+- rounds[i] = sum of the 5 individual throw scores for that round (use 0 for empty or illegible cells)
+- bonusRounds[i] = true if ALL 5 individual throw scores in that round are greater than 0, otherwise false
+- Do NOT rely on any bonus marking on the card — derive it purely from the throw scores
+- Each player must have exactly 5 round sums and exactly 5 bonus booleans
 - Include all visible player rows, even if partially filled`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
