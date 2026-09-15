@@ -52,7 +52,7 @@ export default function AdminUsersPage() {
     }
 
     async function handleApprove(req: ClubRequest) {
-        await addClub(req.club_name, "123");
+        await addClub(req.club_name, "1337");
         await supabase.from("club_requests").update({ status: "approved" }).eq("id", req.id);
         await Promise.all([refresh(), refreshRequests()]);
     }
@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
 
     async function handleAddClub() {
         const name = newClubName.trim();
-        const pw   = newClubPw.trim() || "123";
+        const pw   = newClubPw.trim() || "1337";
         if (!name) return;
         await addClub(name, pw);
         setNewClubName("");
@@ -195,7 +195,7 @@ export default function AdminUsersPage() {
                         {t.club_login_pass}
                         <input
                             type="text"
-                            placeholder={t.admin_users_club_pw_ph + " (default: 123)"}
+                            placeholder={t.admin_users_club_pw_ph + " (default: 1337)"}
                             value={newClubPw}
                             onChange={(e) => setNewClubPw(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleAddClub()}

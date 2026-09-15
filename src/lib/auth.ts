@@ -65,7 +65,7 @@ export async function listClubs(): Promise<string[]> {
     return (data ?? []).map((r: { id: string }) => r.id)
 }
 
-export async function addClub(name: string, password = '123'): Promise<void> {
+export async function addClub(name: string, password = '1337'): Promise<void> {
     const hashed = await hashPassword(password)
     await supabase
         .from('credentials')
@@ -82,7 +82,7 @@ export async function removeClub(name: string): Promise<void> {
 
 export async function ensureClubsExist(knownClubs: string[]): Promise<void> {
     if (knownClubs.length === 0) return
-    const hashed = await hashPassword('123')
+    const hashed = await hashPassword('1337')
     const rows = knownClubs.map((c) => ({ id: c, type: 'club', password: hashed }))
     await supabase
         .from('credentials')
