@@ -165,6 +165,10 @@ export default function HomePage() {
                         {t.footer_privacy}
                     </Link>
                     <span className="site-footer-pipe" aria-hidden="true">|</span>
+                    <Link className="site-footer-link" to="/club-apply">
+                        {t.apply_link}
+                    </Link>
+                    <span className="site-footer-pipe" aria-hidden="true">|</span>
                     <span className="site-footer-dev">
                         Designed and developed by Patrik Axelsson.
                     </span>

@@ -1,11 +1,25 @@
-import { Lock, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { Check, Lock, Plus, RefreshCw, Save, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addClub, listClubs, removeClub, setAdminPassword, setClubPassword } from "../lib/auth";
 import { useLanguage } from "../lib/language";
+import { supabase } from "../lib/supabase";
+
+type ClubRequest = {
+    id: string;
+    club_name: string;
+    contact_name: string;
+    email: string;
+    phone: string | null;
+    city: string | null;
+    status: string;
+    created_at: string;
+};
 
 export default function AdminUsersPage() {
     const { t, lang } = useLanguage();
 
+    const [requests,    setRequests]    = useState<ClubRequest[]>([]);
+    const [reqLoading,  setReqLoading]  = useState(true);
     const [clubs,       setClubs]       = useState<string[]>([]);
     const [loading,     setLoading]     = useState(true);
     const [newClubName, setNewClubName] = useState("");
@@ -18,12 +32,34 @@ export default function AdminUsersPage() {
     const [adminPw,     setAdminPw]     = useState("");
     const [adminStatus, setAdminStatus] = useState<"idle" | "ok">("idle");
 
-    useEffect(() => { refresh(); }, []);
+    useEffect(() => { refresh(); refreshRequests(); }, []);
 
     async function refresh() {
         setLoading(true);
         setClubs(await listClubs());
         setLoading(false);
+    }
+
+    async function refreshRequests() {
+        setReqLoading(true);
+        const { data } = await supabase
+            .from("club_requests")
+            .select("*")
+            .eq("status", "pending")
+            .order("created_at", { ascending: true });
+        setRequests(data ?? []);
+        setReqLoading(false);
+    }
+
+    async function handleApprove(req: ClubRequest) {
+        await addClub(req.club_name, "123");
+        await supabase.from("club_requests").update({ status: "approved" }).eq("id", req.id);
+        await Promise.all([refresh(), refreshRequests()]);
+    }
+
+    async function handleReject(id: string) {
+        await supabase.from("club_requests").update({ status: "rejected" }).eq("id", id);
+        await refreshRequests();
     }
 
     async function handleAddClub() {
@@ -71,6 +107,70 @@ export default function AdminUsersPage() {
                     <p>{t.admin_users_desc}</p>
                 </div>
             </div>
+
+            {/* ── Club applications ── */}
+            <section className="admin-panel">
+                <div className="panel-title-row">
+                    <h2>{t.admin_requests_heading}</h2>
+                    {requests.length > 0 && (
+                        <span className="club-tab-count">{requests.length} {t.admin_requests_pending}</span>
+                    )}
+                </div>
+                {reqLoading ? (
+                    <p className="club-empty">…</p>
+                ) : requests.length === 0 ? (
+                    <p className="club-empty">{t.admin_requests_empty}</p>
+                ) : (
+                    <div className="table-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{t.admin_requests_col_club}</th>
+                                    <th>{t.admin_requests_col_contact}</th>
+                                    <th>{t.admin_requests_col_email}</th>
+                                    <th>{t.admin_requests_col_phone}</th>
+                                    <th>{t.admin_requests_col_city}</th>
+                                    <th>{t.admin_requests_col_date}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {requests.map((req) => (
+                                    <tr key={req.id}>
+                                        <td><strong>{req.club_name}</strong></td>
+                                        <td>{req.contact_name}</td>
+                                        <td>{req.email}</td>
+                                        <td>{req.phone ?? "—"}</td>
+                                        <td>{req.city ?? "—"}</td>
+                                        <td style={{ whiteSpace: "nowrap", color: "var(--muted)", fontSize: "0.85em" }}>
+                                            {new Date(req.created_at).toLocaleDateString("sv-SE")}
+                                        </td>
+                                        <td style={{ whiteSpace: "nowrap" }}>
+                                            <span style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                                <button
+                                                    type="button"
+                                                    className="primary-action score-button"
+                                                    onClick={() => handleApprove(req)}
+                                                >
+                                                    <Check size={14} />
+                                                    {t.admin_requests_approve}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="comp-delete-btn"
+                                                    onClick={() => handleReject(req.id)}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
 
             {/* ── Club accounts ── */}
             <section className="admin-panel">
