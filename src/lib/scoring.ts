@@ -22,14 +22,12 @@ export interface RankedPlayer extends PlayerScore {
 
 const rankingPointTable = [20, 18, 16, 14, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-const bonusTargets = new Set([15, 19, 31, 32, 35, 36, 44, 48, 49, 53, 57, 58, 60, 61, 64]);
-
 export function sumRounds(rounds: number[], start: number, end: number) {
     return rounds.slice(start, end).reduce((total, score) => total + score, 0);
 }
 
 export function calculateBonusPoints(rounds: number[]) {
-    return rounds.filter((score) => bonusTargets.has(score)).length * 5;
+    return rounds.filter((score) => score === 5).length;
 }
 
 export function getRankingPoints(rank: number, participantCount: number) {
