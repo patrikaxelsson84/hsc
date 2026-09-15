@@ -27,7 +27,10 @@ export function sumRounds(rounds: number[], start: number, end: number) {
 }
 
 export function calculateBonusPoints(rounds: number[]) {
-    return rounds.filter((score) => score === 5).length;
+    let bonus = 0;
+    if (rounds.slice(0, 5).every((s) => s > 0)) bonus++;
+    if (rounds.slice(5, 10).every((s) => s > 0)) bonus++;
+    return bonus;
 }
 
 export function getRankingPoints(rank: number, participantCount: number) {
