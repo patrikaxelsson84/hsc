@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { submitPendingChange, loadRejectedAddIds, loadResolvedDeleteChanges } from "../lib/pendingChanges";
+import { pushLiveResults } from "../lib/liveResults";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -1217,6 +1218,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         localStorage.setItem(`${LIVE_PREFIX}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         setStatus("saved");
+        pushLiveResults(currentRunId, selectedComp?.name ?? currentRunId, typeName(typeIds, lang), players, teamAssignments);
     }
 
     function resetScores() {
