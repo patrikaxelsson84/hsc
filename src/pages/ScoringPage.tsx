@@ -1,4 +1,5 @@
 import { ArrowLeft, Archive, CalendarDays, ClipboardList, MapPin, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
+import { pushLiveResults } from "../lib/liveResults";
 import { useEffect, useMemo, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
@@ -359,6 +360,7 @@ export default function ScoringPage() {
         localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
+        pushLiveResults(currentRunId, competition.name, contestType.name, players, teamAssignments);
     }
 
     function resetScores() {

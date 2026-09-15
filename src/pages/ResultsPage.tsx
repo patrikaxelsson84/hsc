@@ -1,4 +1,5 @@
 import { GripVertical, Maximize, Minimize, Printer, Trophy } from "lucide-react";
+import { fetchLiveResults } from "../lib/liveResults";
 import { useEffect, useState } from "react";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
@@ -316,12 +317,22 @@ export default function ResultsPage() {
     }
 
     useEffect(() => {
-        const refresh = () => setLiveData(readLiveData());
-        const interval = setInterval(refresh, 3000);
-        window.addEventListener("storage", refresh);
+        async function refresh() {
+            const local = readLiveData();
+            if (local) {
+                setLiveData(local);
+            } else {
+                const remote = await fetchLiveResults();
+                if (remote) setLiveData(remote);
+            }
+        }
+        refresh();
+        const interval = setInterval(refresh, 10000);
+        const onStorage = () => setLiveData(readLiveData());
+        window.addEventListener("storage", onStorage);
         return () => {
             clearInterval(interval);
-            window.removeEventListener("storage", refresh);
+            window.removeEventListener("storage", onStorage);
         };
     }, []);
 

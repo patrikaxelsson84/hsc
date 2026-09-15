@@ -332,6 +332,7 @@ const en = {
     reg_select_competition:     "Select competition…",
 
     // ── Club apply page ────────────────────────────────────────────
+    hero_live_results:          "Live results",
     apply_link:                 "New club? Apply for access",
     apply_eyebrow:              "Club application",
     apply_heading:              "Apply for club access",
@@ -698,6 +699,7 @@ const sv: Record<keyof typeof en, string> = {
     reg_select_competition:     "Välj tävling…",
 
     // ── Club apply page ────────────────────────────────────────────
+    hero_live_results:          "Live-resultat",
     apply_link:                 "Ny klubb? Ansök om tillgång",
     apply_eyebrow:              "Klubbansökan",
     apply_heading:              "Ansök om klubbåtkomst",
@@ -1064,6 +1066,7 @@ const pl: Record<keyof typeof en, string> = {
     reg_select_competition:     "Wybierz zawody…",
 
     // ── Club apply page ────────────────────────────────────────────
+    hero_live_results:          "Wyniki na żywo",
     apply_link:                 "Nowy klub? Złóż wniosek o dostęp",
     apply_eyebrow:              "Wniosek klubowy",
     apply_heading:              "Złóż wniosek o dostęp dla klubu",

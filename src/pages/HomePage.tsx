@@ -3,6 +3,7 @@ import {
     CalendarDays,
     ChevronDown,
     MapPin,
+    Radio,
     ShieldCheck,
     Trophy,
 } from "lucide-react";
@@ -104,6 +105,10 @@ export default function HomePage() {
                     <p className="eyebrow">{t.hero_eyebrow}</p>
                     <h1>{t.hero_title}</h1>
                     <p className="hero-copy">{t.hero_copy}</p>
+                    <Link className="live-results-hero-btn" to="/results">
+                        <Radio size={16} aria-hidden="true" />
+                        {t.hero_live_results}
+                    </Link>
                 </div>
 
                 <aside className="event-panel" id="calendar" aria-label="Competition calendar">

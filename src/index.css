@@ -201,6 +201,22 @@ a {
   line-height: 1.65;
 }
 
+.live-results-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+.live-results-hero-btn:hover { opacity: 0.85; }
+
 .hero-actions {
     display: flex;
     flex-wrap: wrap;
