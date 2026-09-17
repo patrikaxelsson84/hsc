@@ -1,18 +1,13 @@
 import { ArrowLeft, ArrowRight, Check, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ClassLevel, AgeCategory, PlayerScore } from "../lib/scoring";
+import { titleToAgeCategory } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
 import { loadPendingChanges, resolveChange, applyAndApprove } from "../lib/pendingChanges";
 import type { PendingChange } from "../lib/pendingChanges";
 import { supabase } from "../lib/supabase";
 
-function titleToAgeCategory(title: string): AgeCategory {
-    if (title === "mrs") return "dam";
-    if (title === "junior") return "junior";
-    if (title === "minior") return "minior";
-    return "herr";
-}
 
 export default function PlayersPage() {
     const { t } = useLanguage();

@@ -1,6 +1,13 @@
 export type ClassLevel = 1 | 2 | 3 | 4;
 export type AgeCategory = "minior" | "junior" | "herr" | "dam";
 
+export function titleToAgeCategory(title: string): AgeCategory {
+    if (title === "mrs")    return "dam";
+    if (title === "junior") return "junior";
+    if (title === "minior") return "minior";
+    return "herr";
+}
+
 export interface PlayerScore {
     id: string;
     name: string;

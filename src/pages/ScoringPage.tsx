@@ -2,19 +2,13 @@ import { ArrowLeft, Archive, CalendarDays, ClipboardList, MapPin, Play, Printer,
 import { pushLiveResults } from "../lib/liveResults";
 import { useEffect, useMemo, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
+import { rankPlayers, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
-import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { supabase } from "../lib/supabase";
 
-function titleToAgeCategory(title: string): AgeCategory {
-    if (title === "mrs") return "dam";
-    if (title === "junior") return "junior";
-    if (title === "minior") return "minior";
-    return "herr";
-}
 
 function loadAllPlayers(basePlayers: PlayerScore[], registeredPlayers: PlayerScore[]): PlayerScore[] {
     const registeredNames = new Set(registeredPlayers.map((p) => p.name.toLowerCase()));

@@ -11,7 +11,7 @@ import { pushLiveResults } from "../lib/liveResults";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
-import { rankPlayers, rankTeams } from "../lib/scoring";
+import { rankPlayers, rankTeams, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
 import { checkClubPassword, ensureClubsExist, listClubs, setClubPassword } from "../lib/auth";
 import { supabase } from "../lib/supabase";
@@ -658,12 +658,6 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
 
 // ── Helpers: convert RegEntry → PlayerScore ───────────────────────────────────
 
-function titleToAgeCategory(title: string): AgeCategory {
-    if (title === "mrs")    return "dam";
-    if (title === "junior") return "junior";
-    if (title === "minior") return "minior";
-    return "herr";
-}
 
 function regToPlayerScore(r: RegEntry, idx: number): PlayerScore {
     return {
