@@ -52,16 +52,30 @@ function computeStandings(rows: GpResultRow[]): Map<ClassLevel, PlayerGp[]> {
         }
 
         for (const [cls, players] of byClass) {
-            const ranked = rankPlayers(players);
-            for (const rp of ranked) {
-                const pts = ptsForRank(rp.rank, players.length);
-                const key = `${rp.name}|||${rp.club}`;
-                if (!pm.has(key)) {
-                    pm.set(key, { name: rp.name, club: rp.club, classLevel: cls as ClassLevel, total: 0, eventPts: {}, eventCount: 0 });
+            const hasPrecomputed = players.some((p) => (p as any).gpPoints !== undefined);
+            if (hasPrecomputed) {
+                for (const p of players) {
+                    const pts = ((p as any).gpPoints as number) ?? 0;
+                    const key = `${p.name}|||${p.club}`;
+                    if (!pm.has(key)) {
+                        pm.set(key, { name: p.name, club: p.club, classLevel: cls as ClassLevel, total: 0, eventPts: {}, eventCount: 0 });
+                    }
+                    const e = pm.get(key)!;
+                    e.classLevel = cls as ClassLevel;
+                    e.eventPts[row.run_id] = Math.max(e.eventPts[row.run_id] ?? 0, pts);
                 }
-                const e = pm.get(key)!;
-                e.classLevel = cls as ClassLevel;
-                e.eventPts[row.run_id] = Math.max(e.eventPts[row.run_id] ?? 0, pts);
+            } else {
+                const ranked = rankPlayers(players);
+                for (const rp of ranked) {
+                    const pts = ptsForRank(rp.rank, players.length);
+                    const key = `${rp.name}|||${rp.club}`;
+                    if (!pm.has(key)) {
+                        pm.set(key, { name: rp.name, club: rp.club, classLevel: cls as ClassLevel, total: 0, eventPts: {}, eventCount: 0 });
+                    }
+                    const e = pm.get(key)!;
+                    e.classLevel = cls as ClassLevel;
+                    e.eventPts[row.run_id] = Math.max(e.eventPts[row.run_id] ?? 0, pts);
+                }
             }
         }
     }
