@@ -1217,7 +1217,6 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function saveScores() {
         localStorage.setItem(`${SCORE_PREFIX}-${currentRunId}`, JSON.stringify(players));
-        localStorage.setItem(`${LIVE_PREFIX}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         setStatus("saved");
         pushLiveResults(currentRunId, selectedComp?.name ?? currentRunId, typeName(typeIds, lang), players, teamAssignments);

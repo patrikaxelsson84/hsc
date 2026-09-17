@@ -362,7 +362,6 @@ export default function ScoringPage() {
 
     function saveScores() {
         localStorage.setItem(`${scoreStoragePrefix}-${currentRunId}`, JSON.stringify(players));
-        localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
