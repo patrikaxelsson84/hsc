@@ -39,32 +39,6 @@ export const seedCompetitions: Omit<Competition, "id" | "registrationOpen">[] = 
     { name: "Inoff SM inomhus",      date: "2027-04-24", organizer: "Dyna X",         location: "Rosenholm",                   ranking: true,  source: "svhkf", country: "SE" },
 ];
 
-export function initCompetitions() {
-    if (!localStorage.getItem(storageKey)) {
-        const seeded = seedCompetitions.map((c, i) => ({
-            ...c,
-            id: `svhkf-${i}`,
-            registrationOpen: true,
-        }));
-        localStorage.setItem(storageKey, JSON.stringify(seeded));
-    }
-}
-
-export function loadCompetitions(): Competition[] {
-    try {
-        const raw = localStorage.getItem(storageKey);
-        if (raw) {
-            const list = JSON.parse(raw) as Competition[];
-            return list.map((c) => ({ ...c, country: (c.country ?? "SE") as "SE" | "PL" }));
-        }
-    } catch { /* empty */ }
-    return [];
-}
-
-export function saveCompetitions(list: Competition[]) {
-    localStorage.setItem(storageKey, JSON.stringify(list));
-}
-
 export function isCompetitionOpen(comp: Competition): boolean {
     const today = new Date().toISOString().slice(0, 10);
     return comp.registrationOpen && comp.date >= today;
