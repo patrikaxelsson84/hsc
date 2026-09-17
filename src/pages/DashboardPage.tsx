@@ -1,13 +1,19 @@
 import { ArrowRight, Play, UserPlus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { currentCompetition } from "../data/sampleCompetition";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 
 export default function DashboardPage() {
     const { t, lang } = useLanguage();
     const { players } = usePlayers();
     const teamCount = new Set(players.map((p) => p.club).filter(Boolean)).size;
+
+    const { competitions } = useCompetitions();
+    const today = new Date().toISOString().slice(0, 10);
+    const nextCompetition = [...competitions]
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .find((c) => c.date >= today) ?? null;
 
     const adminChoices = [
         {
@@ -70,20 +76,22 @@ export default function DashboardPage() {
                 })}
             </section>
 
-            <section className="admin-panel">
-                <div className="panel-title-row">
-                    <h2>{t.dash_current_comp}</h2>
-                    <span className="success-pill">
-                        {currentCompetition.registrationOpen ? t.status_open : t.status_closed}
-                    </span>
-                </div>
-                <p>
-                    {players.length}{" "}
-                    {players.length === 1 ? t.players_player_s : t.players_player_p}{" "}
-                    {fromWord} {teamCount}{" "}
-                    {teamCount === 1 ? t.sc_team_s : t.sc_team_p}.
-                </p>
-            </section>
+            {nextCompetition && (
+                <section className="admin-panel">
+                    <div className="panel-title-row">
+                        <h2>{t.dash_current_comp}</h2>
+                        <span className="success-pill">
+                            {nextCompetition.registrationOpen ? t.status_open : t.status_closed}
+                        </span>
+                    </div>
+                    <p>
+                        <strong>{nextCompetition.name}</strong>
+                        {" · "}
+                        {nextCompetition.date}
+                        {nextCompetition.location && ` · ${nextCompetition.location}`}
+                    </p>
+                </section>
+            )}
         </div>
     );
 }

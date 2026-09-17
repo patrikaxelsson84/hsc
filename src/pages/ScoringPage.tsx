@@ -8,6 +8,7 @@ import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { supabase } from "../lib/supabase";
+import { contestTypeDefs, typeName } from "../lib/contestTypes";
 
 
 function loadAllPlayers(basePlayers: PlayerScore[], registeredPlayers: PlayerScore[]): PlayerScore[] {
@@ -31,31 +32,20 @@ function slugifyContest(name: string) {
     return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 }
 
-const contestTypes = [
-    "Mixed","Dubbel","Team","Mr.","Mrs.","Junior","Minions",
-    "Mr. Double","Mrs. Double","Individual Rank",
-].map((name) => ({
-    id: name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),
-    name,
-}));
-
 function getRunId(contestId: string, contestTypeId: string) {
     return `${contestId}__${contestTypeId}`;
 }
 
-function getTypeSelection(typeIds: string[]) {
-    const types = typeIds
-        .map((typeId) => contestTypes.find((item) => item.id === typeId))
-        .filter((item): item is (typeof contestTypes)[number] => Boolean(item));
+function getTypeSelection(typeIds: string[], lang: string) {
     return {
-        ids:  types.map((type) => type.id),
-        id:   types.map((type) => type.id).join(typeIdSeparator),
-        name: types.map((type) => type.name).join(" + "),
+        ids:  typeIds,
+        id:   typeIds.join(typeIdSeparator),
+        name: typeName(typeIds, lang),
     };
 }
 
-function parseTypeSelection(typeId: string) {
-    return getTypeSelection(typeId.split(typeIdSeparator).filter(Boolean));
+function parseTypeSelection(typeId: string, lang: string) {
+    return getTypeSelection(typeId.split(typeIdSeparator).filter(Boolean), lang);
 }
 
 function getStoredScores(runId: string, basePlayers: PlayerScore[], registeredPlayers: PlayerScore[] = []): PlayerScore[] {
@@ -97,7 +87,7 @@ function getSavedContestIds() {
         });
     return [...scoreRunIds, ...liveRunIds].filter((runId) => {
         const [, typeId] = runId.split("__");
-        return parseTypeSelection(typeId).ids.length > 0;
+        return typeId.split(typeIdSeparator).filter(Boolean).length > 0;
     });
 }
 
@@ -160,14 +150,14 @@ export default function ScoringPage() {
     }, [baseLoading, basePlayers]);
 
     const competition   = contests.find((c) => c.id === competitionId) ?? contests[0];
-    const contestType   = parseTypeSelection(contestTypeId);
+    const contestType   = parseTypeSelection(contestTypeId, lang);
     const currentRunId  = getRunId(competitionId, contestType.id);
 
     const oldContests = oldContestIds
         .map((runId) => {
             const [cid, tid] = runId.split("__");
             const contest = contests.find((c) => c.id === cid);
-            const type    = parseTypeSelection(tid);
+            const type    = parseTypeSelection(tid, lang);
             return contest && type.ids.length > 0 ? { runId, contest, type } : null;
         })
         .filter((item): item is { runId: string; contest: (typeof contests)[number]; type: ReturnType<typeof parseTypeSelection> } => Boolean(item));
@@ -217,7 +207,7 @@ export default function ScoringPage() {
     }
 
     function continueWithContestTypes() {
-        const sel = getTypeSelection(selectedContestTypeIds);
+        const sel = getTypeSelection(selectedContestTypeIds, lang);
         if (sel.ids.length === 0) return;
         setContestTypeId(sel.id); setSelectedPlayerIds([]); setClubFilter("all");
         setPlayers([]); setClassFilter(allClasses); setLaneAssignments({});
@@ -227,7 +217,7 @@ export default function ScoringPage() {
 
     function openOldContest(runId: string) {
         const [nci, nti] = runId.split("__");
-        const sel     = parseTypeSelection(nti);
+        const sel     = parseTypeSelection(nti, lang);
         const contest = contests.find((c) => c.id === nci);
         const loaded  = getStoredScores(runId, basePlayers, registeredPlayers);
         localStorage.setItem(activeContestKey, JSON.stringify({ runId, contestName: contest?.name ?? nci, typeName: sel.name }));
@@ -601,14 +591,14 @@ export default function ScoringPage() {
                 </div>
 
                 <section className="contest-grid" aria-label={t.sc_start_title}>
-                    {contestTypes.map((type) => (
+                    {contestTypeDefs.map((type) => (
                         <button
                             className={selectedContestTypeIds.includes(type.id) ? "contest-card selected" : "contest-card"}
                             key={type.id} type="button"
                             aria-pressed={selectedContestTypeIds.includes(type.id)}
                             onClick={() => toggleContestType(type.id)}>
                             <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
-                            <span>{type.name}</span>
+                            <span>{lang === "sv" ? type.sv : type.en}</span>
                         </button>
                     ))}
                 </section>
