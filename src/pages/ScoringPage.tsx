@@ -7,6 +7,7 @@ import { rankPlayers } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { useCompetitions } from "../contexts/CompetitionsContext";
+import { supabase } from "../lib/supabase";
 
 function titleToAgeCategory(title: string): AgeCategory {
     if (title === "mrs") return "dam";
@@ -15,27 +16,10 @@ function titleToAgeCategory(title: string): AgeCategory {
     return "herr";
 }
 
-function loadAllPlayers(basePlayers: PlayerScore[]): PlayerScore[] {
-    try {
-        const raw = localStorage.getItem("hsc-registrations");
-        const registered: PlayerScore[] = raw
-            ? (JSON.parse(raw) as { firstName: string; lastName: string; club: string; category: string; title: string; createdAt: string }[]).filter((e) => !["mix-d","dubbel","mr-d","mrs-d","team-g"].includes(e.category)).map((e) => ({
-                  id: `reg-${e.createdAt}`,
-                  name: `${e.firstName} ${e.lastName}`.trim(),
-                  club: e.club ?? "",
-                  classLevel: (Number(e.category) || 4) as ClassLevel,
-                  ageCategory: titleToAgeCategory(e.title),
-                  rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                  bonusHits: Array(10).fill(false),
-                  sevenMeters: 0,
-              }))
-            : [];
-        const registeredNames = new Set(registered.map((p) => p.name.toLowerCase()));
-        const base = basePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
-        return [...base, ...registered];
-    } catch {
-        return basePlayers;
-    }
+function loadAllPlayers(basePlayers: PlayerScore[], registeredPlayers: PlayerScore[]): PlayerScore[] {
+    const registeredNames = new Set(registeredPlayers.map((p) => p.name.toLowerCase()));
+    const base = basePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
+    return [...base, ...registeredPlayers];
 }
 
 const allClasses = "all";
@@ -80,7 +64,7 @@ function parseTypeSelection(typeId: string) {
     return getTypeSelection(typeId.split(typeIdSeparator).filter(Boolean));
 }
 
-function getStoredScores(runId: string, basePlayers: PlayerScore[]): PlayerScore[] {
+function getStoredScores(runId: string, basePlayers: PlayerScore[], registeredPlayers: PlayerScore[] = []): PlayerScore[] {
     const stored = localStorage.getItem(`${scoreStoragePrefix}-${runId}`);
     if (stored) {
         try {
@@ -95,7 +79,7 @@ function getStoredScores(runId: string, basePlayers: PlayerScore[]): PlayerScore
             if (data.length > 0) return data;
         } catch { /* fall through */ }
     }
-    return loadAllPlayers(basePlayers);
+    return loadAllPlayers(basePlayers, registeredPlayers);
 }
 
 function resetPlayerScores(players: PlayerScore[]) {
@@ -127,6 +111,27 @@ export default function ScoringPage() {
     const { t, lang } = useLanguage();
     const { players: basePlayers, loading: baseLoading } = usePlayers();
 
+    const [registeredPlayers, setRegisteredPlayers] = useState<PlayerScore[]>([]);
+    useEffect(() => {
+        supabase.from('registrations').select('*').order('created_at').then(({ data }) => {
+            const entries = (data ?? []) as { first_name: string; last_name: string; club: string; category: string; title: string; created_at: string }[];
+            setRegisteredPlayers(
+                entries
+                    .filter((e) => !["mix-d","dubbel","mr-d","mrs-d","team-g"].includes(e.category))
+                    .map((e) => ({
+                        id: `reg-${e.created_at}`,
+                        name: `${e.first_name} ${e.last_name}`.trim(),
+                        club: e.club ?? "",
+                        classLevel: (Number(e.category) || 4) as ClassLevel,
+                        ageCategory: titleToAgeCategory(e.title),
+                        rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        bonusHits: Array(10).fill(false),
+                        sevenMeters: 0,
+                    }))
+            );
+        });
+    }, []);
+
     const { competitions: rawComps } = useCompetitions();
     const today = new Date().toISOString().slice(0, 10);
     const allComps = useMemo(() => [...rawComps].sort((a, b) => a.date.localeCompare(b.date)), [rawComps]);
@@ -157,7 +162,7 @@ export default function ScoringPage() {
     const [oldContestIds,           setOldContestIds]           = useState<string[]>(getSavedContestIds);
 
     useEffect(() => {
-        if (!baseLoading) setPlayers((cur) => cur.length === 0 ? loadAllPlayers(basePlayers) : cur);
+        if (!baseLoading) setPlayers((cur) => cur.length === 0 ? loadAllPlayers(basePlayers, registeredPlayers) : cur);
     }, [baseLoading, basePlayers]);
 
     const competition   = contests.find((c) => c.id === competitionId) ?? contests[0];
@@ -174,10 +179,10 @@ export default function ScoringPage() {
         .filter((item): item is { runId: string; contest: (typeof contests)[number]; type: ReturnType<typeof parseTypeSelection> } => Boolean(item));
 
     const registrationPlayers = useMemo(
-        () => loadAllPlayers(basePlayers).sort((a, b) =>
+        () => loadAllPlayers(basePlayers, registeredPlayers).sort((a, b) =>
             a.club.localeCompare(b.club) || a.classLevel - b.classLevel || a.name.localeCompare(b.name)
         ),
-        [basePlayers]
+        [basePlayers, registeredPlayers]
     );
     const registrationClubs = useMemo(
         () => [...new Set(registrationPlayers.map((p) => p.club || t.sc_no_team))].sort((a, b) => a.localeCompare(b)),
@@ -230,7 +235,7 @@ export default function ScoringPage() {
         const [nci, nti] = runId.split("__");
         const sel     = parseTypeSelection(nti);
         const contest = contests.find((c) => c.id === nci);
-        const loaded  = getStoredScores(runId, basePlayers);
+        const loaded  = getStoredScores(runId, basePlayers, registeredPlayers);
         localStorage.setItem(activeContestKey, JSON.stringify({ runId, contestName: contest?.name ?? nci, typeName: sel.name }));
         localStorage.setItem(`${liveScorePrefix}-${runId}`, JSON.stringify(loaded));
         const teamsRaw = localStorage.getItem(`${teamsStoragePrefix}-${runId}`);
@@ -401,7 +406,7 @@ export default function ScoringPage() {
             .forEach((k) => localStorage.removeItem(k));
         localStorage.removeItem(activeContestKey);
         setOldContestIds([]);
-        setPlayers(loadAllPlayers(basePlayers));
+        setPlayers(loadAllPlayers(basePlayers, registeredPlayers));
         setTeamAssignments([]); setActiveTeamId(null);
         setLaneAssignments({}); setActiveLane(null);
         setStatus("reset");

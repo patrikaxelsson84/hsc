@@ -1,6 +1,7 @@
 import { GripVertical, Maximize, Minimize, Printer, Trophy } from "lucide-react";
 import { fetchLiveResults } from "../lib/liveResults";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
@@ -39,8 +40,6 @@ function saveColLayout(layout: ColLayout) {
     localStorage.setItem(RESULTS_COLS_KEY, JSON.stringify(layout));
 }
 
-const REGISTRATIONS_KEY = "hsc-registrations";
-
 interface PairResult {
     id: string;
     mrName: string;
@@ -50,18 +49,18 @@ interface PairResult {
     rank: number;
 }
 
-function buildMixedPairs(players: PlayerScore[], competitionId: string): PairResult[] {
+interface RegRow { first_name: string; last_name: string; category: string; pair_with?: string | null; competition_id?: string | null }
+
+function buildMixedPairs(players: PlayerScore[], competitionId: string, regs: RegRow[]): PairResult[] {
     try {
-        const regs: { firstName: string; lastName: string; category: string; pairWith?: string; competitionId?: string }[] =
-            JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
-        const pairs = regs.filter((r) => r.competitionId === competitionId && r.category === "mix-d" && r.pairWith);
+        const pairs = regs.filter((r) => r.competition_id === competitionId && r.category === "mix-d" && r.pair_with);
 
         const seen = new Set<string>();
         const results: PairResult[] = [];
 
         for (const entry of pairs) {
-            const nameA = `${entry.firstName} ${entry.lastName}`.trim();
-            const nameB = entry.pairWith!;
+            const nameA = `${entry.first_name} ${entry.last_name}`.trim();
+            const nameB = entry.pair_with!;
             const key = [nameA, nameB].sort().join("|");
             if (seen.has(key)) continue;
             seen.add(key);
@@ -291,6 +290,13 @@ export default function ResultsPage() {
     const { t, lang } = useLanguage();
     const [liveData, setLiveData] = useState(readLiveData);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
+    const [supabaseRegs, setSupabaseRegs] = useState<RegRow[]>([]);
+
+    useEffect(() => {
+        supabase.from('registrations').select('first_name,last_name,category,pair_with,competition_id').then(({ data }) => {
+            setSupabaseRegs((data ?? []) as RegRow[]);
+        });
+    }, []);
     const [dragKey, setDragKey] = useState<SectionKey | null>(null);
     const [dropTarget, setDropTarget] = useState<{ col: ColId; before: SectionKey | null } | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -368,7 +374,7 @@ export default function ResultsPage() {
 
     const competitionId = active.runId.split("__")[0];
     const liveTypeName = typeNameFromRunId(active.runId, lang);
-    const mixedPairs = active.runId.toLowerCase().includes("mixed") ? buildMixedPairs(players, competitionId) : [];
+    const mixedPairs = active.runId.toLowerCase().includes("mixed") ? buildMixedPairs(players, competitionId, supabaseRegs) : [];
 
     const sections: Partial<Record<SectionKey, SectionFactory>> = {};
 

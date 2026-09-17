@@ -20,7 +20,6 @@ import { supabase } from "../lib/supabase";
 
 const CLUB_SESSION_KEY  = "hsc-club-session";
 const ROSTERS_KEY       = "hsc-club-rosters";
-const REGISTRATIONS_KEY = "hsc-registrations";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -2384,18 +2383,17 @@ export default function ClubPage() {
                     });
                 if (changed) saveClubRoster(name, roster);
             }
-            const regs: RegEntry[] = (() => {
-                try { return JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]"); }
-                catch { return []; }
-            })();
+            const { data: regData } = await supabase
+                .from('registrations')
+                .select('first_name,last_name,club,category,title,created_at')
+                .eq('club', name)
+                .not('category', 'in', `(${PAIR_CATS.join(',')})`);
             const rosterNames = new Set(roster.map((p) => p.name.toLowerCase()));
-            const fromRegs: ClubPlayer[] = regs
-                .filter((r) => r.club?.toLowerCase() === name.toLowerCase())
-                .filter((r) => !PAIR_CATS.includes(r.category))
-                .filter((r) => !rosterNames.has(`${r.firstName} ${r.lastName}`.trim().toLowerCase()))
-                .map((r) => ({
-                    id: `reg-${r.createdAt ?? Date.now()}`,
-                    name: `${r.firstName} ${r.lastName}`.trim(),
+            const fromRegs: ClubPlayer[] = (regData ?? [])
+                .filter((r: { first_name: string; last_name: string }) => !rosterNames.has(`${r.first_name} ${r.last_name}`.trim().toLowerCase()))
+                .map((r: { first_name: string; last_name: string; club: string; category: string; title: string; created_at: string }) => ({
+                    id: `reg-${r.created_at}`,
+                    name: `${r.first_name} ${r.last_name}`.trim(),
                     club: r.club,
                     classLevel: (Number(r.category) || 4) as ClassLevel,
                     ageCategory: titleToAgeCategory(r.title),
@@ -2541,13 +2539,6 @@ export default function ClubPage() {
             : `Are you sure you want to remove ${name} from the club?`;
         if (!window.confirm(msg)) return;
         saveAndSet(players.filter((p) => p.id !== id));
-        if (id.startsWith("reg-")) {
-            const createdAt = id.slice(4);
-            try {
-                const regs: RegEntry[] = JSON.parse(localStorage.getItem(REGISTRATIONS_KEY) ?? "[]");
-                localStorage.setItem(REGISTRATIONS_KEY, JSON.stringify(regs.filter((r) => r.createdAt !== createdAt)));
-            } catch { /* empty */ }
-        }
     }
 
     function toggleRegPlayer(id: string) {

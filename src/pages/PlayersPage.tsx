@@ -5,50 +5,13 @@ import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
 import { loadPendingChanges, resolveChange, applyAndApprove } from "../lib/pendingChanges";
 import type { PendingChange } from "../lib/pendingChanges";
-
-interface RegistrationEntry {
-    firstName: string;
-    lastName: string;
-    email?: string;
-    club: string;
-    category: string;
-    title: string;
-    notes?: string;
-    createdAt: string;
-}
+import { supabase } from "../lib/supabase";
 
 function titleToAgeCategory(title: string): AgeCategory {
     if (title === "mrs") return "dam";
     if (title === "junior") return "junior";
     if (title === "minior") return "minior";
     return "herr";
-}
-
-function loadRegisteredPlayers(): PlayerScore[] {
-    try {
-        const raw = localStorage.getItem("hsc-registrations");
-        if (!raw) return [];
-        const entries = JSON.parse(raw) as RegistrationEntry[];
-        return entries.map((e) => ({
-            id: `reg-${e.createdAt}`,
-            name: `${e.firstName} ${e.lastName}`.trim(),
-            club: e.club ?? "",
-            classLevel: (Number(e.category) || 4) as ClassLevel,
-            ageCategory: titleToAgeCategory(e.title),
-            rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            bonusHits: Array(10).fill(false),
-            sevenMeters: 0,
-        }));
-    } catch {
-        return [];
-    }
-}
-
-function mergeWithRegistered(basePlayers: PlayerScore[]): PlayerScore[] {
-    const registered = loadRegisteredPlayers();
-    const registeredIds = new Set(registered.map((p) => p.name.toLowerCase()));
-    const base = basePlayers.filter((p) => !registeredIds.has(p.name.toLowerCase()));
-    return [...base, ...registered];
 }
 
 export default function PlayersPage() {
@@ -58,7 +21,23 @@ export default function PlayersPage() {
     const [players, setPlayers] = useState<PlayerScore[]>([]);
 
     useEffect(() => {
-        if (!loading) setPlayers(mergeWithRegistered(basePlayers));
+        if (loading) return;
+        supabase.from('registrations').select('*').order('created_at').then(({ data }) => {
+            const entries = (data ?? []) as { first_name: string; last_name: string; club: string; category: string; title: string; created_at: string }[];
+            const registered: PlayerScore[] = entries.map((e) => ({
+                id: `reg-${e.created_at}`,
+                name: `${e.first_name} ${e.last_name}`.trim(),
+                club: e.club ?? "",
+                classLevel: (Number(e.category) || 4) as ClassLevel,
+                ageCategory: titleToAgeCategory(e.title),
+                rounds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                bonusHits: Array(10).fill(false),
+                sevenMeters: 0,
+            }));
+            const registeredNames = new Set(registered.map((p) => p.name.toLowerCase()));
+            const base = basePlayers.filter((p) => !registeredNames.has(p.name.toLowerCase()));
+            setPlayers([...base, ...registered]);
+        });
     }, [loading, basePlayers]);
 
     const sortedPlayers = [...players].sort((a, b) => {
@@ -114,7 +93,7 @@ export default function PlayersPage() {
         setSaveError(null);
         const updated = players.map((p) => p.id === editingPlayer.id ? editingPlayer : p);
         setPlayers(updated);
-        // only save real GitHub players, not pending localStorage registrations
+        // only save master-list players, not event registrations
         const toSave = updated.filter((p) => !p.id.startsWith("reg-"));
         try {
             await savePlayers(toSave);
