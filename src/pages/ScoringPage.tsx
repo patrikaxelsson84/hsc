@@ -9,6 +9,7 @@ import { printProtokoll, printStartordning, printLaguppställning } from "../lib
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { supabase } from "../lib/supabase";
 import { contestTypeDefs, typeName } from "../lib/contestTypes";
+import { pushGpResult } from "../lib/gpResults";
 
 
 function loadAllPlayers(basePlayers: PlayerScore[], registeredPlayers: PlayerScore[]): PlayerScore[] {
@@ -350,6 +351,7 @@ export default function ScoringPage() {
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
         pushLiveResults(currentRunId, competition.name, contestType.name, players, teamAssignments);
+        pushGpResult(currentRunId, competition.name, competition.date ?? null, contestType.name, players);
     }
 
     function resetScores() {

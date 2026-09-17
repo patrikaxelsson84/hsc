@@ -13,11 +13,16 @@ import ResultsPage from "../pages/ResultsPage";
 import ScoringPage from "../pages/ScoringPage";
 import AdminUsersPage from "../pages/AdminUsersPage";
 import PrivacyPage from "../pages/PrivacyPage";
+import GrandPrixPage from "../pages/GrandPrixPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <HomePage />,
+    },
+    {
+        path: "/grand-prix",
+        element: <GrandPrixPage />,
     },
     {
         path: "/privacy",

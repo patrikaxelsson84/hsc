@@ -3,6 +3,7 @@ import {
     CalendarDays,
     ChevronDown,
     MapPin,
+    Medal,
     Radio,
     ShieldCheck,
     Trophy,
@@ -94,10 +95,18 @@ export default function HomePage() {
     return (
         <main className="public-page">
             <header className="site-header">
-                <Link className="brand" to="/" aria-label="HSC home">
-                    <span className="brand-mark">HSC</span>
-                    <span>{t.brand_subtitle}</span>
-                </Link>
+                <div className="header-left">
+                    <Link className="brand" to="/" aria-label="HSC home">
+                        <span className="brand-mark">HSC</span>
+                        <span>{t.brand_subtitle}</span>
+                    </Link>
+                    <nav className="site-nav">
+                        <Link to="/grand-prix" className="site-nav-link">
+                            <Medal size={14} aria-hidden="true" />
+                            Sweden Grand Prix
+                        </Link>
+                    </nav>
+                </div>
 
                 <a className="svhkf-logo-link" href="https://www.svhkf.se/" target="_blank" rel="noopener noreferrer" aria-label="Sv HKF">
                     <img className="svhkf-logo" src="/svhkf-logo.png" alt="Svenska Hästskokastarförbundet" />
