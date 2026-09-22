@@ -1216,10 +1216,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setStatus("idle");
     }
 
-    function saveFlow() {
+    async function saveFlow() {
         if (!selectedCompId || view === "pick") return;
         const state = { view, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments };
         localStorage.setItem(`${FLOW_PREFIX}-${selectedCompId}`, JSON.stringify(state));
+        if (typeIds.length > 0) {
+            await supabase.from("competitions").update({ disciplines: typeIds }).eq("id", selectedCompId);
+        }
         setStatus("saved");
     }
 
@@ -2856,22 +2859,33 @@ export default function ClubPage() {
 
                                 {selectedComp && (
                                     <>
-                                        {/* Sub-tabs */}
-                                        <div className="club-tab-bar" style={{ marginTop: "1rem", marginBottom: "0.75rem" }}>
-                                            {(["individual", "lag", "mix", "dubbel"] as const).map((rt) => (
-                                                <button key={rt} type="button"
-                                                    className={regTab === rt ? "club-tab active" : "club-tab"}
-                                                    onClick={() => setRegTab(rt)}>
-                                                    {rt === "individual" ? (lang === "sv" ? "Individuell" : "Individual") :
-                                                     rt === "lag"        ? (lang === "sv" ? "Lag" : "Team") :
-                                                     rt === "mix"        ? "Mix" : "Dubbel"}
-                                                    {rt === "individual" && selectedPlayers.length > 0 && <span className="club-tab-count">{selectedPlayers.length}</span>}
-                                                    {rt === "lag"        && regTeams.length > 0           && <span className="club-tab-count">{regTeams.length}</span>}
-                                                    {rt === "mix"        && mixPairs.length > 0            && <span className="club-tab-count">{mixPairs.length}</span>}
-                                                    {rt === "dubbel"     && regDubbel.length > 0           && <span className="club-tab-count">{regDubbel.length}</span>}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {/* Sub-tabs — filtered by the competition's configured disciplines */}
+                                        {(() => {
+                                            const cd = competitions.find((c) => c.id === selectedComp)?.disciplines ?? [];
+                                            const ok = (ids: string[]) => cd.length === 0 || ids.some((d) => cd.includes(d));
+                                            const indDiscs = ["klass","individual-rank","mr","mrs","junior","minions"];
+                                            const tabs = [
+                                                { id: "individual" as const, sv: "Individuell", en: "Individual", show: ok(indDiscs) },
+                                                { id: "lag"        as const, sv: "Lag",         en: "Team",       show: ok(["team"]) },
+                                                { id: "mix"        as const, sv: "Mix",         en: "Mix",        show: ok(["mixed"]) },
+                                                { id: "dubbel"     as const, sv: "Dubbel",      en: "Doubles",    show: ok(["dubbel","mr-double","mrs-double"]) },
+                                            ].filter((t) => t.show);
+                                            return (
+                                                <div className="club-tab-bar" style={{ marginTop: "1rem", marginBottom: "0.75rem" }}>
+                                                    {tabs.map((rt) => (
+                                                        <button key={rt.id} type="button"
+                                                            className={regTab === rt.id ? "club-tab active" : "club-tab"}
+                                                            onClick={() => setRegTab(rt.id)}>
+                                                            {lang === "sv" ? rt.sv : rt.en}
+                                                            {rt.id === "individual" && selectedPlayers.length > 0 && <span className="club-tab-count">{selectedPlayers.length}</span>}
+                                                            {rt.id === "lag"        && regTeams.length > 0           && <span className="club-tab-count">{regTeams.length}</span>}
+                                                            {rt.id === "mix"        && mixPairs.length > 0            && <span className="club-tab-count">{mixPairs.length}</span>}
+                                                            {rt.id === "dubbel"     && regDubbel.length > 0           && <span className="club-tab-count">{regDubbel.length}</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* ── Individuell ── */}
                                         {regTab === "individual" && (

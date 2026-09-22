@@ -11,6 +11,7 @@ export interface Competition {
     registrationOpen: boolean;
     source: "manual" | "svhkf";
     country: "SE" | "PL";
+    disciplines?: string[];
 }
 
 export const seedCompetitions: Omit<Competition, "id" | "registrationOpen">[] = [
