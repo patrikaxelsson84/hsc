@@ -2358,7 +2358,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 export default function ClubPage() {
     const { t, lang } = useLanguage();
     const { players: basePlayers, loading: baseLoading } = usePlayers();
-    const { competitions: allCompetitions } = useCompetitions();
+    const { competitions: allCompetitions, refresh: refreshCompetitions } = useCompetitions();
     const knownClubs = useMemo(
         () => [...new Set(basePlayers.map((p) => p.club).filter(Boolean))].sort((a, b) => a.localeCompare(b, "sv")),
         [basePlayers],
@@ -2450,6 +2450,10 @@ export default function ClubPage() {
     const [regDubbelP1,     setRegDubbelP1]     = useState("");
     const [regDubbelP2,     setRegDubbelP2]     = useState("");
     const [myRegs,          setMyRegs]          = useState<RegEntry[]>([]);
+
+    useEffect(() => {
+        if (tab === "competition") void refreshCompetitions();
+    }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!selectedComp || !clubName) { setMyRegs([]); return; }
