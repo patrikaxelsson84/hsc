@@ -910,6 +910,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [view,               setView]               = useState<OwnView>("pick");
     const [selectedCompId,     setSelectedCompId]     = useState<string | null>(null);
     const [typeIds,            setTypeIds]            = useState<string[]>([]);
+    const [freshStart,         setFreshStart]         = useState(false);
     const [laneCount,          setLaneCount]          = useState(1);
     const [selectedPlayerIds,  setSelectedPlayerIds]  = useState<string[]>([]);
     const [players,            setPlayers]            = useState<PlayerScore[]>([]);
@@ -972,6 +973,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setTypeIds(savedDisciplines); setLaneCount(1); setSelectedPlayerIds([]);
         setPlayers([]); setLaneAssignments({}); setActiveLane(null);
         setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
+        setFreshStart(true);
         setView("type");
     }
 
@@ -1006,6 +1008,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setTeamAssignments(flow?.teamAssignments ?? teamData);
         setSelectedPlayerIds(flow?.selectedPlayerIds ?? savedPlayers.map((p) => p.id));
         setActiveLane(null); setActiveTeamId(null); setStatus("idle");
+        setFreshStart(false);
         setView(flow?.view ?? "scoring");
     }
 
@@ -1316,7 +1319,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     // ── TYPE + LANES ──
     if (view === "type") {
-        const disciplinesLocked = compPlayers.length > 0;
+        const disciplinesLocked = compPlayers.length > 0 && !freshStart;
         return (
             <div className="admin-page">
                 <div className="admin-page-header">
