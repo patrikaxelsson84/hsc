@@ -961,8 +961,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     function goBack() {
         if (view === "type")              setView("pick");
         else if (view === "registration") setView("type");
-        else if (view === "lanes")        setView("registration");
-        else if (view === "teams")        setView("registration");
+        else if (view === "lanes")        setView("type");
+        else if (view === "teams")        setView("type");
         else if (view === "scoring")      setView("pick");
     }
 
@@ -1109,8 +1109,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function proceedFromType() {
         if (typeIds.length === 0) return;
-        setSelectedPlayerIds(compPlayers.map((p) => p.id));  // pre-select all
-        setView("registration");
+        setSelectedPlayerIds(compPlayers.map((p) => p.id));
+        setView("lanes");
     }
 
     function startContest() {
