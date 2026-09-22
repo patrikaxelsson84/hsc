@@ -1117,9 +1117,20 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             .eq('competition_id', selectedCompId);
         const compRegs = (freshData ?? []).map(rowToRegEntry);
 
-        // Build players from every registration entry
-        const chosen: PlayerScore[] = compRegs.map((r, idx) => ({
-            id:          r.id ?? `reg-${idx}-${r.firstName}-${r.lastName}`,
+        // Deduplicate by name — individual (numeric category) takes priority over team/pair
+        const PAIR_CATS_LOCAL = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g"];
+        const playerMap = new Map<string, RegEntry>();
+        for (const r of compRegs.filter((r) => !PAIR_CATS_LOCAL.includes(r.category))) {
+            const key = `${r.firstName} ${r.lastName}`.trim().toLowerCase();
+            if (!playerMap.has(key)) playerMap.set(key, r);
+        }
+        for (const r of compRegs.filter((r) => PAIR_CATS_LOCAL.includes(r.category))) {
+            const key = `${r.firstName} ${r.lastName}`.trim().toLowerCase();
+            if (!playerMap.has(key)) playerMap.set(key, r);
+        }
+
+        const chosen: PlayerScore[] = Array.from(playerMap.values()).map((r) => ({
+            id:          r.id ?? `reg-${r.firstName}-${r.lastName}`,
             name:        `${r.firstName} ${r.lastName}`.trim(),
             club:        r.club,
             classLevel:  (Number(r.category) || 4) as import("../lib/scoring").ClassLevel,
@@ -1128,6 +1139,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             bonusHits:   Array(10).fill(false) as boolean[],
             sevenMeters: 0,
         }));
+
+        // Name → resolved id lookup so team/pair assignments reference the deduplicated player list
+        const nameToId = new Map<string, string>(chosen.map((p) => [p.name.toLowerCase(), p.id]));
+        function resolveId(r: RegEntry): string {
+            const name = `${r.firstName} ${r.lastName}`.trim();
+            return nameToId.get(name.toLowerCase()) ?? (r.id ?? `reg-${r.firstName}-${r.lastName}`);
+        }
 
         // Pre-build team/pair assignments from registrations
         const preTeams: { id: string; name: string; playerIds: string[] }[] = [];
@@ -1142,22 +1160,21 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             preTeams.push({
                 id:        tid,
                 name:      members[0].club || "Lag",
-                playerIds: members.map((r, i) => r.id ?? `reg-${compRegs.indexOf(r)}-${r.firstName}-${r.lastName}`),
+                playerIds: members.map(resolveId),
             });
         }
 
         // Par (dubbel/mix/mr-d/mrs-d): deduplicate by sorted name key
-        const PAIR_CATS_LOCAL = ["mix-d", "dubbel", "mr-d", "mrs-d"];
         const seenPairs = new Set<string>();
-        for (const r of compRegs.filter((r) => PAIR_CATS_LOCAL.includes(r.category))) {
+        for (const r of compRegs.filter((r) => PAIR_CATS_LOCAL.slice(0, 4).includes(r.category))) {
             const partner = compRegs.find((r2) => r2 !== r && r2.category === r.category && `${r2.firstName} ${r2.lastName}`.trim() === r.pairWith);
             const rName = `${r.firstName} ${r.lastName}`.trim();
             const pName = partner ? `${partner.firstName} ${partner.lastName}`.trim() : (r.pairWith ?? "");
             const key = [rName, pName].sort().join("|");
             if (seenPairs.has(key)) continue;
             seenPairs.add(key);
-            const rId = r.id ?? `reg-${compRegs.indexOf(r)}-${r.firstName}-${r.lastName}`;
-            const pId = partner ? (partner.id ?? `reg-${compRegs.indexOf(partner)}-${partner.firstName}-${partner.lastName}`) : `missing-${pName}`;
+            const rId = resolveId(r);
+            const pId = partner ? resolveId(partner) : `missing-${pName}`;
             preTeams.push({ id: `pair-${key}`, name: `${rName} / ${pName}`, playerIds: [rId, pId] });
         }
 
