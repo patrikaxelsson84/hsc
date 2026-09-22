@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Camera, CheckSquare, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
@@ -294,6 +294,20 @@ const PAIR_TYPES: { id: PairCat; sv: string; en: string; size: 2 | 4 }[] = [
     { id: "mr-d",   sv: "Mr Dubbel",  en: "Mr Doubles",  size: 2 },
     { id: "mrs-d",  sv: "Mrs Dubbel", en: "Mrs Doubles", size: 2 },
     { id: "team-g", sv: "Lag",        en: "Team",        size: 4 },
+];
+
+const DISCIPLINES: { id: string; sv: string; en: string }[] = [
+    { id: "klass",           sv: "Klass",       en: "Class" },
+    { id: "team",            sv: "Lag",          en: "Team" },
+    { id: "individual-rank", sv: "Individuellt", en: "Individual" },
+    { id: "mr",              sv: "Herr",         en: "Men" },
+    { id: "mrs",             sv: "Dam",          en: "Women" },
+    { id: "dubbel",          sv: "Dubbel",       en: "Doubles" },
+    { id: "mrs-double",      sv: "Dam dubbel",   en: "Women's Doubles" },
+    { id: "mr-double",       sv: "Herrdubbel",   en: "Men's Doubles" },
+    { id: "mixed",           sv: "Mix",          en: "Mixed" },
+    { id: "junior",          sv: "Junior",       en: "Junior" },
+    { id: "minions",         sv: "Minior",       en: "Minior" },
 ];
 
 // ── Incoming registrations ────────────────────────────────────────────────────
@@ -1303,8 +1317,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <div className="admin-page-header">
                     <div>
                         <p className="eyebrow">{selectedComp?.name}</p>
-                        <h1>{t.club_own_setup_type}</h1>
-                        <p>{t.sc_type_desc}</p>
+                        <h1>{lang === "sv" ? "Välj grenar" : "Choose disciplines"}</h1>
+                        <p>{lang === "sv" ? "Kryssa i de delar av tävlingen du vill ha med." : "Check the parts of the competition you want to include."}</p>
                     </div>
                     <button className="secondary-action roster-back-button" type="button" onClick={goBack}>
                         <ArrowLeft size={17} aria-hidden="true" /> {t.sc_back}
@@ -1337,16 +1351,21 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </div>
                 </div>
 
-                <section className="contest-grid">
-                    {contestTypeDefs.map((type) => (
-                        <button key={type.id} type="button"
-                            className={typeIds.includes(type.id) ? "contest-card selected" : "contest-card"}
-                            aria-pressed={typeIds.includes(type.id)}
-                            onClick={() => setTypeIds((cur) => cur.includes(type.id) ? cur.filter((x) => x !== type.id) : [...cur, type.id])}>
-                            <span className="contest-card-icon"><Trophy size={20} aria-hidden="true" /></span>
-                            <span>{lang === "sv" ? type.sv : type.en}</span>
-                        </button>
-                    ))}
+                <section className="contest-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+                    {DISCIPLINES.map((d) => {
+                        const on = typeIds.includes(d.id);
+                        return (
+                            <button key={d.id} type="button"
+                                className={on ? "contest-card selected" : "contest-card"}
+                                aria-pressed={on}
+                                onClick={() => setTypeIds((cur) => on ? cur.filter((x) => x !== d.id) : [...cur, d.id])}>
+                                <span className="contest-card-icon">
+                                    {on ? <CheckSquare size={20} aria-hidden="true" /> : <Square size={20} aria-hidden="true" />}
+                                </span>
+                                <span>{lang === "sv" ? d.sv : d.en}</span>
+                            </button>
+                        );
+                    })}
                 </section>
             </div>
         );

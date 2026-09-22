@@ -1,4 +1,5 @@
 export const contestTypeDefs: { id: string; sv: string; en: string }[] = [
+    { id: "klass",           sv: "Klass",       en: "Class" },
     { id: "mixed",           sv: "Mixed",       en: "Mixed" },
     { id: "dubbel",          sv: "Dubbel",      en: "Double" },
     { id: "team",            sv: "Lag",         en: "Team" },
