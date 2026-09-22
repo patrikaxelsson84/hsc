@@ -67,7 +67,12 @@ export function printProtokoll({
     lang = "sv",
 }: PrintProtokollParams): void {
     const hasLanes = laneCount > 1 && Object.keys(laneAssignments).length > 0;
-    const banaLabel = lang === "sv" ? "Bana" : "Lane";
+    const banaLabel  = lang === "sv" ? "Bana"    : "Lane";
+    const skoLabel   = lang === "sv" ? "Sko"     : "Shoe";
+    const namnLabel  = lang === "sv" ? "Namn"    : "Name";
+    const summaLabel = lang === "sv" ? "Summa"   : "Total";
+    const omgLabel   = lang === "sv" ? "Omgång:" : "Round:";
+    const numRows    = 20;
 
     const laneGroups: { laneNum: number; players: PlayerScore[] }[] = [];
     if (hasLanes) {
@@ -82,21 +87,42 @@ export function printProtokoll({
     }
 
     const tables = laneGroups.map(({ laneNum, players: lp }) => {
-        const rows = lp.length > 0
-            ? lp.map((p) => `<tr><td class="nc">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`).join("")
-            : Array.from({ length: 5 }, () => `<tr><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`).join("");
-        return `<div class="lb"><table>
-            <thead>
-                <tr><th colspan="7" class="lh">${banaLabel} ${laneNum}</th></tr>
-                <tr><th class="nt">Namn</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>Summa</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table></div>`;
+        const filledRows = lp.map((p, i) =>
+            `<tr><td class="num">${i + 1}</td><td class="nc">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`
+        );
+        const emptyCount = Math.max(0, numRows - filledRows.length);
+        const emptyRows  = Array.from({ length: emptyCount }, (_, i) =>
+            `<tr><td class="num">${filledRows.length + i + 1}</td><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`
+        );
+        const rows = [...filledRows, ...emptyRows].join("");
+
+        return `<div class="lb" style="page-break-after:always">
+<p style="font-size:11px;margin:0 0 4px"><strong>${omgLabel}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10</p>
+<table>
+    <thead>
+        <tr>
+            <th colspan="2" class="lh">${banaLabel} ${laneNum}</th>
+            <th class="lh" style="text-align:center">${skoLabel}</th>
+            <th class="lh" style="text-align:center">${skoLabel}</th>
+            <th class="lh" style="text-align:center">${skoLabel}</th>
+            <th class="lh" style="text-align:center">${skoLabel}</th>
+            <th class="lh" style="text-align:center">${skoLabel}</th>
+            <th class="lh"></th>
+        </tr>
+        <tr>
+            <th class="num">Nr</th>
+            <th class="nt">${namnLabel}</th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+            <th>${summaLabel}</th>
+        </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+</table></div>`;
     }).join("");
 
     openPrint(`${competitionName} – Domarprotokoll`, `
 <div class="ph"><div><h1>${competitionName}</h1><p>Domarprotokoll</p></div></div>
-<div class="grid">${tables}</div>`, lang);
+${tables}`, lang);
 }
 
 // ── Startordning ──────────────────────────────────────────────────────────────
