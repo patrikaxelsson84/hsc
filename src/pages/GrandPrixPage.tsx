@@ -20,10 +20,12 @@ const CLASS_ZONES = {
     4: { promo: 5, relego: 0 },
 } as const;
 
-function ptsForRank(rank: number, n: number): number {
-    const scorers = Math.floor(n * 0.8);
+function ptsForRank(rank: number, n: number, isSm = false): number {
+    // Official 80% table: 1-4 participants → 3 score; otherwise Math.round(n*0.8)
+    const scorers = n <= 4 ? 3 : Math.round(n * 0.8);
     if (rank > scorers) return 0;
-    return GP_PTS[rank - 1] ?? 1;
+    const base = GP_PTS[rank - 1] ?? 1;
+    return base + (isSm ? 5 : 0);
 }
 
 interface PlayerGp {
@@ -55,6 +57,7 @@ function computeStandings(rows: GpResultRow[]): Map<ClassLevel, PlayerGp[]> {
             const hasPrecomputed = players.some((p) => (p as any).gpPoints !== undefined);
             if (hasPrecomputed) {
                 for (const p of players) {
+                    // Pre-seeded points from svhkf.se already include SM bonus
                     const pts = ((p as any).gpPoints as number) ?? 0;
                     const key = `${p.name}|||${p.club}`;
                     if (!pm.has(key)) {
@@ -67,7 +70,7 @@ function computeStandings(rows: GpResultRow[]): Map<ClassLevel, PlayerGp[]> {
             } else {
                 const ranked = rankPlayers(players);
                 for (const rp of ranked) {
-                    const pts = ptsForRank(rp.rank, players.length);
+                    const pts = ptsForRank(rp.rank, players.length, row.is_sm);
                     const key = `${rp.name}|||${rp.club}`;
                     if (!pm.has(key)) {
                         pm.set(key, { name: rp.name, club: rp.club, classLevel: cls as ClassLevel, total: 0, eventPts: {}, eventCount: 0 });
@@ -305,22 +308,30 @@ export default function GrandPrixPage() {
                                 </div>
                                 <div className="gp-rules-card">
                                     <h3>{lang === "sv" ? "Poängfördelning" : "Points per place"}</h3>
-                                    <div className="gp-pts-grid">
-                                        {[15, 13, 11, 9, 7, 6, 5, 4, 3, 2].map((pts, i) => (
-                                            <span key={i} className="gp-pts-row">
-                                                <span className="gp-pts-rank">{i + 1}</span>
-                                                <span className="gp-pts-val">{pts}</span>
-                                            </span>
-                                        ))}
-                                        <span className="gp-pts-row">
-                                            <span className="gp-pts-rank">11+</span>
-                                            <span className="gp-pts-val">1</span>
-                                        </span>
-                                    </div>
+                                    <table className="gp-mini-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{lang === "sv" ? "Plac" : "Place"}</th>
+                                                <th>{lang === "sv" ? "Poäng" : "Points"}</th>
+                                                <th>{lang === "sv" ? "Vid SM" : "At SM"}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {([
+                                                [1,15,20],[2,13,18],[3,11,16],[4,9,14],[5,7,12],
+                                                [6,6,11],[7,5,10],[8,4,9],[9,3,8],[10,2,7],
+                                            ] as [number,number,number][]).map(([place,pts,smPts]) => (
+                                                <tr key={place}>
+                                                    <td>{place}</td><td>{pts}</td><td>{smPts}</td>
+                                                </tr>
+                                            ))}
+                                            <tr><td>11+</td><td>1</td><td>6</td></tr>
+                                        </tbody>
+                                    </table>
                                     <p className="gp-rules-note">
                                         {lang === "sv"
-                                            ? "Ca 80% av deltagarna per klass poängsätts vid varje tävling. Bästa 12 resultat räknas."
-                                            : "~80% of class participants score points at each event. Best 12 results count."}
+                                            ? "80% av deltagarna per klass poängsätts per tävling. Bästa 12 resultat räknas. Vid SM-tävling: +5 poäng extra. Inga delade poäng — vid delad plats får båda full poäng."
+                                            : "80% of class participants score per event. Best 12 results count. At SM events: +5 bonus points. No split points — tied players both receive full points for that place."}
                                     </p>
                                 </div>
                             </div>

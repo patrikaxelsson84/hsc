@@ -148,6 +148,12 @@ export default function CompetitionsPage() {
         );
     }
 
+    async function toggleSm(id: string) {
+        await saveCompetitions(
+            competitions.map((c) => c.id === id ? { ...c, is_sm: !(c.is_sm ?? false) } : c)
+        );
+    }
+
     async function syncFromSvhkf() {
         setSyncStatus("loading");
         try {
@@ -326,6 +332,7 @@ const pastByYear = useMemo(() => {
                                 <th>{t.comps_col_org}</th>
                                 <th>{t.comps_col_loc}</th>
                                 <th>{t.comps_col_ranking}</th>
+                                <th>SM</th>
                                 <th>{t.comps_col_reg}</th>
                                 <th></th>
                             </tr>
@@ -349,6 +356,16 @@ const pastByYear = useMemo(() => {
                                         {comp.ranking
                                             ? <span className="success-pill">{t.comps_yes}</span>
                                             : <span className="comp-pill-closed comp-pill-btn">{t.comps_no}</span>}
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className={comp.is_sm ? "success-pill comp-pill-btn" : "comp-pill-btn comp-pill-closed"}
+                                            title="SM-tävling ger +5 poäng i Sweden GP"
+                                            onClick={() => toggleSm(comp.id)}
+                                        >
+                                            {comp.is_sm ? "SM ✓" : "–"}
+                                        </button>
                                     </td>
                                     <td>
                                         <button

@@ -21,6 +21,7 @@ function rowToComp(row: Record<string, unknown>): Competition {
         organizer:        (row.organizer as string)  ?? "",
         location:         (row.location  as string)  ?? "",
         ranking:          (row.ranking   as boolean) ?? false,
+        is_sm:            (row.is_sm     as boolean) ?? false,
         registrationOpen: (row.registration_open as boolean) ?? true,
         source:           ((row.source as string) ?? "manual") as "manual" | "svhkf",
         country:          ((row.country as string) ?? "SE") as "SE" | "PL",
@@ -35,6 +36,7 @@ function compToRow(c: Competition): Record<string, unknown> {
         organizer:         c.organizer,
         location:          c.location,
         ranking:           c.ranking,
+        is_sm:             c.is_sm ?? false,
         registration_open: c.registrationOpen,
         source:            c.source,
     };

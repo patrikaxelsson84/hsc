@@ -126,6 +126,7 @@ export default function ScoringPage() {
         date: c.date,
         organizer: c.organizer,
         location: c.location,
+        is_sm: c.is_sm ?? false,
     })), [allComps]);
     const upcomingContests = contests.filter((c) => c.date >= today);
 
@@ -351,7 +352,7 @@ export default function ScoringPage() {
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
         pushLiveResults(currentRunId, competition.name, contestType.name, players, teamAssignments);
-        pushGpResult(currentRunId, competition.name, competition.date ?? null, contestType.name, players);
+        pushGpResult(currentRunId, competition.name, competition.date ?? null, contestType.name, players, competition.is_sm ?? false);
     }
 
     function resetScores() {

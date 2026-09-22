@@ -7,6 +7,7 @@ export interface Competition {
     organizer: string;
     location: string;
     ranking: boolean;
+    is_sm?: boolean;
     registrationOpen: boolean;
     source: "manual" | "svhkf";
     country: "SE" | "PL";
