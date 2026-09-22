@@ -967,8 +967,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function pickComp(id: string) {
         localStorage.removeItem(`${FLOW_PREFIX}-${id}`);
+        const savedDisciplines = competitions.find((c) => c.id === id)?.disciplines ?? [];
         setSelectedCompId(id);
-        setTypeIds([]); setLaneCount(1); setSelectedPlayerIds([]);
+        setTypeIds(savedDisciplines); setLaneCount(1); setSelectedPlayerIds([]);
         setPlayers([]); setLaneAssignments({}); setActiveLane(null);
         setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
         setView("type");
@@ -1315,13 +1316,22 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     // ── TYPE + LANES ──
     if (view === "type") {
+        const disciplinesLocked = compPlayers.length > 0;
         return (
             <div className="admin-page">
                 <div className="admin-page-header">
                     <div>
                         <p className="eyebrow">{selectedComp?.name}</p>
                         <h1>{lang === "sv" ? "Välj grenar" : "Choose disciplines"}</h1>
-                        <p>{lang === "sv" ? "Kryssa i de delar av tävlingen du vill ha med." : "Check the parts of the competition you want to include."}</p>
+                        <p>
+                            {disciplinesLocked
+                                ? (lang === "sv"
+                                    ? "Grenar är låsta — det finns redan anmälda spelare."
+                                    : "Disciplines are locked — players are already registered.")
+                                : (lang === "sv"
+                                    ? "Kryssa i de delar av tävlingen du vill ha med."
+                                    : "Check the parts of the competition you want to include.")}
+                        </p>
                     </div>
                     <button className="secondary-action roster-back-button" type="button" onClick={goBack}>
                         <ArrowLeft size={17} aria-hidden="true" /> {t.sc_back}
@@ -1329,14 +1339,19 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 </div>
 
                 <section className="score-controls contest-registration-actions">
-                    <span className="success-pill">{typeIds.length} {t.sc_selected_suffix}</span>
-                    <button className="secondary-action score-button" type="button"
-                        disabled={typeIds.length === 0} onClick={() => setTypeIds([])}>
-                        {t.sc_clear}
-                    </button>
-                    <button className="secondary-action score-button" type="button" onClick={saveFlow}>
-                        <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
-                    </button>
+                    <span className="success-pill">
+                        {disciplinesLocked && <Lock size={13} aria-hidden="true" style={{ marginRight: 4 }} />}
+                        {typeIds.length} {t.sc_selected_suffix}
+                    </span>
+                    {!disciplinesLocked && <>
+                        <button className="secondary-action score-button" type="button"
+                            disabled={typeIds.length === 0} onClick={() => setTypeIds([])}>
+                            {t.sc_clear}
+                        </button>
+                        <button className="secondary-action score-button" type="button" onClick={saveFlow}>
+                            <Save size={15} aria-hidden="true" /> {status === "saved" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                        </button>
+                    </>}
                     <button className="primary-action score-button" type="button"
                         disabled={typeIds.length === 0} onClick={proceedFromType}>
                         {t.sc_continue}
@@ -1361,9 +1376,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             <button key={d.id} type="button"
                                 className={on ? "contest-card selected" : "contest-card"}
                                 aria-pressed={on}
-                                onClick={() => setTypeIds((cur) => on ? cur.filter((x) => x !== d.id) : [...cur, d.id])}>
+                                disabled={disciplinesLocked}
+                                onClick={() => !disciplinesLocked && setTypeIds((cur) => on ? cur.filter((x) => x !== d.id) : [...cur, d.id])}>
                                 <span className="contest-card-icon">
-                                    {on ? <CheckSquare size={20} aria-hidden="true" /> : <Square size={20} aria-hidden="true" />}
+                                    {disciplinesLocked && on
+                                        ? <Lock size={20} aria-hidden="true" />
+                                        : on
+                                            ? <CheckSquare size={20} aria-hidden="true" />
+                                            : <Square size={20} aria-hidden="true" />}
                                 </span>
                                 <span>{lang === "sv" ? d.sv : d.en}</span>
                             </button>
