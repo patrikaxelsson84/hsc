@@ -106,6 +106,7 @@ interface PrintStartordningParams {
     players: PlayerScore[];
     laneAssignments: Record<string, number>;
     laneCount: number;
+    teamAssignments?: { id: string; name: string; playerIds: string[] }[];
     laneFilter?: number | "all";
     lang?: string;
 }
@@ -115,6 +116,7 @@ export function printStartordning({
     players,
     laneAssignments,
     laneCount,
+    teamAssignments = [],
     laneFilter = "all",
     lang = "sv",
 }: PrintStartordningParams): void {
@@ -122,6 +124,28 @@ export function printStartordning({
     const banaLabel  = lang === "sv" ? "Bana"   : "Lane";
     const klassLabel = lang === "sv" ? "Klass"  : "Class";
     const klubbLabel = lang === "sv" ? "Klubb"  : "Club";
+    const lagLabel   = lang === "sv" ? "Lag"    : "Team";
+
+    const playerMap = new Map(players.map((p) => [p.id, p]));
+
+    // Build throwing-order map: playerId → position within their team (0-indexed)
+    const teamPositionMap = new Map<string, number>();
+    const playerTeamMap   = new Map<string, string>(); // playerId → teamName
+    for (const t of teamAssignments) {
+        t.playerIds.forEach((id, pos) => {
+            teamPositionMap.set(id, pos);
+            playerTeamMap.set(id, t.name);
+        });
+    }
+
+    // Sort players within a lane: team members first in throwing order, then individuals
+    function sortLanePlayers(lp: PlayerScore[]): PlayerScore[] {
+        return [...lp].sort((a, b) => {
+            const pa = teamPositionMap.get(a.id) ?? 999;
+            const pb = teamPositionMap.get(b.id) ?? 999;
+            return pa - pb;
+        });
+    }
 
     const laneGroups: { laneNum: number; players: PlayerScore[] }[] = [];
     if (hasLanes) {
@@ -129,27 +153,32 @@ export function printStartordning({
             ? [laneFilter as number]
             : Array.from({ length: laneCount }, (_, i) => i + 1);
         for (const lane of lanesToShow) {
-            laneGroups.push({ laneNum: lane, players: players.filter((p) => laneAssignments[p.id] === lane) });
+            const lp = players.filter((p) => laneAssignments[p.id] === lane);
+            laneGroups.push({ laneNum: lane, players: sortLanePlayers(lp) });
         }
     } else {
-        laneGroups.push({ laneNum: 0, players });
+        laneGroups.push({ laneNum: 0, players: sortLanePlayers(players) });
     }
 
     const tables = laneGroups.map(({ laneNum, players: lp }) => {
         const header = laneNum > 0
-            ? `<tr><th colspan="4" class="lh">${banaLabel} ${laneNum}</th></tr>`
+            ? `<tr><th colspan="5" class="lh">${banaLabel} ${laneNum}</th></tr>`
             : "";
-        const rows = lp.map((p, i) => `
-            <tr>
+        const rows = lp.map((p, i) => {
+            const teamName = playerTeamMap.get(p.id);
+            const teamCell = teamName ? `<td style="color:#555;font-size:9px">${lagLabel}: ${teamName}</td>` : `<td></td>`;
+            return `<tr>
                 <td class="num">${i + 1}</td>
                 <td class="nc">${p.name}</td>
                 <td>${p.club || "–"}</td>
                 <td>${p.classLevel}</td>
-            </tr>`).join("");
+                ${teamCell}
+            </tr>`;
+        }).join("");
         return `<div class="lb"><table>
             <thead>
                 ${header}
-                <tr><th class="num">#</th><th class="nt">Namn</th><th>${klubbLabel}</th><th>${klassLabel}</th></tr>
+                <tr><th class="num">#</th><th class="nt">Namn</th><th>${klubbLabel}</th><th>${klassLabel}</th><th></th></tr>
             </thead>
             <tbody>${rows}</tbody>
         </table></div>`;

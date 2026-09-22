@@ -1963,6 +1963,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         players,
                         laneAssignments,
                         laneCount,
+                        teamAssignments,
                         laneFilter: laneScoreFilter,
                         lang,
                     })}>
