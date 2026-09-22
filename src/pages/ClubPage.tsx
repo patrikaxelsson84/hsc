@@ -2444,7 +2444,7 @@ export default function ClubPage() {
     const [mixPairs,        setMixPairs]        = useState<{ p1Id: string; p2Id: string }[]>([]);
     const [mixP1,           setMixP1]           = useState("");
     const [mixP2,           setMixP2]           = useState("");
-    const [regTab,          setRegTab]          = useState<"individual" | "lag" | "mix" | "dubbel">("individual");
+    const [regTab,          setRegTab]          = useState<"individual" | "lag" | "mix" | "dubbel" | "junior" | "minior">("individual");
     const [regTeams,        setRegTeams]        = useState<{ id: string; name: string; playerIds: string[] }[]>([]);
     const [regDubbel,       setRegDubbel]       = useState<{ p1Id: string; p2Id: string }[]>([]);
     const [regDubbelP1,     setRegDubbelP1]     = useState("");
@@ -2873,6 +2873,8 @@ export default function ClubPage() {
                                                 { id: "lag"        as const, sv: "Lag",         en: "Team",       show: ok(["team"]) },
                                                 { id: "mix"        as const, sv: "Mix",         en: "Mix",        show: ok(["mixed"]) },
                                                 { id: "dubbel"     as const, sv: "Dubbel",      en: "Doubles",    show: ok(["dubbel","mr-double","mrs-double"]) },
+                                                { id: "junior"     as const, sv: "Junior",      en: "Junior",     show: ok(["junior"]) },
+                                                { id: "minior"     as const, sv: "Minior",      en: "Minior",     show: ok(["minions"]) },
                                             ].filter((t) => t.show);
                                             return (
                                                 <div className="club-tab-bar" style={{ marginTop: "1rem", marginBottom: "0.75rem" }}>
@@ -3035,6 +3037,50 @@ export default function ClubPage() {
                                                     </button>
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {/* ── Junior ── */}
+                                        {regTab === "junior" && (
+                                            players.filter((p) => p.ageCategory === "junior").length === 0 ? (
+                                                <p className="club-empty">{lang === "sv" ? "Inga juniorer i klubben." : "No junior players in the club."}</p>
+                                            ) : (
+                                                <div className="club-player-pick-grid">
+                                                    {players.filter((p) => p.ageCategory === "junior").map((p) => {
+                                                        const checked = selectedPlayers.includes(p.id);
+                                                        return (
+                                                            <button key={p.id} type="button"
+                                                                className={checked ? "club-player-pick active" : "club-player-pick"}
+                                                                onClick={() => toggleRegPlayer(p.id)}
+                                                                aria-pressed={checked}>
+                                                                <strong>{p.name}</strong>
+                                                                <span>{t.sc_class_prefix} {p.classLevel}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )
+                                        )}
+
+                                        {/* ── Minior ── */}
+                                        {regTab === "minior" && (
+                                            players.filter((p) => p.ageCategory === "minior").length === 0 ? (
+                                                <p className="club-empty">{lang === "sv" ? "Inga minorer i klubben." : "No minior players in the club."}</p>
+                                            ) : (
+                                                <div className="club-player-pick-grid">
+                                                    {players.filter((p) => p.ageCategory === "minior").map((p) => {
+                                                        const checked = selectedPlayers.includes(p.id);
+                                                        return (
+                                                            <button key={p.id} type="button"
+                                                                className={checked ? "club-player-pick active" : "club-player-pick"}
+                                                                onClick={() => toggleRegPlayer(p.id)}
+                                                                aria-pressed={checked}>
+                                                                <strong>{p.name}</strong>
+                                                                <span>{t.sc_class_prefix} {p.classLevel}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )
                                         )}
 
                                         <div className="comp-form-actions" style={{ marginTop: "1.25rem" }}>
