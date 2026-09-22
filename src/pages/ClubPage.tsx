@@ -1159,7 +1159,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         for (const [tid, members] of lagByTeamId) {
             preTeams.push({
                 id:        tid,
-                name:      members[0].club || "Lag",
+                name:      tid || members[0].club || "Lag",
                 playerIds: members.map(resolveId),
             });
         }
@@ -1236,6 +1236,15 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function proceedFromLanes() {
         saveLanes(laneCount, laneAssignments); setActiveLane(null);
+        // Re-sort each team's players by their lane assignment so throwing order = bantilldelning order
+        if (Object.keys(laneAssignments).length > 0) {
+            setTeamAssignments((prev) => prev.map((team) => ({
+                ...team,
+                playerIds: [...team.playerIds].sort((a, b) =>
+                    (laneAssignments[a] ?? 999) - (laneAssignments[b] ?? 999)
+                ),
+            })));
+        }
         if (typeIds.includes("team")) setView("teams"); else setView("scoring");
     }
 
