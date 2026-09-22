@@ -1118,7 +1118,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         const compRegs = (freshData ?? []).map(rowToRegEntry);
 
         // Deduplicate by name — individual (numeric category) takes priority over team/pair
-        const PAIR_CATS_LOCAL = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g"];
+        const PAIR_CATS_LOCAL = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g", "lag"];
         const playerMap = new Map<string, RegEntry>();
         for (const r of compRegs.filter((r) => !PAIR_CATS_LOCAL.includes(r.category))) {
             const key = `${r.firstName} ${r.lastName}`.trim().toLowerCase();
@@ -1150,9 +1150,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         // Pre-build team/pair assignments from registrations
         const preTeams: { id: string; name: string; playerIds: string[] }[] = [];
 
-        // Lag (team-g): group by teamId
+        // Lag (team-g / lag): group by teamId
         const lagByTeamId = new Map<string, RegEntry[]>();
-        for (const r of compRegs.filter((r) => r.category === "team-g" && r.teamId)) {
+        for (const r of compRegs.filter((r) => (r.category === "team-g" || r.category === "lag") && r.teamId)) {
             if (!lagByTeamId.has(r.teamId!)) lagByTeamId.set(r.teamId!, []);
             lagByTeamId.get(r.teamId!)!.push(r);
         }
