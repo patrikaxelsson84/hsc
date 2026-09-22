@@ -1109,8 +1109,22 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function proceedFromType() {
         if (typeIds.length === 0) return;
-        setSelectedPlayerIds(compPlayers.map((p) => p.id));
-        setView("lanes");
+        const allIds = compPlayers.map((p) => p.id);
+        setSelectedPlayerIds(allIds);
+        const chosen: PlayerScore[] = compPlayers.map((p) => ({
+            ...p,
+            rounds: Array(10).fill(0) as number[],
+            bonusHits: Array(10).fill(false) as boolean[],
+            sevenMeters: 0,
+        }));
+        const runId = `${selectedCompId}__${buildTypeId(typeIds)}`;
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
+        localStorage.setItem(`${LIVE_PREFIX}-${runId}`, JSON.stringify(chosen));
+        setPlayers(chosen);
+        setLaneAssignments({}); setActiveLane(null); setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
+        if (laneCount > 1) setView("lanes");
+        else if (typeIds.includes("team")) setView("teams");
+        else setView("scoring");
     }
 
     function startContest() {
