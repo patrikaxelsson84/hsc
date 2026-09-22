@@ -1107,23 +1107,70 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setStatus("idle");
     }
 
-    function proceedFromType() {
+    async function proceedFromType() {
         if (typeIds.length === 0) return;
-        const allIds = compPlayers.map((p) => p.id);
-        setSelectedPlayerIds(allIds);
-        const chosen: PlayerScore[] = compPlayers.map((p) => ({
-            ...p,
-            rounds: Array(10).fill(0) as number[],
-            bonusHits: Array(10).fill(false) as boolean[],
+
+        // Fresh fetch — OwnCompetition.allRegs only loads once on mount and may be stale
+        const { data: freshData } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('competition_id', selectedCompId);
+        const compRegs = (freshData ?? []).map(rowToRegEntry);
+
+        // Build players from every registration entry
+        const chosen: PlayerScore[] = compRegs.map((r, idx) => ({
+            id:          r.id ?? `reg-${idx}-${r.firstName}-${r.lastName}`,
+            name:        `${r.firstName} ${r.lastName}`.trim(),
+            club:        r.club,
+            classLevel:  (Number(r.category) || 4) as import("../lib/scoring").ClassLevel,
+            ageCategory: titleToAgeCategory(r.title),
+            rounds:      Array(10).fill(0) as number[],
+            bonusHits:   Array(10).fill(false) as boolean[],
             sevenMeters: 0,
         }));
+
+        // Pre-build team/pair assignments from registrations
+        const preTeams: { id: string; name: string; playerIds: string[] }[] = [];
+
+        // Lag (team-g): group by teamId
+        const lagByTeamId = new Map<string, RegEntry[]>();
+        for (const r of compRegs.filter((r) => r.category === "team-g" && r.teamId)) {
+            if (!lagByTeamId.has(r.teamId!)) lagByTeamId.set(r.teamId!, []);
+            lagByTeamId.get(r.teamId!)!.push(r);
+        }
+        for (const [tid, members] of lagByTeamId) {
+            preTeams.push({
+                id:        tid,
+                name:      members[0].club || "Lag",
+                playerIds: members.map((r, i) => r.id ?? `reg-${compRegs.indexOf(r)}-${r.firstName}-${r.lastName}`),
+            });
+        }
+
+        // Par (dubbel/mix/mr-d/mrs-d): deduplicate by sorted name key
+        const PAIR_CATS_LOCAL = ["mix-d", "dubbel", "mr-d", "mrs-d"];
+        const seenPairs = new Set<string>();
+        for (const r of compRegs.filter((r) => PAIR_CATS_LOCAL.includes(r.category))) {
+            const partner = compRegs.find((r2) => r2 !== r && r2.category === r.category && `${r2.firstName} ${r2.lastName}`.trim() === r.pairWith);
+            const rName = `${r.firstName} ${r.lastName}`.trim();
+            const pName = partner ? `${partner.firstName} ${partner.lastName}`.trim() : (r.pairWith ?? "");
+            const key = [rName, pName].sort().join("|");
+            if (seenPairs.has(key)) continue;
+            seenPairs.add(key);
+            const rId = r.id ?? `reg-${compRegs.indexOf(r)}-${r.firstName}-${r.lastName}`;
+            const pId = partner ? (partner.id ?? `reg-${compRegs.indexOf(partner)}-${partner.firstName}-${partner.lastName}`) : `missing-${pName}`;
+            preTeams.push({ id: `pair-${key}`, name: `${rName} / ${pName}`, playerIds: [rId, pId] });
+        }
+
+        const allIds = chosen.map((p) => p.id);
+        setSelectedPlayerIds(allIds);
         const runId = `${selectedCompId}__${buildTypeId(typeIds)}`;
         localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         localStorage.setItem(`${LIVE_PREFIX}-${runId}`, JSON.stringify(chosen));
         setPlayers(chosen);
-        setLaneAssignments({}); setActiveLane(null); setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
+        setTeamAssignments(preTeams);
+        setLaneAssignments({}); setActiveLane(null); setActiveTeamId(null); setStatus("idle");
         if (laneCount > 1) setView("lanes");
-        else if (typeIds.includes("team")) setView("teams");
+        else if (preTeams.length > 0 || typeIds.includes("team")) setView("teams");
         else setView("scoring");
     }
 
