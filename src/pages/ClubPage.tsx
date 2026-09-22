@@ -559,9 +559,9 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
                                                         </button>
                                                     </div>
                                                     <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                                                        {members.map(({ r, i: gi }) => (
+                                                        {members.map(({ r, i: gi }, pos) => (
                                                             <li key={gi} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem" }}>
-                                                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--muted)", flexShrink: 0 }} />
+                                                                <span style={{ color: "var(--muted)", fontSize: "0.75rem", width: "1.1rem", flexShrink: 0, textAlign: "right" }}>{pos + 1}.</span>
                                                                 <span>{r.firstName} {r.lastName}</span>
                                                                 <span style={{ color: "var(--muted)", fontSize: "0.8rem" }}>{r.club}</span>
                                                             </li>
@@ -1601,7 +1601,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", marginTop: "0.3rem" }}>
                                                         {members.map((m, i) => (
                                                             <div key={i} style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                                                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--muted)", flexShrink: 0 }} />
+                                                                <span style={{ color: "var(--muted)", fontSize: "0.75rem", width: "1rem", flexShrink: 0, textAlign: "right" }}>{i + 1}.</span>
                                                                 {m}
                                                             </div>
                                                         ))}
