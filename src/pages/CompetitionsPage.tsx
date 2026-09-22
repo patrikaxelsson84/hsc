@@ -1,5 +1,8 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const LAST_SYNC_KEY = "hsc-svhkf-last-sync";
+const SYNC_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 import { useNavigate } from "react-router-dom";
 import { type Competition, isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
@@ -111,11 +114,12 @@ const emptyForm = { name: "", date: "", organizer: "", location: "", country: "S
 export default function CompetitionsPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
-    const { competitions, saveCompetitions } = useCompetitions();
+    const { competitions, saveCompetitions, loading } = useCompetitions();
     const [noResultsFor, setNoResultsFor] = useState<string | null>(null);
     const [showForm,    setShowForm]    = useState(false);
     const [form,        setForm]        = useState(emptyForm);
     const [syncStatus,  setSyncStatus]  = useState<"idle" | "loading" | "done" | "error">("idle");
+    const autoSyncDone = useRef(false);
 
     async function handleAdd() {
         if (!form.name.trim() || !form.date) return;
@@ -154,6 +158,17 @@ export default function CompetitionsPage() {
         );
     }
 
+    // Auto-sync on page load if last sync was more than 1 hour ago
+    useEffect(() => {
+        if (loading || autoSyncDone.current) return;
+        autoSyncDone.current = true;
+        const lastSync = Number(localStorage.getItem(LAST_SYNC_KEY) ?? "0");
+        if (Date.now() - lastSync >= SYNC_COOLDOWN_MS) {
+            void syncFromSvhkf();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]);
+
     async function syncFromSvhkf() {
         setSyncStatus("loading");
         try {
@@ -176,6 +191,7 @@ export default function CompetitionsPage() {
             }
             next.sort((a, b) => a.date.localeCompare(b.date));
             await saveCompetitions(next);
+            localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
             setSyncStatus("done");
         } catch {
             setSyncStatus("error");

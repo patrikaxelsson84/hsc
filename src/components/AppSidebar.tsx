@@ -4,7 +4,6 @@ import {
     Users,
     Trophy,
     ClipboardList,
-    Target,
     BarChart3,
     ShieldCheck,
 } from "lucide-react";
@@ -18,7 +17,6 @@ export default function AppSidebar() {
         { title: t.menu_players,      icon: Users,         path: "/admin/players" },
         { title: t.menu_competitions, icon: Trophy,        path: "/admin/competitions" },
         { title: t.menu_registration, icon: ClipboardList, path: "/admin/registration" },
-        { title: t.menu_contest,      icon: Target,        path: "/admin/scoring" },
         { title: t.menu_results,      icon: BarChart3,     path: "/admin/results" },
         { title: t.menu_users,        icon: ShieldCheck,   path: "/admin/users" },
     ];
