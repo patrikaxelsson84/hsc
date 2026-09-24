@@ -70,10 +70,15 @@ ${r}
 <div class="toolbar"><button onclick="window.print()">${n===`sv`?`Skriv ut`:`Print`}</button></div>
 ${t}
 </body>
-</html>`,a=window.open(``,`_blank`);a&&(a.document.write(i),a.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});function p(e,t){let n=t.map((e,t)=>`<tr class="proto-row"><td class="proto-nr">${t+1}</td><td class="proto-name">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`),r=Math.max(0,20-n.length),i=Array.from({length:r},(e,t)=>`<tr class="proto-row"><td class="proto-nr">${n.length+t+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`);return`<table class="proto-table">
+</html>`,a=window.open(``,`_blank`);a&&(a.document.write(i),a.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});let p=[];for(let{laneNum:t,players:n}of f){let r=n.map((e,t)=>`<tr class="proto-row"><td class="proto-nr">${t+1}</td><td class="proto-name">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`),i=Math.max(0,20-r.length),a=Array.from({length:i},(e,t)=>`<tr class="proto-row"><td class="proto-nr">${r.length+t+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`),o=[...r,...a].join(``);for(let n=1;n<=10;n++)p.push(`<div class="proto-page">
+<div class="proto-header">
+  <span class="proto-comp">${e}</span>
+  <span class="proto-omg">${d} <span class="proto-omg-num">${n}</span></span>
+</div>
+<table class="proto-table">
     <thead>
         <tr>
-            <th colspan="2" class="proto-th-bana">${s} ${e}</th>
+            <th colspan="2" class="proto-th-bana">${s} ${t}</th>
             <th class="proto-th">${c}</th><th class="proto-th">${c}</th>
             <th class="proto-th">${c}</th><th class="proto-th">${c}</th>
             <th class="proto-th">${c}</th><th class="proto-th"></th>
@@ -86,29 +91,31 @@ ${t}
             <th class="proto-th">${u}</th>
         </tr>
     </thead>
-    <tbody>${[...n,...i].join(``)}</tbody>
-</table>`}let m=[];for(let t=1;t<=10;t++)for(let n=0;n<f.length;n+=2){let r=f[n],i=f[n+1],a=t===10&&n+2>=f.length,o=i?`<div style="display:flex;gap:6mm">${p(r.laneNum,r.players)}<div style="width:1px;background:#ccc;flex-shrink:0"></div>${p(i.laneNum,i.players)}</div>`:p(r.laneNum,r.players);m.push(`<div class="proto-page" style="page-break-after:${a?`avoid`:`always`}">
-<div class="proto-header">
-  <span class="proto-comp">${e}</span>
-  <span class="proto-omg">${d} <span class="proto-omg-num">${t}</span></span>
-</div>
-${o}</div>`)}Pf(`${e} – Domarprotokoll`,m.join(``),a,`
-@page{size:A4 landscape;margin:8mm}
+    <tbody>${o}</tbody>
+</table></div>`)}Pf(`${e} – Domarprotokoll`,`<div class="proto-container">${p.join(``)}</div>`,a,`
+@page{size:A4 portrait;margin:10mm}
 body{padding:0 !important}
-.proto-page{width:277mm;min-height:194mm;page-break-after:always}
+.proto-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px}
+.proto-page{border:1px solid #ccc;padding:6px;background:#fff}
 .proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
-.proto-comp{font-size:13px;font-weight:bold;color:#000}
-.proto-omg{font-size:12px;color:#000}
-.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:22px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
+.proto-comp{font-size:12px;font-weight:bold;color:#000}
+.proto-omg{font-size:11px;color:#000}
+.proto-omg-num{border:2px solid #000;padding:1px 6px;font-size:20px;font-weight:bold;margin-left:3px;color:#000;display:inline-block;line-height:1}
 .proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
-.proto-row{height:8mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:10px;background:#fff !important;padding:1px;color:#000}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:3px;font-size:11px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:3px;color:#c00 !important}
-.proto-table td{border:1px solid #000;padding:1px;text-align:center;font-size:10px;color:#000}
-.proto-nr{width:20px;text-align:center}
-.proto-name{text-align:left;padding-left:3px;width:38%}
-@media print{.toolbar{display:none}body{padding:0 !important}}`)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
+.proto-row{height:12mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
+.proto-nr{width:22px;text-align:center}
+.proto-name{text-align:left;padding-left:4px;width:38%}
+@media print{
+  .toolbar{display:none}
+  body{padding:0 !important}
+  .proto-container{display:block}
+  .proto-page{border:none;padding:0;page-break-after:always}
+  .proto-row{height:12mm}
+}`)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
             <thead>
                 ${e>0?`<tr><th colspan="5" class="lh">${c} ${e}</th></tr>`:``}
                 <tr><th class="num">#</th><th class="nt">Namn</th><th>${u}</th><th>${l}</th><th></th></tr>
