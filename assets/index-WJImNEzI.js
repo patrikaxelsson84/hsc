@@ -106,7 +106,7 @@ body{padding:0 !important}
 .proto-comp{font-size:12px;font-weight:bold;color:#000}
 .proto-omg{font-size:11px;color:#000}
 .proto-omg-num{border:2px solid #000;padding:1px 6px;font-size:20px;font-weight:bold;margin-left:3px;color:#000;display:inline-block;line-height:1}
-.proto-table{border-collapse:collapse;width:100%}
+.proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
 .proto-row{height:12mm}
 .proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
 .proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
