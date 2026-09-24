@@ -96,21 +96,21 @@ ${t}
     <tbody>${o}</tbody>
 </table></div>`)}}Pf(`${e} – Domarprotokoll`,p.join(``),a,`
 @page{size:A4 portrait;margin:10mm}
-.proto-page{width:100%;height:277mm;display:flex;flex-direction:column;overflow:hidden}
-.proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4mm;padding-bottom:2mm;border-bottom:1px solid #000}
-.proto-comp{font-size:14px;font-weight:bold}
-.proto-omg{font-size:13px}
-.proto-omg-num{border:1px solid #000;padding:0 6px;font-size:20px;font-weight:bold;margin-left:3px}
-.proto-table{border-collapse:collapse;width:100%;flex:1;table-layout:fixed}
-.proto-table tbody{height:100%}
-.proto-row{height:11.5mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff;padding:1px 2px}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00}
-.proto-table td{border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px}
-.proto-nr{width:24px;text-align:center;color:#555}
-.proto-name{text-align:left;padding-left:4px;width:38%}
-@media print{.toolbar{display:none}.proto-page{height:277mm}}`)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
+body{padding:0 !important}
+.proto-page{width:190mm;min-height:277mm;page-break-after:always}
+.proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
+.proto-comp{font-size:13px;font-weight:bold;color:#000}
+.proto-omg{font-size:12px;color:#000}
+.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:24px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
+.proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
+.proto-row{height:12mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:12px;color:#000}
+.proto-nr{width:24px;text-align:center}
+.proto-name{text-align:left;padding-left:4px;width:40%}
+@media print{.toolbar{display:none}body{padding:0 !important}}`)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
             <thead>
                 ${e>0?`<tr><th colspan="5" class="lh">${c} ${e}</th></tr>`:``}
                 <tr><th class="num">#</th><th class="nt">Namn</th><th>${u}</th><th>${l}</th><th></th></tr>
