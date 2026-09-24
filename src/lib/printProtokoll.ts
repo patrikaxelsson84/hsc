@@ -88,8 +88,7 @@ export function printProtokoll({
         laneGroups.push({ laneNum: 1, players });
     }
 
-    const pages: string[] = [];
-    for (const { laneNum, players: lp } of laneGroups) {
+    function laneTable(laneNum: number, lp: PlayerScore[]): string {
         const filledRows = lp.map((p, i) =>
             `<tr class="proto-row"><td class="proto-nr">${i + 1}</td><td class="proto-name">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
@@ -98,53 +97,61 @@ export function printProtokoll({
             `<tr class="proto-row"><td class="proto-nr">${filledRows.length + i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const rows = [...filledRows, ...emptyRows].join("");
+        return `<table class="proto-table">
+    <thead>
+        <tr>
+            <th colspan="2" class="proto-th-bana">${banaLabel} ${laneNum}</th>
+            <th class="proto-th">${skoLabel}</th><th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th><th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th><th class="proto-th"></th>
+        </tr>
+        <tr>
+            <th class="proto-th proto-nr">Nr</th>
+            <th class="proto-th proto-th-name">${namnLabel}</th>
+            <th class="proto-th">1</th><th class="proto-th">2</th><th class="proto-th">3</th>
+            <th class="proto-th">4</th><th class="proto-th">5</th>
+            <th class="proto-th">${summaLabel}</th>
+        </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+</table>`;
+    }
 
-        for (let round = 1; round <= numRounds; round++) {
-            const isLast = laneGroups[laneGroups.length - 1].laneNum === laneNum && round === numRounds;
+    const pages: string[] = [];
+    for (let round = 1; round <= numRounds; round++) {
+        // Pair lanes side by side: (1,2), (3,4), (5,6)...
+        for (let i = 0; i < laneGroups.length; i += 2) {
+            const a = laneGroups[i];
+            const b = laneGroups[i + 1];
+            const isLast = round === numRounds && i + 2 >= laneGroups.length;
+            const tables = b
+                ? `<div style="display:flex;gap:6mm">${laneTable(a.laneNum, a.players)}<div style="width:1px;background:#ccc;flex-shrink:0"></div>${laneTable(b.laneNum, b.players)}</div>`
+                : laneTable(a.laneNum, a.players);
             pages.push(`<div class="proto-page" style="page-break-after:${isLast ? "avoid" : "always"}">
 <div class="proto-header">
   <span class="proto-comp">${competitionName}</span>
   <span class="proto-omg">${omgLabel} <span class="proto-omg-num">${round}</span></span>
 </div>
-<table class="proto-table">
-    <thead>
-        <tr>
-            <th colspan="2" class="proto-th-bana">${banaLabel} ${laneNum}</th>
-            <th class="proto-th">${skoLabel}</th>
-            <th class="proto-th">${skoLabel}</th>
-            <th class="proto-th">${skoLabel}</th>
-            <th class="proto-th">${skoLabel}</th>
-            <th class="proto-th">${skoLabel}</th>
-            <th class="proto-th"></th>
-        </tr>
-        <tr>
-            <th class="proto-th proto-nr">Nr</th>
-            <th class="proto-th proto-th-name">${namnLabel}</th>
-            <th class="proto-th">1</th><th class="proto-th">2</th><th class="proto-th">3</th><th class="proto-th">4</th><th class="proto-th">5</th>
-            <th class="proto-th">${summaLabel}</th>
-        </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-</table></div>`);
+${tables}</div>`);
         }
     }
 
     const protoStyles = `
-@page{size:A4 portrait;margin:10mm}
+@page{size:A4 landscape;margin:8mm}
 body{padding:0 !important}
-.proto-page{width:190mm;min-height:277mm;page-break-after:always}
+.proto-page{width:277mm;min-height:194mm;page-break-after:always}
 .proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
 .proto-comp{font-size:13px;font-weight:bold;color:#000}
 .proto-omg{font-size:12px;color:#000}
-.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:24px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
+.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:22px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
 .proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
-.proto-row{height:12mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
-.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:12px;color:#000}
-.proto-nr{width:24px;text-align:center}
-.proto-name{text-align:left;padding-left:4px;width:40%}
+.proto-row{height:8mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:10px;background:#fff !important;padding:1px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:3px;font-size:11px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:3px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:1px;text-align:center;font-size:10px;color:#000}
+.proto-nr{width:20px;text-align:center}
+.proto-name{text-align:left;padding-left:3px;width:38%}
 @media print{.toolbar{display:none}body{padding:0 !important}}`;
 
     openPrint(`${competitionName} – Domarprotokoll`, pages.join(""), lang, protoStyles);
