@@ -76,6 +76,12 @@ ${t}
   <span class="proto-omg">${d} <span class="proto-omg-num">${n}</span></span>
 </div>
 <table class="proto-table">
+    <colgroup>
+        <col style="width:24px">
+        <col style="width:48%">
+        <col><col><col><col><col>
+        <col style="width:42px">
+    </colgroup>
     <thead>
         <tr>
             <th colspan="2" class="proto-th-bana">${s} ${t}</th>
@@ -101,14 +107,14 @@ body{padding:0 !important}
 .proto-comp{font-size:12px;font-weight:bold;color:#000}
 .proto-omg{font-size:11px;color:#000}
 .proto-omg-num{border:2px solid #000;padding:1px 6px;font-size:20px;font-weight:bold;margin-left:3px;color:#000;display:inline-block;line-height:1}
-.proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
+.proto-table{border-collapse:collapse;width:100%}
 .proto-row{height:12mm}
 .proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
 .proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important;width:52%}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
 .proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
-.proto-nr{width:22px;text-align:center}
-.proto-name{text-align:left;padding-left:4px;width:52%}
+.proto-nr{width:24px;text-align:center}
+.proto-name{text-align:left;padding-left:4px;white-space:nowrap}
 @media print{
   .toolbar{display:none}
   body{padding:0 !important}
