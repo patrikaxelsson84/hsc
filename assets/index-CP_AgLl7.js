@@ -108,7 +108,7 @@ body{padding:0 !important}
 .proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
 .proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
 .proto-nr{width:22px;text-align:center}
-.proto-name{text-align:left;padding-left:4px;width:38%}
+.proto-name{text-align:left;padding-left:4px;width:52%}
 @media print{
   .toolbar{display:none}
   body{padding:0 !important}
