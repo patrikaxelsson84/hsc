@@ -73,6 +73,7 @@ export function printProtokoll({
     const summaLabel = lang === "sv" ? "Summa"   : "Total";
     const omgLabel   = lang === "sv" ? "Omgång:" : "Round:";
     const numRows    = 20;
+    const numRounds  = 10;
 
     const laneGroups: { laneNum: number; players: PlayerScore[] }[] = [];
     if (hasLanes) {
@@ -86,7 +87,8 @@ export function printProtokoll({
         laneGroups.push({ laneNum: 1, players });
     }
 
-    const tables = laneGroups.map(({ laneNum, players: lp }) => {
+    const pages: string[] = [];
+    for (const { laneNum, players: lp } of laneGroups) {
         const filledRows = lp.map((p, i) =>
             `<tr><td class="num">${i + 1}</td><td class="nc">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`
         );
@@ -96,8 +98,13 @@ export function printProtokoll({
         );
         const rows = [...filledRows, ...emptyRows].join("");
 
-        return `<div class="lb" style="page-break-after:always">
-<p style="font-size:11px;margin:0 0 4px"><strong>${omgLabel}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10</p>
+        for (let round = 1; round <= numRounds; round++) {
+            const isLast = laneGroups[laneGroups.length - 1].laneNum === laneNum && round === numRounds;
+            pages.push(`<div style="page-break-after:${isLast ? "avoid" : "always"}">
+<div style="text-align:center;margin-bottom:10px">
+  <span style="font-size:14px;font-weight:bold">${omgLabel}</span>
+  <span style="font-size:40px;font-weight:bold;border:2px solid #000;padding:0 10px;margin-left:6px;display:inline-block;line-height:1.1">${round}</span>
+</div>
 <table>
     <thead>
         <tr>
@@ -117,12 +124,13 @@ export function printProtokoll({
         </tr>
     </thead>
     <tbody>${rows}</tbody>
-</table></div>`;
-    }).join("");
+</table></div>`);
+        }
+    }
 
     openPrint(`${competitionName} – Domarprotokoll`, `
 <div class="ph"><div><h1>${competitionName}</h1><p>Domarprotokoll</p></div></div>
-${tables}`, lang);
+${pages.join("")}`, lang);
 }
 
 // ── Startordning ──────────────────────────────────────────────────────────────
