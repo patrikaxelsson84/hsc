@@ -90,37 +90,36 @@ export function printProtokoll({
     const pages: string[] = [];
     for (const { laneNum, players: lp } of laneGroups) {
         const filledRows = lp.map((p, i) =>
-            `<tr><td class="num">${i + 1}</td><td class="nc">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`
+            `<tr><td style="text-align:center;width:22px">${i + 1}</td><td style="text-align:left;padding-left:4px">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const emptyCount = Math.max(0, numRows - filledRows.length);
         const emptyRows  = Array.from({ length: emptyCount }, (_, i) =>
-            `<tr><td class="num">${filledRows.length + i + 1}</td><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`
+            `<tr><td style="text-align:center;width:22px">${filledRows.length + i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const rows = [...filledRows, ...emptyRows].join("");
 
         for (let round = 1; round <= numRounds; round++) {
             const isLast = laneGroups[laneGroups.length - 1].laneNum === laneNum && round === numRounds;
             pages.push(`<div style="page-break-after:${isLast ? "avoid" : "always"}">
-<div style="text-align:center;margin-bottom:10px">
-  <span style="font-size:14px;font-weight:bold">${omgLabel}</span>
-  <span style="font-size:40px;font-weight:bold;border:2px solid #000;padding:0 10px;margin-left:6px;display:inline-block;line-height:1.1">${round}</span>
+<div style="text-align:right;margin-bottom:6px;font-size:12px">
+  ${omgLabel} <span style="border:1px solid #000;padding:1px 10px;font-size:22px;font-weight:bold;margin-left:4px">${round}</span>
 </div>
 <table>
     <thead>
         <tr>
-            <th colspan="2" class="lh">${banaLabel} ${laneNum}</th>
-            <th class="lh" style="text-align:center">${skoLabel}</th>
-            <th class="lh" style="text-align:center">${skoLabel}</th>
-            <th class="lh" style="text-align:center">${skoLabel}</th>
-            <th class="lh" style="text-align:center">${skoLabel}</th>
-            <th class="lh" style="text-align:center">${skoLabel}</th>
-            <th class="lh"></th>
+            <th colspan="2" style="text-align:left;padding-left:4px;font-size:11px;font-weight:bold;background:#fff">${banaLabel} ${laneNum}</th>
+            <th style="background:#fff">${skoLabel}</th>
+            <th style="background:#fff">${skoLabel}</th>
+            <th style="background:#fff">${skoLabel}</th>
+            <th style="background:#fff">${skoLabel}</th>
+            <th style="background:#fff">${skoLabel}</th>
+            <th style="background:#fff"></th>
         </tr>
         <tr>
-            <th class="num">Nr</th>
-            <th class="nt">${namnLabel}</th>
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-            <th>${summaLabel}</th>
+            <th class="num" style="background:#fff">Nr</th>
+            <th class="nt" style="background:#fff;font-size:11px;color:#c00">${namnLabel}</th>
+            <th style="background:#fff">1</th><th style="background:#fff">2</th><th style="background:#fff">3</th><th style="background:#fff">4</th><th style="background:#fff">5</th>
+            <th style="background:#fff">${summaLabel}</th>
         </tr>
     </thead>
     <tbody>${rows}</tbody>
