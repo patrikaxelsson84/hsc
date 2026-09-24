@@ -139,7 +139,7 @@ body{padding:0 !important}
 .proto-row{height:12mm}
 .proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
 .proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important;width:52%}
 .proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
 .proto-nr{width:22px;text-align:center}
 .proto-name{text-align:left;padding-left:4px;width:52%}
