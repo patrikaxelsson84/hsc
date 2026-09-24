@@ -108,9 +108,8 @@ export function printProtokoll({
 <table class="proto-table">
     <colgroup>
         <col style="width:24px">
-        <col style="width:32%">
-        <col><col><col><col><col>
-        <col style="width:42px">
+        <col style="width:22%">
+        <col><col><col><col><col><col>
     </colgroup>
     <thead>
         <tr>
