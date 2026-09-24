@@ -88,7 +88,8 @@ export function printProtokoll({
         laneGroups.push({ laneNum: 1, players });
     }
 
-    function laneTable(laneNum: number, lp: PlayerScore[]): string {
+    const pages: string[] = [];
+    for (const { laneNum, players: lp } of laneGroups) {
         const filledRows = lp.map((p, i) =>
             `<tr class="proto-row"><td class="proto-nr">${i + 1}</td><td class="proto-name">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
@@ -97,7 +98,14 @@ export function printProtokoll({
             `<tr class="proto-row"><td class="proto-nr">${filledRows.length + i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const rows = [...filledRows, ...emptyRows].join("");
-        return `<table class="proto-table">
+
+        for (let round = 1; round <= numRounds; round++) {
+            pages.push(`<div class="proto-page">
+<div class="proto-header">
+  <span class="proto-comp">${competitionName}</span>
+  <span class="proto-omg">${omgLabel} <span class="proto-omg-num">${round}</span></span>
+</div>
+<table class="proto-table">
     <thead>
         <tr>
             <th colspan="2" class="proto-th-bana">${banaLabel} ${laneNum}</th>
@@ -114,47 +122,36 @@ export function printProtokoll({
         </tr>
     </thead>
     <tbody>${rows}</tbody>
-</table>`;
-    }
-
-    const pages: string[] = [];
-    for (let round = 1; round <= numRounds; round++) {
-        // Pair lanes side by side: (1,2), (3,4), (5,6)...
-        for (let i = 0; i < laneGroups.length; i += 2) {
-            const a = laneGroups[i];
-            const b = laneGroups[i + 1];
-            const isLast = round === numRounds && i + 2 >= laneGroups.length;
-            const tables = b
-                ? `<div style="display:flex;gap:6mm">${laneTable(a.laneNum, a.players)}<div style="width:1px;background:#ccc;flex-shrink:0"></div>${laneTable(b.laneNum, b.players)}</div>`
-                : laneTable(a.laneNum, a.players);
-            pages.push(`<div class="proto-page" style="page-break-after:${isLast ? "avoid" : "always"}">
-<div class="proto-header">
-  <span class="proto-comp">${competitionName}</span>
-  <span class="proto-omg">${omgLabel} <span class="proto-omg-num">${round}</span></span>
-</div>
-${tables}</div>`);
+</table></div>`);
         }
     }
 
     const protoStyles = `
-@page{size:A4 landscape;margin:8mm}
+@page{size:A4 portrait;margin:10mm}
 body{padding:0 !important}
-.proto-page{width:277mm;min-height:194mm;page-break-after:always}
+.proto-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px}
+.proto-page{border:1px solid #ccc;padding:6px;background:#fff}
 .proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
-.proto-comp{font-size:13px;font-weight:bold;color:#000}
-.proto-omg{font-size:12px;color:#000}
-.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:22px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
+.proto-comp{font-size:12px;font-weight:bold;color:#000}
+.proto-omg{font-size:11px;color:#000}
+.proto-omg-num{border:2px solid #000;padding:1px 6px;font-size:20px;font-weight:bold;margin-left:3px;color:#000;display:inline-block;line-height:1}
 .proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
-.proto-row{height:8mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:10px;background:#fff !important;padding:1px;color:#000}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:3px;font-size:11px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:3px;color:#c00 !important}
-.proto-table td{border:1px solid #000;padding:1px;text-align:center;font-size:10px;color:#000}
-.proto-nr{width:20px;text-align:center}
-.proto-name{text-align:left;padding-left:3px;width:38%}
-@media print{.toolbar{display:none}body{padding:0 !important}}`;
+.proto-row{height:12mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
+.proto-nr{width:22px;text-align:center}
+.proto-name{text-align:left;padding-left:4px;width:38%}
+@media print{
+  .toolbar{display:none}
+  body{padding:0 !important}
+  .proto-container{display:block}
+  .proto-page{border:none;padding:0;page-break-after:always}
+  .proto-row{height:12mm}
+}`;
 
-    openPrint(`${competitionName} – Domarprotokoll`, pages.join(""), lang, protoStyles);
+    openPrint(`${competitionName} – Domarprotokoll`, `<div class="proto-container">${pages.join("")}</div>`, lang, protoStyles);
 }
 
 // ── Startordning ──────────────────────────────────────────────────────────────
