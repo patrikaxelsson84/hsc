@@ -53,7 +53,7 @@ function localOrSeed(): Competition[] {
         const raw = localStorage.getItem(storageKey);
         if (raw) return JSON.parse(raw) as Competition[];
     } catch { /* empty */ }
-    return seedCompetitions.map((c, i) => ({ ...c, id: `svhkf-${i}`, registrationOpen: true }));
+    return seedCompetitions.map((c, i) => ({ ...c, id: `svhkf-${i}`, registrationOpen: false }));
 }
 
 export function CompetitionsProvider({ children }: { children: ReactNode }) {

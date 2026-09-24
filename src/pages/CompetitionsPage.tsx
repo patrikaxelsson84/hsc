@@ -137,7 +137,7 @@ export default function CompetitionsPage() {
                 organizer: form.organizer.trim(),
                 location: form.location.trim(),
                 ranking: false,
-                registrationOpen: true,
+                registrationOpen: false,
                 source: "manual",
                 country: form.country,
                 disciplines: form.disciplines.length > 0 ? form.disciplines : undefined,
@@ -192,7 +192,7 @@ export default function CompetitionsPage() {
                         ranking: incoming.ranking,
                     });
                 } else {
-                    next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: true, country: "SE" });
+                    next.push({ ...incoming, id: `svhkf-${Date.now()}-${Math.random()}`, registrationOpen: false, country: "SE" });
                 }
             }
             next.sort((a, b) => a.date.localeCompare(b.date));
