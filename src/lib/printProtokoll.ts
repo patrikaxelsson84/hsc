@@ -131,21 +131,21 @@ export function printProtokoll({
 
     const protoStyles = `
 @page{size:A4 portrait;margin:10mm}
-.proto-page{width:100%;height:277mm;display:flex;flex-direction:column;overflow:hidden}
-.proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4mm;padding-bottom:2mm;border-bottom:1px solid #000}
-.proto-comp{font-size:14px;font-weight:bold}
-.proto-omg{font-size:13px}
-.proto-omg-num{border:1px solid #000;padding:0 6px;font-size:20px;font-weight:bold;margin-left:3px}
-.proto-table{border-collapse:collapse;width:100%;flex:1;table-layout:fixed}
-.proto-table tbody{height:100%}
-.proto-row{height:11.5mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff;padding:1px 2px}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00}
-.proto-table td{border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px}
-.proto-nr{width:24px;text-align:center;color:#555}
-.proto-name{text-align:left;padding-left:4px;width:38%}
-@media print{.toolbar{display:none}.proto-page{height:277mm}}`;
+body{padding:0 !important}
+.proto-page{width:190mm;min-height:277mm;page-break-after:always}
+.proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
+.proto-comp{font-size:13px;font-weight:bold;color:#000}
+.proto-omg{font-size:12px;color:#000}
+.proto-omg-num{border:2px solid #000;padding:1px 8px;font-size:24px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
+.proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
+.proto-row{height:12mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:12px;color:#000}
+.proto-nr{width:24px;text-align:center}
+.proto-name{text-align:left;padding-left:4px;width:40%}
+@media print{.toolbar{display:none}body{padding:0 !important}}`;
 
     openPrint(`${competitionName} – Domarprotokoll`, pages.join(""), lang, protoStyles);
 }
