@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, CheckSquare, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Camera, CheckSquare, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage } from "../lib/importFromPhoto";
 import type { RecognizedScore } from "../lib/importFromPhoto";
@@ -817,6 +817,161 @@ function buildTypeId(ids: string[]) { return ids.join(TYPE_SEP); }
 function parseTypeId(raw: string)   { return raw.split(TYPE_SEP).filter(Boolean); }
 
 type OwnView = "pick" | "type" | "registration" | "lanes" | "teams" | "scoring";
+
+// ── Pre-competition setup (disciplines + lock) ────────────────────────────────
+
+function CompSetup({ clubName }: { clubName: string }) {
+    const { lang } = useLanguage();
+    const { competitions, refresh } = useCompetitions();
+    const myComps = competitions.filter((c) => isOrganizerOf(c.organizer, clubName));
+
+    const [localDiscs, setLocalDiscs] = useState<Record<string, string[]>>(() =>
+        Object.fromEntries(myComps.map((c) => [c.id, c.disciplines ?? []]))
+    );
+    const [saving,     setSaving]     = useState<string | null>(null);
+    const [requesting, setRequesting] = useState<string | null>(null);
+
+    // Sync localDiscs when competitions reload
+    useEffect(() => {
+        setLocalDiscs((prev) => {
+            const next = { ...prev };
+            for (const c of myComps) {
+                if (!(c.id in next)) next[c.id] = c.disciplines ?? [];
+            }
+            return next;
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [competitions]);
+
+    async function handleSave(comp: { id: string; name: string }) {
+        setSaving(comp.id);
+        const discs = localDiscs[comp.id] ?? [];
+        await supabase.from("competitions").update({
+            disciplines:       discs.length > 0 ? discs : null,
+            locked:            true,
+            registration_open: true,
+        }).eq("id", comp.id);
+        await refresh();
+        setSaving(null);
+    }
+
+    async function handleUnlockRequest(comp: { id: string; name: string }) {
+        setRequesting(comp.id);
+        await submitPendingChange({
+            change_type: "unlock_request",
+            player_id:   comp.id,
+            player_name: comp.name,
+            club_name:   clubName,
+            old_data:    null,
+            new_data:    null,
+        });
+        await supabase.from("competitions").update({ unlock_requested: true }).eq("id", comp.id);
+        await refresh();
+        setRequesting(null);
+    }
+
+    if (myComps.length === 0) return null;
+
+    return (
+        <div className="comp-setup-section">
+            <p className="eyebrow" style={{ marginBottom: "0.75rem" }}>
+                {lang === "sv" ? "Inför tävlingen" : "Pre-competition setup"}
+            </p>
+            <div className="comp-setup-list">
+                {myComps.map((comp) => {
+                    const discs    = localDiscs[comp.id] ?? [];
+                    const isLocked = comp.locked ?? false;
+                    const isWaiting = comp.unlockRequested ?? false;
+
+                    return (
+                        <div key={comp.id} className={`comp-setup-card ${isLocked ? "comp-setup-card--locked" : ""}`}>
+                            <div className="comp-setup-card-header">
+                                <strong>{comp.name}</strong>
+                                <span className="comp-date" style={{ fontSize: "0.85rem" }}>
+                                    <CalendarDays size={13} aria-hidden="true" />
+                                    {comp.date}
+                                </span>
+                                {isLocked && (
+                                    <span className="success-pill" style={{ marginLeft: "auto" }}>
+                                        <Lock size={12} aria-hidden="true" style={{ marginRight: 4 }} />
+                                        {lang === "sv" ? "Låst" : "Locked"}
+                                    </span>
+                                )}
+                            </div>
+
+                            {!isLocked && (
+                                <>
+                                    <p className="comp-setup-hint">
+                                        {lang === "sv"
+                                            ? "Kryssa i vilka grenar som ska ingå i tävlingen."
+                                            : "Check which disciplines to include in the competition."}
+                                    </p>
+                                    <div className="comp-disciplines-grid" style={{ marginBottom: "0.75rem" }}>
+                                        {DISCIPLINES.map((d) => {
+                                            const on = discs.includes(d.id);
+                                            return (
+                                                <button
+                                                    key={d.id}
+                                                    type="button"
+                                                    className={on ? "success-pill comp-pill-btn" : "comp-pill-btn comp-pill-closed"}
+                                                    onClick={() => setLocalDiscs((prev) => ({
+                                                        ...prev,
+                                                        [comp.id]: on
+                                                            ? discs.filter((x) => x !== d.id)
+                                                            : [...discs, d.id],
+                                                    }))}
+                                                >
+                                                    {lang === "sv" ? d.sv : d.en}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="primary-action score-button"
+                                        disabled={discs.length === 0 || saving === comp.id}
+                                        onClick={() => handleSave(comp)}
+                                    >
+                                        <Save size={15} aria-hidden="true" />
+                                        {saving === comp.id
+                                            ? (lang === "sv" ? "Sparar…" : "Saving…")
+                                            : (lang === "sv" ? "Spara & öppna för anmälningar" : "Save & open for registration")}
+                                    </button>
+                                </>
+                            )}
+
+                            {isLocked && !isWaiting && (
+                                <div className="comp-setup-locked-row">
+                                    <span className="comp-setup-discs">
+                                        {comp.disciplines?.map((d) => {
+                                            const def = DISCIPLINES.find((x) => x.id === d);
+                                            return def ? (lang === "sv" ? def.sv : def.en) : d;
+                                        }).join(", ") ?? "–"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="secondary-action score-button"
+                                        style={{ fontSize: "0.8rem" }}
+                                        disabled={requesting === comp.id}
+                                        onClick={() => handleUnlockRequest(comp)}
+                                    >
+                                        {lang === "sv" ? "Begär upplåsning" : "Request unlock"}
+                                    </button>
+                                </div>
+                            )}
+
+                            {isLocked && isWaiting && (
+                                <p className="comp-setup-hint" style={{ color: "var(--muted)", fontStyle: "italic" }}>
+                                    {lang === "sv" ? "Väntar på godkännande från admin…" : "Awaiting admin approval…"}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
 
 // ── Club settings (password change) ──────────────────────────────────────────
 
@@ -3235,6 +3390,7 @@ export default function ClubPage() {
                 {/* ── Our competition tab (merged incoming + own) ── */}
                 {tab === "our" && (
                     <div>
+                        <CompSetup clubName={clubName} />
                         <div className="club-comp-section">
                             <div className="club-section-header">
                                 <div>

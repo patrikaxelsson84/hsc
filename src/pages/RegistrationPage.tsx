@@ -11,6 +11,13 @@ import { supabase } from "../lib/supabase";
 
 type RegistrationStatus = "idle" | "submitted";
 
+const TITLE_DEFS = [
+    { value: "mr",     disciplineId: "mr",      label: (t: Record<string, string>) => t.reg_mr },
+    { value: "mrs",    disciplineId: "mrs",     label: (t: Record<string, string>) => t.reg_mrs },
+    { value: "junior", disciplineId: "junior",  label: (t: Record<string, string>) => t.reg_junior },
+    { value: "minior", disciplineId: "minions", label: (t: Record<string, string>) => t.reg_minior },
+] as const;
+
 const CLUB_SESSION_KEY = "hsc-club-session";
 
 export default function RegistrationPage() {
@@ -30,6 +37,16 @@ export default function RegistrationPage() {
     const compId = searchParams.get("comp") ?? "";
     const competitions = allComps.filter((c) => isCompetitionOpen(c));
     const selectedComp = competitions.find((c) => c.id === compId) ?? null;
+
+    const allowedTitles = useMemo(() => {
+        const d = selectedComp?.disciplines;
+        if (!d || d.length === 0) return TITLE_DEFS.map((td) => td.value);
+        const individualIds = TITLE_DEFS.map((td) => td.disciplineId);
+        const filtered = TITLE_DEFS.filter((td) => d.includes(td.disciplineId)).map((td) => td.value);
+        // If the competition has no individual disciplines at all, show all titles as fallback
+        const hasAnyIndividual = d.some((x) => individualIds.includes(x as typeof individualIds[number]));
+        return hasAnyIndividual ? filtered : TITLE_DEFS.map((td) => td.value);
+    }, [selectedComp]);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -199,10 +216,9 @@ export default function RegistrationPage() {
                                 <option value="" disabled>
                                     {t.reg_select_title}
                                 </option>
-                                <option value="mr">{t.reg_mr}</option>
-                                <option value="mrs">{t.reg_mrs}</option>
-                                <option value="junior">{t.reg_junior}</option>
-                                <option value="minior">{t.reg_minior}</option>
+                                {TITLE_DEFS.filter((td) => allowedTitles.includes(td.value)).map((td) => (
+                                    <option key={td.value} value={td.value}>{td.label(t as Record<string, string>)}</option>
+                                ))}
                             </select>
                         </label>
                     </div>

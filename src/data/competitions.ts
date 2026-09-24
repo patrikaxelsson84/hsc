@@ -12,6 +12,8 @@ export interface Competition {
     source: "manual" | "svhkf";
     country: "SE" | "PL";
     disciplines?: string[];
+    locked?: boolean;
+    unlockRequested?: boolean;
 }
 
 export const seedCompetitions: Omit<Competition, "id" | "registrationOpen">[] = [

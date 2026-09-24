@@ -118,6 +118,8 @@ export default function PlayersPage() {
             if (c.old_data?.ageCategory !== c.new_data?.ageCategory) parts.push(`kategori: ${c.old_data?.ageCategory} → ${c.new_data?.ageCategory}`);
             return `${c.club_name} vill ändra ${c.player_name}: ${parts.join(", ")}`;
         }
+        if (c.change_type === "unlock_request")
+            return `${c.club_name} vill låsa upp tävlingen: ${c.player_name}`;
         return `${c.club_name}: ${c.change_type} ${c.player_name}`;
     }
 
@@ -138,6 +140,7 @@ export default function PlayersPage() {
                                     {c.change_type === "delete" ? "Ta bort"
                                         : c.change_type === "add" ? "Lägg till"
                                         : c.change_type === "new_club" ? "Ny klubb"
+                                        : c.change_type === "unlock_request" ? "Upplåsning"
                                         : "Ändra"}
                                 </span>
                                 <span className="pending-change-desc">{changeLabel(c)}</span>

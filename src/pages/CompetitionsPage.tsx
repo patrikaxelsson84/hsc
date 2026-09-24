@@ -1,4 +1,9 @@
 import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { contestTypeDefs } from "../lib/contestTypes";
+
+const DISCIPLINES = contestTypeDefs.filter((d) =>
+    ["klass", "team", "individual-rank", "mr", "mrs", "dubbel", "mrs-double", "mr-double", "mixed", "junior", "minions"].includes(d.id)
+);
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const LAST_SYNC_KEY = "hsc-svhkf-last-sync";
@@ -109,7 +114,7 @@ function clubInitials(name: string): string {
     return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
-const emptyForm = { name: "", date: "", organizer: "", location: "", country: "SE" as "SE" | "PL" };
+const emptyForm = { name: "", date: "", organizer: "", location: "", country: "SE" as "SE" | "PL", disciplines: [] as string[] };
 
 export default function CompetitionsPage() {
     const { t } = useLanguage();
@@ -135,6 +140,7 @@ export default function CompetitionsPage() {
                 registrationOpen: true,
                 source: "manual",
                 country: form.country,
+                disciplines: form.disciplines.length > 0 ? form.disciplines : undefined,
             },
         ];
         await saveCompetitions(next);
@@ -314,6 +320,30 @@ const pastByYear = useMemo(() => {
                             </select>
                         </label>
                     </div>
+                    <div className="comp-disciplines-section">
+                        <p className="comp-disciplines-label">Grenar i tävlingen</p>
+                        <div className="comp-disciplines-grid">
+                            {DISCIPLINES.map((d) => {
+                                const on = form.disciplines.includes(d.id);
+                                return (
+                                    <button
+                                        key={d.id}
+                                        type="button"
+                                        className={on ? "success-pill comp-pill-btn" : "comp-pill-btn comp-pill-closed"}
+                                        onClick={() => setForm((f) => ({
+                                            ...f,
+                                            disciplines: on
+                                                ? f.disciplines.filter((x) => x !== d.id)
+                                                : [...f.disciplines, d.id],
+                                        }))}
+                                    >
+                                        {d.sv}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="comp-form-actions">
                         <button
                             className="secondary-action score-button"

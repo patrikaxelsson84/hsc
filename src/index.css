@@ -2417,6 +2417,27 @@ a {
   padding-bottom: 8px;
 }
 
+.comp-disciplines-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comp-disciplines-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.comp-disciplines-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .comp-form-actions {
   display: flex;
   gap: 8px;
@@ -3899,6 +3920,58 @@ a {
     gap: 8px;
     font-size: 0.85rem;
     padding: 3px 0;
+}
+
+/* ── Pre-competition setup ───────────────────────────── */
+.comp-setup-section {
+    margin-bottom: 1.5rem;
+}
+
+.comp-setup-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comp-setup-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comp-setup-card--locked {
+    border-color: var(--color-success, #15803d);
+    background: color-mix(in srgb, var(--color-success, #15803d) 6%, var(--surface));
+}
+
+.comp-setup-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.comp-setup-hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.comp-setup-locked-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.comp-setup-discs {
+    font-size: 0.85rem;
+    color: var(--muted);
+    flex: 1;
 }
 
 /* ── Own competition tab ─────────────────────────────── */

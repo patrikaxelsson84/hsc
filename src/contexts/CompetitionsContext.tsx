@@ -26,6 +26,8 @@ function rowToComp(row: Record<string, unknown>): Competition {
         source:           ((row.source as string) ?? "manual") as "manual" | "svhkf",
         country:          ((row.country as string) ?? "SE") as "SE" | "PL",
         disciplines:      (row.disciplines as string[] | null) ?? undefined,
+        locked:           (row.locked as boolean) ?? false,
+        unlockRequested:  (row.unlock_requested as boolean) ?? false,
     };
 }
 
@@ -40,6 +42,9 @@ function compToRow(c: Competition): Record<string, unknown> {
         is_sm:             c.is_sm ?? false,
         registration_open: c.registrationOpen,
         source:            c.source,
+        disciplines:       c.disciplines ?? null,
+        locked:            c.locked ?? false,
+        unlock_requested:  c.unlockRequested ?? false,
     };
 }
 
