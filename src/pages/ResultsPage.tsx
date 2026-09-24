@@ -6,6 +6,7 @@ import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { typeNameFromRunId } from "../lib/contestTypes";
+import { useCompetitions } from "../contexts/CompetitionsContext";
 
 const liveScorePrefix    = "hsc-live-v1";
 const teamsStoragePrefix = "hsc-teams-v1";
@@ -288,6 +289,7 @@ type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 
 export default function ResultsPage() {
     const { t, lang } = useLanguage();
+    const { competitions } = useCompetitions();
     const [liveData, setLiveData] = useState(readLiveData);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [supabaseRegs, setSupabaseRegs] = useState<RegRow[]>([]);
@@ -373,6 +375,9 @@ export default function ResultsPage() {
     const miniorPlayers   = players.filter((p) => p.ageCategory === "minior");
 
     const competitionId = active.runId.split("__")[0];
+    const activeComp = competitions.find((c) => c.id === competitionId);
+    const discs = activeComp?.disciplines;
+    const hasDisc = (id: string) => !discs || discs.length === 0 || discs.includes(id);
     const liveTypeName = typeNameFromRunId(active.runId, lang);
     const mixedPairs = active.runId.toLowerCase().includes("mixed") ? buildMixedPairs(players, competitionId, supabaseRegs) : [];
 
@@ -386,10 +391,10 @@ export default function ResultsPage() {
         const filtered = players.filter((p) => p.classLevel === cl && p.ageCategory !== "junior" && p.ageCategory !== "minior");
         sections[k] = (handle) => <ClassResultBox classLevel={cl} players={filtered} handle={handle} />;
     });
-    if (herrPlayers.length   > 0) sections.herr   = (h) => <CategoryResultBox title={t.reg_mr}     players={herrPlayers}   showClass handle={h} />;
-    if (damPlayers.length    > 0) sections.dam     = (h) => <CategoryResultBox title={t.reg_mrs}    players={damPlayers}    showClass handle={h} />;
-    if (juniorPlayers.length > 0) sections.junior  = (h) => <CategoryResultBox title={t.reg_junior} players={juniorPlayers} showClass handle={h} />;
-    if (miniorPlayers.length > 0) sections.minior  = (h) => <CategoryResultBox title={t.reg_minior} players={miniorPlayers} showClass handle={h} />;
+    if (herrPlayers.length   > 0 && hasDisc("mr"))      sections.herr   = (h) => <CategoryResultBox title={t.reg_mr}     players={herrPlayers}   showClass handle={h} />;
+    if (damPlayers.length    > 0 && hasDisc("mrs"))     sections.dam     = (h) => <CategoryResultBox title={t.reg_mrs}    players={damPlayers}    showClass handle={h} />;
+    if (juniorPlayers.length > 0 && hasDisc("junior"))  sections.junior  = (h) => <CategoryResultBox title={t.reg_junior} players={juniorPlayers} showClass handle={h} />;
+    if (miniorPlayers.length > 0 && hasDisc("minions")) sections.minior  = (h) => <CategoryResultBox title={t.reg_minior} players={miniorPlayers} showClass handle={h} />;
     if (teams.length         > 0) sections.teams   = (h) => <TeamResultBox teams={teams} handle={h} />;
 
     const allActiveKeys = Object.keys(sections) as SectionKey[];

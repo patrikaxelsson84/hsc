@@ -286,15 +286,7 @@ function isOrganizerOf(competitionOrganizer: string, clubName: string): boolean 
 
 // ── Pair / team types ─────────────────────────────────────────────────────────
 
-type PairCat = "mix-d" | "dubbel" | "mr-d" | "mrs-d" | "team-g" | "lag";
 const PAIR_CATS: string[] = ["mix-d", "dubbel", "mr-d", "mrs-d", "team-g", "lag"];
-const PAIR_TYPES: { id: PairCat; sv: string; en: string; size: 2 | 4 }[] = [
-    { id: "mix-d",  sv: "Mixed",      en: "Mixed",       size: 2 },
-    { id: "dubbel", sv: "Dubbel",     en: "Doubles",     size: 2 },
-    { id: "mr-d",   sv: "Mr Dubbel",  en: "Mr Doubles",  size: 2 },
-    { id: "mrs-d",  sv: "Mrs Dubbel", en: "Mrs Doubles", size: 2 },
-    { id: "team-g", sv: "Lag",        en: "Team",        size: 4 },
-];
 
 const DISCIPLINES: { id: string; sv: string; en: string }[] = [
     { id: "klass",           sv: "Klass",       en: "Class" },
@@ -323,9 +315,6 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
     const [regsLoading, setRegsLoading] = useState(true);
     const [editIdx,       setEditIdx]       = useState<number | null>(null);
     const [editForm,      setEditForm]      = useState<RegEntry | null>(null);
-    const [pairingCompId, setPairingCompId] = useState<string | null>(null);
-    const [pairingType,   setPairingType]   = useState<PairCat>("mix-d");
-    const [pairSlots,     setPairSlots]     = useState<string[]>(["", ""]);
 
     const [refreshing, setRefreshing] = useState(false);
 
@@ -379,34 +368,6 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
         setEditForm((f) => f ? { ...f, [key]: val } : f);
     }
 
-    async function addPairFromSlots(compId: string) {
-        const pairInfo = PAIR_TYPES.find((pt) => pt.id === pairingType);
-        if (!pairInfo) return;
-        const indices = pairSlots.map((s) => parseInt(s));
-        if (indices.some(isNaN) || new Set(indices).size !== indices.length) return;
-        const ps = indices.map((i) => allRegs[i]);
-        if (ps.some((p) => !p)) return;
-        const ts    = new Date().toISOString();
-        const names = ps.map((p) => `${p.firstName} ${p.lastName}`.trim());
-        if (pairingType === "team-g") {
-            const teamId = `team-${Date.now()}`;
-            persistRegs([...allRegs, ...ps.map((p, i) => ({
-                firstName: p.firstName, lastName: p.lastName, club: p.club,
-                category: "team-g" as const, title: p.title,
-                pairWith: names.filter((_, j) => j !== i).join(", "),
-                teamId, createdAt: ts + (i > 0 ? `-${i}` : ""), competitionId: compId,
-            }))]);
-        } else {
-            const [p1, p2] = ps;
-            const [n1, n2] = names;
-            persistRegs([...allRegs,
-                { firstName: p1.firstName, lastName: p1.lastName, club: p1.club, category: pairingType, title: p1.title, pairWith: n2, createdAt: ts,        competitionId: compId },
-                { firstName: p2.firstName, lastName: p2.lastName, club: p2.club, category: pairingType, title: p2.title, pairWith: n1, createdAt: ts + "-2", competitionId: compId },
-            ]);
-        }
-        setPairSlots(Array(pairInfo.size).fill(""));
-    }
-
     async function deletePairGroup(cat: string, key: string, compId: string) {
         if (cat === "team-g") {
             persistRegs(allRegs.filter((r) => !(r.competitionId === compId && r.category === "team-g" && r.teamId === key)));
@@ -458,19 +419,7 @@ function IncomingRegistrations({ clubName }: { clubName: string }) {
                                 <strong>{comp.name}</strong>
                                 <span>{comp.date}</span>
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <button type="button" className="secondary-action score-button"
-                                    style={{ fontSize: "0.8rem", padding: "4px 10px" }}
-                                    onClick={() => {
-                                        setPairingCompId(pairingCompId === comp.id ? null : comp.id);
-                                        setPairSlots(Array(PAIR_TYPES.find((pt) => pt.id === pairingType)?.size ?? 2).fill(""));
-                                    }}>
-                                    {pairingCompId === comp.id
-                                        ? (lang === "sv" ? "Stäng" : "Close")
-                                        : (lang === "sv" ? "Skapa par" : "Create pairs")}
-                                </button>
-                                <span className="club-tab-count">{compRegs.filter(({ r }) => !PAIR_CATS.includes(r.category)).length} {t.club_incoming_count}</span>
-                            </div>
+                            <span className="club-tab-count">{compRegs.filter(({ r }) => !PAIR_CATS.includes(r.category)).length} {t.club_incoming_count}</span>
                         </div>
                         {(() => {
                             if (compRegs.length === 0) return <p className="club-empty">{t.club_incoming_empty}</p>;
