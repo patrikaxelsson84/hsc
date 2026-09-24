@@ -2,7 +2,7 @@ import type { PlayerScore } from "./scoring";
 
 // ── shared helpers ────────────────────────────────────────────────────────────
 
-function openPrint(title: string, body: string, lang: string): void {
+function openPrint(title: string, body: string, lang: string, extraStyles = ""): void {
     const printLabel = lang === "sv" ? "Skriv ut" : "Print";
     const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -35,6 +35,7 @@ th{background:#d8d8ee;font-size:10px}
     .toolbar{display:none}
     body{padding:6mm}
 }
+${extraStyles}
 </style>
 </head>
 <body>
@@ -90,36 +91,37 @@ export function printProtokoll({
     const pages: string[] = [];
     for (const { laneNum, players: lp } of laneGroups) {
         const filledRows = lp.map((p, i) =>
-            `<tr><td style="text-align:center;width:22px">${i + 1}</td><td style="text-align:left;padding-left:4px">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
+            `<tr class="proto-row"><td class="proto-nr">${i + 1}</td><td class="proto-name">${p.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const emptyCount = Math.max(0, numRows - filledRows.length);
         const emptyRows  = Array.from({ length: emptyCount }, (_, i) =>
-            `<tr><td style="text-align:center;width:22px">${filledRows.length + i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
+            `<tr class="proto-row"><td class="proto-nr">${filledRows.length + i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
         );
         const rows = [...filledRows, ...emptyRows].join("");
 
         for (let round = 1; round <= numRounds; round++) {
             const isLast = laneGroups[laneGroups.length - 1].laneNum === laneNum && round === numRounds;
-            pages.push(`<div style="page-break-after:${isLast ? "avoid" : "always"}">
-<div style="text-align:right;margin-bottom:6px;font-size:12px">
-  ${omgLabel} <span style="border:1px solid #000;padding:1px 10px;font-size:22px;font-weight:bold;margin-left:4px">${round}</span>
+            pages.push(`<div class="proto-page" style="page-break-after:${isLast ? "avoid" : "always"}">
+<div class="proto-header">
+  <span class="proto-comp">${competitionName}</span>
+  <span class="proto-omg">${omgLabel} <span class="proto-omg-num">${round}</span></span>
 </div>
-<table>
+<table class="proto-table">
     <thead>
         <tr>
-            <th colspan="2" style="text-align:left;padding-left:4px;font-size:11px;font-weight:bold;background:#fff">${banaLabel} ${laneNum}</th>
-            <th style="background:#fff">${skoLabel}</th>
-            <th style="background:#fff">${skoLabel}</th>
-            <th style="background:#fff">${skoLabel}</th>
-            <th style="background:#fff">${skoLabel}</th>
-            <th style="background:#fff">${skoLabel}</th>
-            <th style="background:#fff"></th>
+            <th colspan="2" class="proto-th-bana">${banaLabel} ${laneNum}</th>
+            <th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th>
+            <th class="proto-th">${skoLabel}</th>
+            <th class="proto-th"></th>
         </tr>
         <tr>
-            <th class="num" style="background:#fff">Nr</th>
-            <th class="nt" style="background:#fff;font-size:11px;color:#c00">${namnLabel}</th>
-            <th style="background:#fff">1</th><th style="background:#fff">2</th><th style="background:#fff">3</th><th style="background:#fff">4</th><th style="background:#fff">5</th>
-            <th style="background:#fff">${summaLabel}</th>
+            <th class="proto-th proto-nr">Nr</th>
+            <th class="proto-th proto-th-name">${namnLabel}</th>
+            <th class="proto-th">1</th><th class="proto-th">2</th><th class="proto-th">3</th><th class="proto-th">4</th><th class="proto-th">5</th>
+            <th class="proto-th">${summaLabel}</th>
         </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -127,9 +129,25 @@ export function printProtokoll({
         }
     }
 
-    openPrint(`${competitionName} – Domarprotokoll`, `
-<div class="ph"><div><h1>${competitionName}</h1><p>Domarprotokoll</p></div></div>
-${pages.join("")}`, lang);
+    const protoStyles = `
+@page{size:A4 portrait;margin:10mm}
+.proto-page{width:100%;height:277mm;display:flex;flex-direction:column;overflow:hidden}
+.proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4mm;padding-bottom:2mm;border-bottom:1px solid #000}
+.proto-comp{font-size:14px;font-weight:bold}
+.proto-omg{font-size:13px}
+.proto-omg-num{border:1px solid #000;padding:0 6px;font-size:20px;font-weight:bold;margin-left:3px}
+.proto-table{border-collapse:collapse;width:100%;flex:1;table-layout:fixed}
+.proto-table tbody{height:100%}
+.proto-row{height:11.5mm}
+.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff;padding:1px 2px}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff}
+.proto-th-name{text-align:left;padding-left:4px;color:#c00}
+.proto-table td{border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px}
+.proto-nr{width:24px;text-align:center;color:#555}
+.proto-name{text-align:left;padding-left:4px;width:38%}
+@media print{.toolbar{display:none}.proto-page{height:277mm}}`;
+
+    openPrint(`${competitionName} – Domarprotokoll`, pages.join(""), lang, protoStyles);
 }
 
 // ── Startordning ──────────────────────────────────────────────────────────────
