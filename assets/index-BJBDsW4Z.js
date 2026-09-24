@@ -69,8 +69,11 @@ th{background:#d8d8ee;font-size:10px}
 <div class="toolbar"><button onclick="window.print()">${n===`sv`?`Skriv ut`:`Print`}</button></div>
 ${t}
 </body>
-</html>`,i=window.open(``,`_blank`);i&&(i.document.write(r),i.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});let p=f.map(({laneNum:e,players:t})=>{let n=t.map((e,t)=>`<tr><td class="num">${t+1}</td><td class="nc">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`),r=Math.max(0,20-n.length),i=Array.from({length:r},(e,t)=>`<tr><td class="num">${n.length+t+1}</td><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`);return`<div class="lb" style="page-break-after:always">
-<p style="font-size:11px;margin:0 0 4px"><strong>${d}</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10</p>
+</html>`,i=window.open(``,`_blank`);i&&(i.document.write(r),i.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});let p=[];for(let{laneNum:e,players:t}of f){let n=t.map((e,t)=>`<tr><td class="num">${t+1}</td><td class="nc">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`),r=Math.max(0,20-n.length),i=Array.from({length:r},(e,t)=>`<tr><td class="num">${n.length+t+1}</td><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`),a=[...n,...i].join(``);for(let t=1;t<=10;t++){let n=f[f.length-1].laneNum===e&&t===10;p.push(`<div style="page-break-after:${n?`avoid`:`always`}">
+<div style="text-align:center;margin-bottom:10px">
+  <span style="font-size:14px;font-weight:bold">${d}</span>
+  <span style="font-size:40px;font-weight:bold;border:2px solid #000;padding:0 10px;margin-left:6px;display:inline-block;line-height:1.1">${t}</span>
+</div>
 <table>
     <thead>
         <tr>
@@ -89,10 +92,10 @@ ${t}
             <th>${u}</th>
         </tr>
     </thead>
-    <tbody>${[...n,...i].join(``)}</tbody>
-</table></div>`}).join(``);Pf(`${e} – Domarprotokoll`,`
+    <tbody>${a}</tbody>
+</table></div>`)}}Pf(`${e} – Domarprotokoll`,`
 <div class="ph"><div><h1>${e}</h1><p>Domarprotokoll</p></div></div>
-${p}`,a)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
+${p.join(``)}`,a)}function If({competitionName:e,players:t,laneAssignments:n,laneCount:r,teamAssignments:i=[],laneFilter:a=`all`,lang:o=`sv`}){let s=r>1&&Object.keys(n).length>0,c=o===`sv`?`Bana`:`Lane`,l=o===`sv`?`Klass`:`Class`,u=o===`sv`?`Klubb`:`Club`,d=o===`sv`?`Lag`:`Team`;new Map(t.map(e=>[e.id,e]));let f=new Map,p=new Map;for(let e of i)e.playerIds.forEach((t,n)=>{f.set(t,n),p.set(t,e.name)});function m(e){return[...e].sort((e,t)=>(f.get(e.id)??999)-(f.get(t.id)??999))}let h=[];if(s){let e=a===`all`?Array.from({length:r},(e,t)=>t+1):[a];for(let r of e){let e=t.filter(e=>n[e.id]===r);h.push({laneNum:r,players:m(e)})}}else h.push({laneNum:0,players:m(t)});let g=h.map(({laneNum:e,players:t})=>`<div class="lb"><table>
             <thead>
                 ${e>0?`<tr><th colspan="5" class="lh">${c} ${e}</th></tr>`:``}
                 <tr><th class="num">#</th><th class="nt">Namn</th><th>${u}</th><th>${l}</th><th></th></tr>
