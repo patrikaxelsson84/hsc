@@ -69,27 +69,26 @@ th{background:#d8d8ee;font-size:10px}
 <div class="toolbar"><button onclick="window.print()">${n===`sv`?`Skriv ut`:`Print`}</button></div>
 ${t}
 </body>
-</html>`,i=window.open(``,`_blank`);i&&(i.document.write(r),i.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});let p=[];for(let{laneNum:e,players:t}of f){let n=t.map((e,t)=>`<tr><td class="num">${t+1}</td><td class="nc">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`),r=Math.max(0,20-n.length),i=Array.from({length:r},(e,t)=>`<tr><td class="num">${n.length+t+1}</td><td class="nc"></td><td></td><td></td><td></td><td></td><td></td><td class="sc"></td></tr>`),a=[...n,...i].join(``);for(let t=1;t<=10;t++){let n=f[f.length-1].laneNum===e&&t===10;p.push(`<div style="page-break-after:${n?`avoid`:`always`}">
-<div style="text-align:center;margin-bottom:10px">
-  <span style="font-size:14px;font-weight:bold">${d}</span>
-  <span style="font-size:40px;font-weight:bold;border:2px solid #000;padding:0 10px;margin-left:6px;display:inline-block;line-height:1.1">${t}</span>
+</html>`,i=window.open(``,`_blank`);i&&(i.document.write(r),i.document.close())}function Ff({competitionName:e,players:t,laneAssignments:n,laneCount:r,laneFilter:i=`all`,lang:a=`sv`}){let o=r>1&&Object.keys(n).length>0,s=a===`sv`?`Bana`:`Lane`,c=a===`sv`?`Sko`:`Shoe`,l=a===`sv`?`Namn`:`Name`,u=a===`sv`?`Summa`:`Total`,d=a===`sv`?`Omgång:`:`Round:`,f=[];if(o){let e=i===`all`?Array.from({length:r},(e,t)=>t+1):[i];for(let r of e)f.push({laneNum:r,players:t.filter(e=>n[e.id]===r)})}else f.push({laneNum:1,players:t});let p=[];for(let{laneNum:e,players:t}of f){let n=t.map((e,t)=>`<tr><td style="text-align:center;width:22px">${t+1}</td><td style="text-align:left;padding-left:4px">${e.name}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`),r=Math.max(0,20-n.length),i=Array.from({length:r},(e,t)=>`<tr><td style="text-align:center;width:22px">${n.length+t+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`),a=[...n,...i].join(``);for(let t=1;t<=10;t++){let n=f[f.length-1].laneNum===e&&t===10;p.push(`<div style="page-break-after:${n?`avoid`:`always`}">
+<div style="text-align:right;margin-bottom:6px;font-size:12px">
+  ${d} <span style="border:1px solid #000;padding:1px 10px;font-size:22px;font-weight:bold;margin-left:4px">${t}</span>
 </div>
 <table>
     <thead>
         <tr>
-            <th colspan="2" class="lh">${s} ${e}</th>
-            <th class="lh" style="text-align:center">${c}</th>
-            <th class="lh" style="text-align:center">${c}</th>
-            <th class="lh" style="text-align:center">${c}</th>
-            <th class="lh" style="text-align:center">${c}</th>
-            <th class="lh" style="text-align:center">${c}</th>
-            <th class="lh"></th>
+            <th colspan="2" style="text-align:left;padding-left:4px;font-size:11px;font-weight:bold;background:#fff">${s} ${e}</th>
+            <th style="background:#fff">${c}</th>
+            <th style="background:#fff">${c}</th>
+            <th style="background:#fff">${c}</th>
+            <th style="background:#fff">${c}</th>
+            <th style="background:#fff">${c}</th>
+            <th style="background:#fff"></th>
         </tr>
         <tr>
-            <th class="num">Nr</th>
-            <th class="nt">${l}</th>
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-            <th>${u}</th>
+            <th class="num" style="background:#fff">Nr</th>
+            <th class="nt" style="background:#fff;font-size:11px;color:#c00">${l}</th>
+            <th style="background:#fff">1</th><th style="background:#fff">2</th><th style="background:#fff">3</th><th style="background:#fff">4</th><th style="background:#fff">5</th>
+            <th style="background:#fff">${u}</th>
         </tr>
     </thead>
     <tbody>${a}</tbody>
