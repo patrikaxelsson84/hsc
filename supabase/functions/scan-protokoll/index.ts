@@ -111,7 +111,7 @@ async function callClaude(image: string, mediaType: string, prompt: string): Pro
         },
         body: JSON.stringify({
             model:      "claude-sonnet-5",
-            max_tokens: 1024,
+            max_tokens: 2048,
             messages: [{
                 role: "user",
                 content: [
@@ -189,7 +189,7 @@ Deno.serve(async (req: Request) => {
             // ── New domarprotokoll format for ScoringPage ────────────────────
             const text = await callClaude(image, mediaType, DOMARPROTOKOLL_PROMPT);
             const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("Kunde inte tolka svaret från Claude.");
+            if (!jsonMatch) throw new Error(`Kunde inte tolka svaret från Claude. Svar: ${text.slice(0, 200)}`);
 
             const parsed = JSON.parse(jsonMatch[0]) as {
                 omgang: number;
