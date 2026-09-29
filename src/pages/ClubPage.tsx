@@ -1189,9 +1189,11 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         const updated = players.map((p) => {
             const row = scanResult.players.find((r) => r.matchad_id === p.id);
             if (!row) return p;
-            const next = [...p.rounds];
-            next[roundIdx] = row.beraknad_summa;
-            return { ...p, rounds: next };
+            const nextRounds = [...p.rounds];
+            nextRounds[roundIdx] = row.beraknad_summa;
+            const nextBonus = [...p.bonusHits];
+            nextBonus[roundIdx] = row.kast.length > 0 && row.kast.every(k => k > 0);
+            return { ...p, rounds: nextRounds, bonusHits: nextBonus };
         });
         setPlayers(updated);
         setScanState("idle");
