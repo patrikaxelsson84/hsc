@@ -2860,6 +2860,131 @@ a {
     margin-top: 30px;
 }
 
+/* ── Scan protocol UI ── */
+
+.scan-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 16px;
+    color: var(--text-secondary, #666);
+}
+
+@keyframes scan-spin {
+    to { transform: rotate(360deg); }
+}
+
+.scan-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border, #ddd);
+    border-top-color: var(--accent, #1a73e8);
+    border-radius: 50%;
+    animation: scan-spin 0.75s linear infinite;
+}
+
+.scan-error {
+    color: var(--danger, #c0392b) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scan-review-panel {
+    border: 1px solid var(--border, #ddd);
+    border-radius: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.scan-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface-alt, #f7f8fa);
+    border-bottom: 1px solid var(--border, #ddd);
+}
+
+.scan-review-sub {
+    display: block;
+    font-size: 0.82em;
+    color: var(--text-secondary, #666);
+    margin-top: 2px;
+}
+
+.scan-review-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.scan-review-table {
+    overflow-x: auto;
+}
+
+.scan-review-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.scan-review-table th,
+.scan-review-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border, #ddd);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.scan-review-table th {
+    background: var(--surface-alt, #f7f8fa);
+    font-weight: 600;
+}
+
+.scan-row-flagged {
+    background: #fffbea;
+}
+
+.scan-row-flagged td {
+    color: #7a5900;
+}
+
+.scan-kast {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary, #555);
+}
+
+.scan-flag {
+    color: #a05c00;
+    font-size: 0.88em;
+}
+
+.scan-ok {
+    color: var(--success, #2e7d32);
+    font-size: 0.88em;
+}
+
+.scan-unmatched {
+    margin-left: 4px;
+    font-size: 0.85em;
+}
+
+@media (prefers-color-scheme: dark) {
+    .scan-row-flagged {
+        background: #2d2500;
+    }
+    .scan-row-flagged td {
+        color: #f0c040;
+    }
+    .scan-flag {
+        color: #f0c040;
+    }
+}
+
 /* ── Photo import modal ── */
 .photo-modal {
     width: 680px;

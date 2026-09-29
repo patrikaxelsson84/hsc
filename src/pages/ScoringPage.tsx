@@ -1,7 +1,9 @@
-import { ArrowLeft, Archive, CalendarDays, ClipboardList, MapPin, Play, Printer, RotateCcw, Save, Trash2, Trophy } from "lucide-react";
+import { ArrowLeft, Archive, CalendarDays, ClipboardList, Download, MapPin, Play, Printer, RotateCcw, Save, ScanLine, Trash2, Trophy } from "lucide-react";
 import { pushLiveResults } from "../lib/liveResults";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
+import { compressImage, scanProtokoll } from "../lib/scanProtokoll";
+import type { ScanResult } from "../lib/scanProtokoll";
 import { rankPlayers, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
 import { useLanguage } from "../lib/language";
@@ -146,6 +148,10 @@ export default function ScoringPage() {
     const [players,                 setPlayers]                 = useState<PlayerScore[]>([]);
     const [status,                  setStatus]                  = useState<"idle" | "saved" | "reset">("idle");
     const [oldContestIds,           setOldContestIds]           = useState<string[]>(getSavedContestIds);
+    const [scanState,               setScanState]               = useState<"idle" | "loading" | "review">("idle");
+    const [scanResult,              setScanResult]              = useState<ScanResult | null>(null);
+    const [scanError,               setScanError]               = useState("");
+    const scanFileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!baseLoading) setPlayers((cur) => cur.length === 0 ? loadAllPlayers(basePlayers, registeredPlayers) : cur);
@@ -344,6 +350,67 @@ export default function ScoringPage() {
             return next;
         });
         setStatus("idle");
+    }
+
+    async function handleScanFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+        setScanState("loading");
+        setScanError("");
+        try {
+            const { base64, mediaType } = await compressImage(file);
+            const result = await scanProtokoll(
+                base64,
+                mediaType,
+                players.map(p => ({ id: p.id, name: p.name })),
+            );
+            setScanResult(result);
+            setScanState("review");
+        } catch (err) {
+            setScanError(err instanceof Error ? err.message : String(err));
+            setScanState("idle");
+        }
+    }
+
+    function applyScanResult() {
+        if (!scanResult) return;
+        const roundIdx = scanResult.omgang - 1;
+        if (roundIdx < 0 || roundIdx > 9) return;
+        setPlayers(cur => {
+            const next = cur.map(p => {
+                const row = scanResult.players.find(r => r.matchad_id === p.id);
+                if (!row) return p;
+                const rounds = [...p.rounds];
+                rounds[roundIdx] = row.beraknad_summa;
+                return { ...p, rounds };
+            });
+            localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(next));
+            return next;
+        });
+        setScanState("idle");
+        setScanResult(null);
+        setStatus("idle");
+    }
+
+    function downloadScanCsv() {
+        if (!scanResult) return;
+        const BOM  = "﻿";
+        const rows = scanResult.players
+            .filter(r => r.matchad_id)
+            .map((r, i) =>
+                `${i + 1},${scanResult.omgang},${scanResult.bana},"${(r.matchat_namn ?? r.namn).replace(/"/g, '""')}",${r.beraknad_summa}`
+            )
+            .join("\r\n");
+        const csv = BOM + "Nr,Omgång,Bana,Namn,Summa\r\n" + rows;
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const filename = `Omgång_${scanResult.omgang}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.csv`;
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
     }
 
     function saveScores() {
@@ -977,6 +1044,19 @@ export default function ScoringPage() {
                     </label>
                 )}
 
+                <label className="secondary-action score-button startlist-no-print scan-btn" style={{ cursor: "pointer" }}>
+                    <ScanLine size={17} aria-hidden="true" />
+                    {lang === "sv" ? "📷 Skanna protokoll" : "📷 Scan protocol"}
+                    <input
+                        ref={scanFileRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        style={{ display: "none" }}
+                        onChange={handleScanFile}
+                    />
+                </label>
+
                 <button className="secondary-action score-button startlist-no-print" type="button" onClick={() => window.print()}>
                     <Printer size={17} aria-hidden="true" />
                     {t.sc_print_list}
@@ -1030,6 +1110,89 @@ export default function ScoringPage() {
                 <p className="form-message startlist-no-print">
                     {status === "saved" ? savedMsg : resetMsg}
                 </p>
+            )}
+
+            {/* ── Scan loading ──────────────────────────────────────────────── */}
+            {scanState === "loading" && (
+                <div className="scan-loading startlist-no-print">
+                    <div className="scan-spinner" />
+                    <p>{lang === "sv" ? "Läser protokollet…" : "Reading protocol…"}</p>
+                </div>
+            )}
+
+            {/* ── Scan error ────────────────────────────────────────────────── */}
+            {scanError && scanState === "idle" && (
+                <p className="form-message scan-error startlist-no-print">
+                    {lang === "sv" ? "Skanningsfel: " : "Scan error: "}{scanError}
+                    <button type="button" style={{ marginLeft: 8, cursor: "pointer", background: "none", border: "none", fontWeight: 700 }} onClick={() => setScanError("")}>✕</button>
+                </p>
+            )}
+
+            {/* ── Scan review panel ─────────────────────────────────────────── */}
+            {scanState === "review" && scanResult && (
+                <div className="scan-review-panel startlist-no-print">
+                    <div className="scan-review-header">
+                        <div>
+                            <strong>
+                                {lang === "sv" ? `📷 Skannat protokoll – Omgång ${scanResult.omgang}, Bana ${scanResult.bana}` : `📷 Scanned protocol – Round ${scanResult.omgang}, Lane ${scanResult.bana}`}
+                            </strong>
+                            <span className="scan-review-sub">
+                                {lang === "sv"
+                                    ? `${scanResult.players.filter(r => !r.flaggad).length} av ${scanResult.players.length} rader OK`
+                                    : `${scanResult.players.filter(r => !r.flaggad).length} of ${scanResult.players.length} rows OK`}
+                            </span>
+                        </div>
+                        <div className="scan-review-actions">
+                            <button type="button" className="secondary-action score-button" onClick={downloadScanCsv}>
+                                <Download size={15} aria-hidden="true" />
+                                CSV
+                            </button>
+                            <button type="button" className="primary-action score-button" onClick={applyScanResult}
+                                disabled={scanResult.omgang < 1 || scanResult.omgang > 10}>
+                                <Save size={15} aria-hidden="true" />
+                                {lang === "sv" ? "Fyll i R" + scanResult.omgang : "Fill R" + scanResult.omgang}
+                            </button>
+                            <button type="button" className="secondary-action score-button"
+                                onClick={() => { setScanState("idle"); setScanResult(null); }}>
+                                {lang === "sv" ? "Avbryt" : "Cancel"}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="table-shell scan-review-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{lang === "sv" ? "Namn" : "Name"}</th>
+                                    <th>{lang === "sv" ? "Kast" : "Throws"}</th>
+                                    <th>{lang === "sv" ? "Beräknad" : "Calculated"}</th>
+                                    <th>{lang === "sv" ? "Angiven" : "Written"}</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {scanResult.players.map((row, i) => (
+                                    <tr key={i} className={row.flaggad ? "scan-row-flagged" : ""}>
+                                        <td>
+                                            {row.matchat_namn ?? row.namn}
+                                            {!row.matchad_id && (
+                                                <span className="scan-unmatched"> ⚠️</span>
+                                            )}
+                                        </td>
+                                        <td className="scan-kast">{row.kast.join(" + ")}</td>
+                                        <td><strong>{row.beraknad_summa}</strong></td>
+                                        <td>{row.angiven_summa ?? "–"}</td>
+                                        <td>
+                                            {row.flaggad
+                                                ? <span className="scan-flag">⚠️ {row.flaggorsak}</span>
+                                                : <span className="scan-ok">✅ {lang === "sv" ? "Stämmer" : "OK"}</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             )}
 
             {/* Print-only start list */}

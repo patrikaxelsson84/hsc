@@ -1,7 +1,7 @@
 import { ArrowLeft, CalendarDays, Camera, CheckSquare, ClipboardList, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
-import { extractScoresFromImage } from "../lib/importFromPhoto";
-import type { RecognizedScore } from "../lib/importFromPhoto";
+import { extractScoresFromImage } from "../lib/scanProtokoll";
+import type { RecognizedScore } from "../lib/scanProtokoll";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
@@ -1026,7 +1026,6 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [laneScoreFilter,    setLaneScoreFilter]    = useState<number | "all">("all");
     const [classFilter,        setClassFilter]        = useState<ClassLevel | "all">("all");
     const [photoStep,          setPhotoStep]          = useState<"closed" | "upload" | "analyzing" | "review">("closed");
-    const [photoApiKey,        setPhotoApiKey]        = useState(() => localStorage.getItem("hsc-anthropic-key") ?? "");
     const [photoHalf,          setPhotoHalf]          = useState<"first" | "second">("first");
     const [photoMatches,       setPhotoMatches]       = useState<(RecognizedScore & { matchedId: string | null })[]>([]);
     const [photoError,         setPhotoError]         = useState("");
@@ -1137,7 +1136,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
-            const recognized = await extractScoresFromImage(dataUrl, photoApiKey);
+            const recognized = await extractScoresFromImage(dataUrl, players.map(p => ({ id: p.id, name: p.name })));
             setPhotoMatches(recognized.map((r) => ({ ...r, matchedId: bestPhotoMatch(r.name) })));
             setPhotoStep("review");
         } catch (e: unknown) {
@@ -2455,37 +2454,18 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
                         {photoStep === "upload" && (
                             <>
-                                {!photoApiKey && (
-                                    <div className="photo-key-section">
-                                        <p>{lang === "sv" ? "Ange din Anthropic API-nyckel:" : "Enter your Anthropic API key:"}</p>
-                                        <input
-                                            type="password"
-                                            placeholder="sk-ant-..."
-                                            value={photoApiKey}
-                                            onChange={(e) => setPhotoApiKey(e.target.value)}
-                                        />
-                                        <button className="secondary-action" onClick={() => {
-                                            localStorage.setItem("hsc-anthropic-key", photoApiKey);
-                                        }}>
-                                            {lang === "sv" ? "Spara nyckel" : "Save key"}
-                                        </button>
-                                    </div>
-                                )}
-                                {photoApiKey && (
-                                    <p className="photo-hint">
-                                        {lang === "sv"
-                                            ? "Ta ett foto av protokollet och välj det nedan. Claude läser av namnen och poängen automatiskt."
-                                            : "Take a photo of the scorecard and select it below. Claude will read names and scores automatically."}
-                                    </p>
-                                )}
-                                <label className={`photo-upload-btn${!photoApiKey ? " disabled" : ""}`}>
+                                <p className="photo-hint">
+                                    {lang === "sv"
+                                        ? "Ta ett foto av protokollet och välj det nedan. Claude läser av namnen och poängen automatiskt."
+                                        : "Take a photo of the scorecard and select it below. Claude will read names and scores automatically."}
+                                </p>
+                                <label className="photo-upload-btn">
                                     <Camera size={22} />
                                     {lang === "sv" ? "Välj foto / kamera" : "Choose photo / camera"}
                                     <input
                                         type="file"
                                         accept="image/*"
                                         capture="environment"
-                                        disabled={!photoApiKey}
                                         onChange={(e) => {
                                             const file = e.target.files?.[0];
                                             if (file) handlePhotoFile(file);
