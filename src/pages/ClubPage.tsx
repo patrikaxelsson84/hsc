@@ -1186,18 +1186,20 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     function applyScanResult() {
         if (!scanResult) return;
         const roundIdx = scanResult.omgang - 1;
-        setPlayers((cur) =>
-            cur.map((p) => {
-                const row = scanResult.players.find((r) => r.matchad_id === p.id);
-                if (!row) return p;
-                const next = [...p.rounds];
-                next[roundIdx] = row.beraknad_summa;
-                return { ...p, rounds: next };
-            })
-        );
+        const updated = players.map((p) => {
+            const row = scanResult.players.find((r) => r.matchad_id === p.id);
+            if (!row) return p;
+            const next = [...p.rounds];
+            next[roundIdx] = row.beraknad_summa;
+            return { ...p, rounds: next };
+        });
+        setPlayers(updated);
         setScanState("idle");
         setScanResult(null);
-        setStatus("idle");
+        setStatus("saved");
+        localStorage.setItem(`${SCORE_PREFIX}-${currentRunId}`, JSON.stringify(updated));
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
+        pushLiveResults(currentRunId, selectedComp?.name ?? currentRunId, typeName(typeIds, lang), updated, teamAssignments);
     }
 
     function downloadScanCsv() {
