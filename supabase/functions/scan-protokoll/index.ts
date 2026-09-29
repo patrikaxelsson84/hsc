@@ -83,6 +83,7 @@ Rules:
 - If a cell value is unclear or hard to read, set osaker: true for that player.
 - A "B" or a mark outside a box is a bonus marker — ignore it completely.
 - Ignore completely empty rows.
+- Ignore any row where the name has a line drawn through it (struck through / crossed out) — do not include it in the output at all.
 - angiven_summa is the total written on the right side of the row; set to null if absent.
 - omgang is the round/omgång number written at the top or left margin.
 - bana is the lane/bana number written at the top or left margin.`;
@@ -125,8 +126,12 @@ async function callClaude(image: string, mediaType: string, prompt: string): Pro
         const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
         throw new Error(err?.error?.message ?? `Claude API ${res.status}`);
     }
-    const data = await res.json() as { content?: { text?: string }[] };
-    return data.content?.[0]?.text ?? "";
+    const data = await res.json() as { content?: Array<{ type?: string; text?: string }> };
+    console.log("Claude raw content types:", data.content?.map(b => b.type).join(","));
+    const textBlock = data.content?.find(b => b.type === "text");
+    const text = textBlock?.text ?? "";
+    console.log("Claude text (first 300):", text.slice(0, 300));
+    return text;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
