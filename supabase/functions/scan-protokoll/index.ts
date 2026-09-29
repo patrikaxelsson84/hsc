@@ -83,6 +83,7 @@ Rules:
 - If a cell value is unclear or hard to read, set osaker: true for that player.
 - A "B" or a mark outside a box is a bonus marker — ignore it completely.
 - Ignore completely empty rows.
+- Ignore any row where the name is crossed out, struck through, or heavily scribbled over — do not include it in the output at all.
 - angiven_summa is the total written on the right side of the row; set to null if absent.
 - omgang is the round/omgång number written at the top or left margin.
 - bana is the lane/bana number written at the top or left margin.`;
