@@ -8,7 +8,7 @@ export interface RegisteredPlayer { id: string; name: string }
 /** Resize to max 1600 px on the long side and encode as JPEG. */
 export async function compressImage(
     file: File,
-    maxSide = 1600,
+    maxSide = 800,
 ): Promise<{ base64: string; mediaType: "image/jpeg" }> {
     const objectUrl = URL.createObjectURL(file);
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
