@@ -336,20 +336,33 @@ export default function ResultsPage() {
 
     useEffect(() => {
         async function refresh() {
-            const local = readLiveData();
-            if (local) {
-                setLiveData(local);
+            const remote = await fetchLiveResults();
+            if (remote) {
+                setLiveData(remote);
             } else {
-                const remote = await fetchLiveResults();
-                if (remote) setLiveData(remote);
+                const local = readLiveData();
+                if (local) setLiveData(local);
             }
         }
         refresh();
-        const interval = setInterval(refresh, 10000);
-        const onStorage = () => setLiveData(readLiveData());
+        const interval = setInterval(refresh, 5000);
+
+        // Realtime: instant cross-device updates when live_contest row changes
+        const channel = supabase
+            .channel("live-contest-watch")
+            .on("postgres_changes", { event: "*", schema: "public", table: "live_contest" }, () => {
+                refresh();
+            })
+            .subscribe();
+
+        const onStorage = () => {
+            const local = readLiveData();
+            if (local) setLiveData(local);
+        };
         window.addEventListener("storage", onStorage);
         return () => {
             clearInterval(interval);
+            supabase.removeChannel(channel);
             window.removeEventListener("storage", onStorage);
         };
     }, []);
