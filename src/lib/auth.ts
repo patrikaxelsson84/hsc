@@ -1,7 +1,61 @@
 import bcrypt from 'bcryptjs'
 import { supabase } from './supabase'
 
-const SALT_ROUNDS = 10
+const SALT_ROUNDS     = 10
+const MAX_ATTEMPTS    = 6
+const LOCKOUT_MINUTES = 60
+
+// ── Lockout types ─────────────────────────────────────────────────────────────
+
+export type LoginResult =
+    | { ok: true }
+    | { ok: false; locked: false; attemptsLeft: number }
+    | { ok: false; locked: true;  minutesLeft: number }
+
+export type LockoutRecord = {
+    id: string
+    failed_attempts: number
+    locked_until: string | null
+    updated_at: string
+}
+
+// ── Lockout helpers ───────────────────────────────────────────────────────────
+
+async function fetchLockRow(id: string) {
+    const { data } = await supabase
+        .from('login_lockouts')
+        .select('failed_attempts, locked_until')
+        .eq('id', id)
+        .maybeSingle()
+    return data as { failed_attempts: number; locked_until: string | null } | null
+}
+
+function activeLock(row: { locked_until: string | null } | null): { locked: boolean; minutesLeft: number } {
+    if (!row?.locked_until) return { locked: false, minutesLeft: 0 }
+    const until = new Date(row.locked_until)
+    if (until <= new Date()) return { locked: false, minutesLeft: 0 }
+    return { locked: true, minutesLeft: Math.ceil((until.getTime() - Date.now()) / 60_000) }
+}
+
+async function recordFailure(id: string, row: { failed_attempts: number } | null): Promise<LoginResult> {
+    const attempts     = (row?.failed_attempts ?? 0) + 1
+    const locked_until = attempts >= MAX_ATTEMPTS
+        ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString()
+        : null
+    await supabase.from('login_lockouts').upsert(
+        { id, failed_attempts: attempts, locked_until, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+    )
+    if (locked_until) return { ok: false, locked: true, minutesLeft: LOCKOUT_MINUTES }
+    return { ok: false, locked: false, attemptsLeft: MAX_ATTEMPTS - attempts }
+}
+
+async function clearAttempts(id: string): Promise<void> {
+    await supabase.from('login_lockouts').upsert(
+        { id, failed_attempts: 0, locked_until: null, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+    )
+}
 
 function isBcryptHash(s: string): boolean {
     return s.startsWith('$2b$') || s.startsWith('$2a$')
@@ -29,6 +83,32 @@ export async function checkAdminPassword(password: string): Promise<boolean> {
     return verifyPassword(password, data.password)
 }
 
+export async function loginAdmin(username: string, password: string): Promise<LoginResult> {
+    const row = await fetchLockRow('admin')
+    const { locked, minutesLeft } = activeLock(row)
+    if (locked) return { ok: false, locked: true, minutesLeft }
+
+    const { data } = await supabase
+        .from('credentials')
+        .select('password, username')
+        .eq('id', 'admin')
+        .single()
+
+    // If a username is stored, both must match; if none stored yet, only password is checked
+    const usernameOk = !data?.username || data.username === username
+    const valid = !!(data && usernameOk && await verifyPassword(password, data.password))
+
+    if (valid) { await clearAttempts('admin'); return { ok: true } }
+    return recordFailure('admin', row)
+}
+
+export async function setAdminUsername(username: string): Promise<void> {
+    await supabase
+        .from('credentials')
+        .update({ username: username.trim() })
+        .eq('id', 'admin')
+}
+
 export async function setAdminPassword(password: string): Promise<void> {
     const hashed = await hashPassword(password)
     await supabase
@@ -47,6 +127,42 @@ export async function checkClubPassword(club: string, password: string): Promise
         .single()
     if (!data) return false
     return verifyPassword(password, data.password)
+}
+
+export async function loginClub(club: string, password: string): Promise<LoginResult> {
+    // Case-insensitive lookup so typing "linköping hsk" matches "Linköping HSK"
+    const { data: match } = await supabase
+        .from('credentials')
+        .select('id, password')
+        .ilike('id', club.trim())
+        .eq('type', 'club')
+        .maybeSingle()
+
+    // Track lockout by the canonical id if found, otherwise by normalised input
+    const lockId = match?.id ?? club.trim().toLowerCase()
+    const row = await fetchLockRow(lockId)
+    const { locked, minutesLeft } = activeLock(row)
+    if (locked) return { ok: false, locked: true, minutesLeft }
+
+    const valid = !!(match && await verifyPassword(password, match.password))
+
+    if (valid) { await clearAttempts(lockId); return { ok: true } }
+    return recordFailure(lockId, row)
+}
+
+// ── Admin lockout management ───────────────────────────────────────────────────
+
+export async function getActiveLockouts(): Promise<LockoutRecord[]> {
+    const { data } = await supabase
+        .from('login_lockouts')
+        .select('id, failed_attempts, locked_until, updated_at')
+        .gt('locked_until', new Date().toISOString())
+        .order('updated_at', { ascending: false })
+    return (data ?? []) as LockoutRecord[]
+}
+
+export async function unlockAccount(id: string): Promise<void> {
+    await clearAttempts(id)
 }
 
 export async function setClubPassword(club: string, password: string): Promise<void> {

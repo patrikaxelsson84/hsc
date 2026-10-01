@@ -13,7 +13,7 @@ import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
 import { rankPlayers, rankTeams, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
-import { checkClubPassword, ensureClubsExist, listClubs, setClubPassword } from "../lib/auth";
+import { checkClubPassword, ensureClubsExist, loginClub, setClubPassword } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -122,9 +122,8 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
     const { t, lang } = useLanguage();
     const [club,           setClub]           = useState("");
     const [password,       setPassword]       = useState("");
-    const [error,          setError]          = useState(false);
+    const [error,          setError]          = useState<string | null>(null);
     const [loading,        setLoading]        = useState(false);
-    const [authClubs,      setAuthClubs]      = useState<string[]>([]);
     const [reqOpen,        setReqOpen]        = useState(false);
     const [reqName,        setReqName]        = useState("");
     const [reqContact,     setReqContact]     = useState("");
@@ -133,20 +132,25 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
 
     useEffect(() => {
         ensureClubsExist(knownClubs);
-        listClubs().then(setAuthClubs);
     }, [knownClubs]);
-
-    const allClubs = [...new Set([...knownClubs, ...authClubs])].sort((a, b) => a.localeCompare(b, "sv"));
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         if (!club) return;
         setLoading(true);
-        if (await checkClubPassword(club, password)) {
+        const result = await loginClub(club, password);
+        if (result.ok) {
             sessionStorage.setItem(CLUB_SESSION_KEY, club);
             onLogin(club);
+        } else if (result.locked) {
+            setError(lang === "sv"
+                ? `Kontot är låst i ${result.minutesLeft} min på grund av för många misslyckade försök.`
+                : `Account locked for ${result.minutesLeft} min due to too many failed attempts.`);
+            setPassword("");
         } else {
-            setError(true);
+            setError(lang === "sv"
+                ? `Fel lösenord. ${result.attemptsLeft} försök kvar innan kontot låses.`
+                : `Wrong password. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left before lockout.`);
             setPassword("");
         }
         setLoading(false);
@@ -191,15 +195,16 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
                     <form className="club-login-form" onSubmit={handleSubmit}>
                         <label>
                             {t.club_login_user}
-                            <div className="club-login-field club-login-field--select">
+                            <div className="club-login-field">
                                 <Users size={16} aria-hidden="true" />
-                                <select required value={club}
-                                    onChange={(e) => { setClub(e.target.value); setError(false); }}>
-                                    <option value="" disabled>{t.club_login_user_ph}</option>
-                                    {allClubs.map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
+                                <input
+                                    type="text"
+                                    autoComplete="organization"
+                                    required
+                                    value={club}
+                                    placeholder={t.club_login_user_ph}
+                                    onChange={(e) => { setClub(e.target.value); setError(null); }}
+                                />
                             </div>
                         </label>
                         <label>
@@ -208,10 +213,10 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
                                 <Lock size={16} aria-hidden="true" />
                                 <input type="password" autoComplete="current-password" required
                                     value={password} placeholder="••••••••"
-                                    onChange={(e) => { setPassword(e.target.value); setError(false); }} />
+                                    onChange={(e) => { setPassword(e.target.value); setError(null); }} />
                             </div>
                         </label>
-                        {error && <p className="club-login-error">{t.club_login_error}</p>}
+                        {error && <p className="club-login-error">{error}</p>}
                         <button className="primary-action club-login-btn" type="submit" disabled={loading}>
                             <LogIn size={18} aria-hidden="true" />
                             {loading ? "…" : t.club_login_btn}

@@ -1,6 +1,6 @@
-import { Check, Lock, Plus, RefreshCw, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { addClub, listClubs, removeClub, setAdminPassword, setClubPassword } from "../lib/auth";
+import { addClub, getActiveLockouts, listClubs, removeClub, setAdminPassword, setAdminUsername, setClubPassword, unlockAccount, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
 import { supabase } from "../lib/supabase";
 
@@ -32,7 +32,21 @@ export default function AdminUsersPage() {
     const [adminPw,     setAdminPw]     = useState("");
     const [adminStatus, setAdminStatus] = useState<"idle" | "ok">("idle");
 
-    useEffect(() => { refresh(); refreshRequests(); }, []);
+    const [adminUser,       setAdminUser]       = useState("");
+    const [adminUserStatus, setAdminUserStatus] = useState<"idle" | "ok">("idle");
+
+    const [lockouts,    setLockouts]    = useState<LockoutRecord[]>([]);
+
+    useEffect(() => { refresh(); refreshRequests(); refreshLockouts(); }, []);
+
+    async function refreshLockouts() {
+        setLockouts(await getActiveLockouts());
+    }
+
+    async function handleUnlock(id: string) {
+        await unlockAccount(id);
+        await refreshLockouts();
+    }
 
     async function refresh() {
         setLoading(true);
@@ -98,6 +112,14 @@ export default function AdminUsersPage() {
         setTimeout(() => setAdminStatus("idle"), 2500);
     }
 
+    async function handleAdminUser() {
+        if (!adminUser.trim()) return;
+        await setAdminUsername(adminUser.trim());
+        setAdminUser("");
+        setAdminUserStatus("ok");
+        setTimeout(() => setAdminUserStatus("idle"), 2500);
+    }
+
     return (
         <div className="admin-page">
             <div className="admin-page-header">
@@ -107,6 +129,62 @@ export default function AdminUsersPage() {
                     <p>{t.admin_users_desc}</p>
                 </div>
             </div>
+
+            {/* ── Locked accounts ── */}
+            {lockouts.length > 0 && (
+                <section className="admin-panel" style={{ borderColor: "var(--danger, #e53e3e)" }}>
+                    <div className="panel-title-row">
+                        <h2 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <AlertTriangle size={18} style={{ color: "var(--danger, #e53e3e)" }} aria-hidden="true" />
+                            {lang === "sv" ? "Låsta inloggningar" : "Locked accounts"}
+                        </h2>
+                        <span className="club-tab-count">{lockouts.length}</span>
+                    </div>
+                    <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "0.75rem" }}>
+                        {lang === "sv"
+                            ? "Dessa konton är tillfälligt låsta efter upprepade misslyckade inloggningsförsök."
+                            : "These accounts are temporarily locked after repeated failed login attempts."}
+                    </p>
+                    <div className="table-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{lang === "sv" ? "Konto" : "Account"}</th>
+                                    <th>{lang === "sv" ? "Försök" : "Attempts"}</th>
+                                    <th>{lang === "sv" ? "Låst till" : "Locked until"}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {lockouts.map((row) => {
+                                    const until = new Date(row.locked_until!);
+                                    const minutesLeft = Math.ceil((until.getTime() - Date.now()) / 60_000);
+                                    return (
+                                        <tr key={row.id}>
+                                            <td><strong>{row.id}</strong></td>
+                                            <td>{row.failed_attempts}</td>
+                                            <td style={{ whiteSpace: "nowrap", fontSize: "0.85em", color: "var(--muted)" }}>
+                                                {until.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+                                                {" "}({minutesLeft} {lang === "sv" ? "min kvar" : "min left"})
+                                            </td>
+                                            <td style={{ whiteSpace: "nowrap" }}>
+                                                <button
+                                                    type="button"
+                                                    className="secondary-action score-button"
+                                                    onClick={() => handleUnlock(row.id)}
+                                                >
+                                                    <ShieldOff size={14} aria-hidden="true" />
+                                                    {lang === "sv" ? "Lås upp" : "Unlock"}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
 
             {/* ── Club applications ── */}
             <section className="admin-panel">
@@ -280,11 +358,37 @@ export default function AdminUsersPage() {
                 )}
             </section>
 
-            {/* ── Admin password ── */}
+            {/* ── Admin credentials ── */}
             <section className="admin-panel" style={{ maxWidth: 420 }}>
                 <div className="panel-title-row">
                     <h2>{t.admin_users_admin_heading}</h2>
                 </div>
+
+                {/* Username */}
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", marginBottom: "0.75rem" }}>
+                    <label style={{ flex: 1 }}>
+                        {lang === "sv" ? "Nytt användarnamn" : "New username"}
+                        <div className="club-login-field">
+                            <User size={16} aria-hidden="true" />
+                            <input
+                                type="text"
+                                placeholder={lang === "sv" ? "Nytt användarnamn" : "New username"}
+                                value={adminUser}
+                                onChange={(e) => { setAdminUser(e.target.value); setAdminUserStatus("idle"); }}
+                                onKeyDown={(e) => e.key === "Enter" && handleAdminUser()}
+                            />
+                        </div>
+                    </label>
+                    <button type="button" className="primary-action score-button"
+                        style={{ marginBottom: 1 }}
+                        disabled={!adminUser.trim()}
+                        onClick={handleAdminUser}>
+                        <Save size={16} aria-hidden="true" />
+                        {adminUserStatus === "ok" ? t.admin_users_saved : (lang === "sv" ? "Spara" : "Save")}
+                    </button>
+                </div>
+
+                {/* Password */}
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
                     <label style={{ flex: 1 }}>
                         {t.admin_users_admin_new}

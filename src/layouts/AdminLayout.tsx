@@ -5,7 +5,7 @@ import LangSelect from "../components/LangSelect";
 import AppSidebar from "../components/AppSidebar";
 import Topbar from "../components/Topbar";
 import { useLanguage } from "../lib/language";
-import { checkAdminPassword } from "../lib/auth";
+import { loginAdmin } from "../lib/auth";
 
 const ADMIN_SESSION_KEY = "hsc-admin-session";
 
@@ -14,19 +14,30 @@ function isAdminLoggedIn(): boolean {
 }
 
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [error,    setError]    = useState(false);
+    const [error,    setError]    = useState<string | null>(null);
     const [loading,  setLoading]  = useState(false);
+
+    function clearError() { setError(null); }
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setLoading(true);
-        if (await checkAdminPassword(password)) {
+        const result = await loginAdmin(username, password);
+        if (result.ok) {
             sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
             onLogin();
+        } else if (result.locked) {
+            setError(lang === "sv"
+                ? `Kontot är låst i ${result.minutesLeft} min på grund av för många misslyckade försök.`
+                : `Account locked for ${result.minutesLeft} min due to too many failed attempts.`);
+            setUsername(""); setPassword("");
         } else {
-            setError(true);
+            setError(lang === "sv"
+                ? `Felaktiga uppgifter. ${result.attemptsLeft} försök kvar innan kontot låses.`
+                : `Invalid credentials. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left before lockout.`);
             setPassword("");
         }
         setLoading(false);
@@ -54,6 +65,20 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
 
                     <form className="club-login-form" onSubmit={handleSubmit}>
                         <label>
+                            {lang === "sv" ? "Användarnamn" : "Username"}
+                            <div className="club-login-field">
+                                <Lock size={16} aria-hidden="true" />
+                                <input
+                                    type="text"
+                                    autoComplete="username"
+                                    required
+                                    value={username}
+                                    placeholder="••••••••"
+                                    onChange={(e) => { setUsername(e.target.value); clearError(); }}
+                                />
+                            </div>
+                        </label>
+                        <label>
                             {t.admin_login_pass}
                             <div className="club-login-field">
                                 <Lock size={16} aria-hidden="true" />
@@ -63,11 +88,11 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
                                     required
                                     value={password}
                                     placeholder="••••••••"
-                                    onChange={(e) => { setPassword(e.target.value); setError(false); }}
+                                    onChange={(e) => { setPassword(e.target.value); clearError(); }}
                                 />
                             </div>
                         </label>
-                        {error && <p className="club-login-error">{t.admin_login_error}</p>}
+                        {error && <p className="club-login-error">{error}</p>}
                         <button className="primary-action club-login-btn" type="submit" disabled={loading}>
                             <LogIn size={18} aria-hidden="true" />
                             {loading ? "…" : t.admin_login_btn}
