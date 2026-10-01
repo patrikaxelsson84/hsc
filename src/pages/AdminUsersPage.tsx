@@ -1,6 +1,6 @@
 import { AlertTriangle, Check, ChevronRight, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { addClub, getActiveLockouts, listClubsWithInfo, removeClub, setAdminPassword, setAdminUsername, setClubPassword, setClubUsername, unlockAccount, type ClubInfo, type LockoutRecord } from "../lib/auth";
+import { addClub, getActiveLockouts, initDefaultUsernames, listClubsWithInfo, removeClub, setAdminPassword, setAdminUsername, setClubPassword, setClubUsername, unlockAccount, type ClubInfo, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
 import { supabase } from "../lib/supabase";
 
@@ -55,6 +55,7 @@ export default function AdminUsersPage() {
     const [drawerUsername,    setDrawerUsername]    = useState("");
     const [drawerUserSaving,  setDrawerUserSaving]  = useState(false);
     const [drawerUserStatus,  setDrawerUserStatus]  = useState<"idle" | "ok">("idle");
+    const [initStatus,        setInitStatus]        = useState<"idle" | "ok">("idle");
 
     useEffect(() => { refresh(); refreshRequests(); refreshLockouts(); }, []);
 
@@ -335,6 +336,24 @@ export default function AdminUsersPage() {
                 <div className="panel-title-row">
                     <h2>{t.admin_users_clubs_heading}</h2>
                     <span className="club-tab-count">{clubs.length}</span>
+                    {clubs.some((c) => !c.username) && (
+                        <button
+                            type="button"
+                            className="secondary-action score-button"
+                            style={{ marginLeft: "auto" }}
+                            onClick={async () => {
+                                await initDefaultUsernames();
+                                await refresh();
+                                setInitStatus("ok");
+                                setTimeout(() => setInitStatus("idle"), 3000);
+                            }}
+                        >
+                            <User size={14} aria-hidden="true" />
+                            {initStatus === "ok"
+                                ? (lang === "sv" ? "Klart!" : "Done!")
+                                : (lang === "sv" ? "Sätt klubbnamn som användarnamn" : "Set club names as usernames")}
+                        </button>
+                    )}
                 </div>
 
                 {/* Add club form */}

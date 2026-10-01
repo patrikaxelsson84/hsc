@@ -213,6 +213,19 @@ export async function setClubUsername(clubId: string, username: string): Promise
         .eq('type', 'club')
 }
 
+export async function initDefaultUsernames(): Promise<number> {
+    const { data } = await supabase
+        .from('credentials')
+        .select('id')
+        .eq('type', 'club')
+        .is('username', null)
+    if (!data?.length) return 0
+    for (const row of data) {
+        await supabase.from('credentials').update({ username: row.id }).eq('id', row.id).eq('type', 'club')
+    }
+    return data.length
+}
+
 export async function addClub(name: string, password = '1337'): Promise<void> {
     const hashed = await hashPassword(password)
     await supabase
