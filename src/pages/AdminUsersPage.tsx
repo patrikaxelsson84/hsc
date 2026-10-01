@@ -1,6 +1,6 @@
 import { AlertTriangle, Check, ChevronRight, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { addClub, getActiveLockouts, listClubs, removeClub, setAdminPassword, setAdminUsername, setClubPassword, unlockAccount, type LockoutRecord } from "../lib/auth";
+import { addClub, getActiveLockouts, listClubsWithInfo, removeClub, setAdminPassword, setAdminUsername, setClubPassword, setClubUsername, unlockAccount, type ClubInfo, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
 import { supabase } from "../lib/supabase";
 
@@ -30,7 +30,7 @@ export default function AdminUsersPage() {
 
     const [requests,    setRequests]    = useState<ClubRequest[]>([]);
     const [reqLoading,  setReqLoading]  = useState(true);
-    const [clubs,       setClubs]       = useState<string[]>([]);
+    const [clubs,       setClubs]       = useState<ClubInfo[]>([]);
     const [loading,     setLoading]     = useState(true);
     const [newClubName, setNewClubName] = useState("");
     const [newClubPw,   setNewClubPw]   = useState("");
@@ -47,11 +47,14 @@ export default function AdminUsersPage() {
 
     const [lockouts,    setLockouts]    = useState<LockoutRecord[]>([]);
 
-    const [profileClub,   setProfileClub]   = useState<string | null>(null);
-    const [profile,       setProfile]       = useState<ClubProfile | null>(null);
-    const [profileLoading, setProfileLoading] = useState(false);
-    const [profileSaving,  setProfileSaving]  = useState(false);
-    const [profileStatus,  setProfileStatus]  = useState<"idle" | "ok">("idle");
+    const [profileClub,       setProfileClub]       = useState<string | null>(null);
+    const [profile,           setProfile]           = useState<ClubProfile | null>(null);
+    const [profileLoading,    setProfileLoading]    = useState(false);
+    const [profileSaving,     setProfileSaving]     = useState(false);
+    const [profileStatus,     setProfileStatus]     = useState<"idle" | "ok">("idle");
+    const [drawerUsername,    setDrawerUsername]    = useState("");
+    const [drawerUserSaving,  setDrawerUserSaving]  = useState(false);
+    const [drawerUserStatus,  setDrawerUserStatus]  = useState<"idle" | "ok">("idle");
 
     useEffect(() => { refresh(); refreshRequests(); refreshLockouts(); }, []);
 
@@ -68,11 +71,11 @@ export default function AdminUsersPage() {
         setProfileClub(clubId);
         setProfileLoading(true);
         setProfileStatus("idle");
-        const { data } = await supabase
-            .from("club_profiles")
-            .select("*")
-            .eq("id", clubId)
-            .maybeSingle();
+        setDrawerUserStatus("idle");
+        const [{ data }, { data: cred }] = await Promise.all([
+            supabase.from("club_profiles").select("*").eq("id", clubId).maybeSingle(),
+            supabase.from("credentials").select("username").eq("id", clubId).eq("type", "club").maybeSingle(),
+        ]);
         setProfile({
             id:           clubId,
             contact_name: data?.contact_name ?? "",
@@ -82,6 +85,7 @@ export default function AdminUsersPage() {
             notes:        data?.notes        ?? "",
             created_at:   data?.created_at,
         });
+        setDrawerUsername(cred?.username ?? "");
         setProfileLoading(false);
     }
 
@@ -89,6 +93,17 @@ export default function AdminUsersPage() {
         setProfileClub(null);
         setProfile(null);
         setProfileStatus("idle");
+        setDrawerUserStatus("idle");
+    }
+
+    async function saveDrawerUsername() {
+        if (!profileClub) return;
+        setDrawerUserSaving(true);
+        await setClubUsername(profileClub, drawerUsername);
+        setDrawerUserSaving(false);
+        setDrawerUserStatus("ok");
+        setClubs((prev) => prev.map((c) => c.id === profileClub ? { ...c, username: drawerUsername.trim() || null } : c));
+        setTimeout(() => setDrawerUserStatus("idle"), 2500);
     }
 
     async function saveProfile() {
@@ -105,7 +120,7 @@ export default function AdminUsersPage() {
 
     async function refresh() {
         setLoading(true);
-        setClubs(await listClubs());
+        setClubs(await listClubsWithInfo());
         setLoading(false);
     }
 
@@ -367,24 +382,28 @@ export default function AdminUsersPage() {
                             <thead>
                                 <tr>
                                     <th>{t.comps_col_name}</th>
+                                    <th>{lang === "sv" ? "Användarnamn" : "Username"}</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {clubs.map((club) => (
-                                    <tr key={club}>
+                                    <tr key={club.id}>
                                         <td>
                                             <button
                                                 type="button"
                                                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem", fontWeight: 600, color: "inherit" }}
-                                                onClick={() => openProfile(club)}
+                                                onClick={() => openProfile(club.id)}
                                             >
-                                                {club}
+                                                {club.id}
                                                 <ChevronRight size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
                                             </button>
                                         </td>
+                                        <td style={{ fontSize: "0.875rem", color: club.username ? "inherit" : "var(--muted)" }}>
+                                            {club.username ?? (lang === "sv" ? "Ej satt" : "Not set")}
+                                        </td>
                                         <td style={{ whiteSpace: "nowrap" }}>
-                                            {resetClub === club ? (
+                                            {resetClub === club.id ? (
                                                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                                                     <input
                                                         type="text"
@@ -393,10 +412,10 @@ export default function AdminUsersPage() {
                                                         value={resetPw}
                                                         autoFocus
                                                         onChange={(e) => setResetPw(e.target.value)}
-                                                        onKeyDown={(e) => e.key === "Enter" && handleResetPw(club)}
+                                                        onKeyDown={(e) => e.key === "Enter" && handleResetPw(club.id)}
                                                     />
                                                     <button type="button" className="primary-action score-button"
-                                                        onClick={() => handleResetPw(club)}>
+                                                        onClick={() => handleResetPw(club.id)}>
                                                         <Save size={14} />
                                                     </button>
                                                     <button type="button" className="secondary-action score-button"
@@ -406,19 +425,19 @@ export default function AdminUsersPage() {
                                                 </div>
                                             ) : (
                                                 <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "flex-end" }}>
-                                                    {resetStatus[club] === "ok" && (
+                                                    {resetStatus[club.id] === "ok" && (
                                                         <span className="success-pill" style={{ fontSize: "0.75rem" }}>
                                                             {t.admin_users_saved}
                                                         </span>
                                                     )}
                                                     <button type="button" className="secondary-action score-button"
-                                                        onClick={() => { setResetClub(club); setResetPw(""); }}>
+                                                        onClick={() => { setResetClub(club.id); setResetPw(""); }}>
                                                         <RefreshCw size={14} aria-hidden="true" />
                                                         {t.admin_users_reset_pw}
                                                     </button>
                                                     <button type="button" className="comp-delete-btn"
-                                                        aria-label={`${t.admin_users_remove} ${club}`}
-                                                        onClick={() => handleRemoveClub(club)}>
+                                                        aria-label={`${t.admin_users_remove} ${club.id}`}
+                                                        onClick={() => handleRemoveClub(club.id)}>
                                                         <Trash2 size={14} />
                                                     </button>
                                                 </span>
@@ -527,6 +546,26 @@ export default function AdminUsersPage() {
                             <p style={{ color: "var(--muted)" }}>…</p>
                         ) : profile ? (
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "Användarnamn (inloggning)" : "Username (login)"}
+                                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                                        <input
+                                            type="text"
+                                            value={drawerUsername}
+                                            placeholder="••••••••"
+                                            style={{ flex: 1 }}
+                                            onChange={(e) => { setDrawerUsername(e.target.value); setDrawerUserStatus("idle"); }}
+                                            onKeyDown={(e) => e.key === "Enter" && saveDrawerUsername()}
+                                        />
+                                        <button type="button" className="primary-action score-button"
+                                            disabled={drawerUserSaving}
+                                            onClick={saveDrawerUsername}
+                                            title={lang === "sv" ? "Spara användarnamn" : "Save username"}>
+                                            {drawerUserStatus === "ok" ? <Check size={14} /> : <Save size={14} />}
+                                        </button>
+                                    </div>
+                                </label>
+                                <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "0.25rem 0" }} />
                                 <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
                                     {lang === "sv" ? "Kontaktperson" : "Contact name"}
                                     <input

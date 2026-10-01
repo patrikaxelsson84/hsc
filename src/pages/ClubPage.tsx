@@ -13,7 +13,7 @@ import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
 import { rankPlayers, rankTeams, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
-import { checkClubPassword, ensureClubsExist, loginClub, setClubPassword } from "../lib/auth";
+import { checkClubPassword, ensureClubsExist, loginClub, setClubPassword, setClubUsername } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -140,8 +140,8 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
         setLoading(true);
         const result = await loginClub(club, password);
         if (result.ok) {
-            sessionStorage.setItem(CLUB_SESSION_KEY, club);
-            onLogin(club);
+            sessionStorage.setItem(CLUB_SESSION_KEY, result.clubId);
+            onLogin(result.clubId);
         } else if (result.locked) {
             setError(lang === "sv"
                 ? `Kontot är låst i ${result.minutesLeft} min på grund av för många misslyckade försök.`
@@ -194,15 +194,15 @@ function ClubLogin({ onLogin, knownClubs }: { onLogin: (clubName: string) => voi
 
                     <form className="club-login-form" onSubmit={handleSubmit}>
                         <label>
-                            {t.club_login_user}
+                            {lang === "sv" ? "Användarnamn" : "Username"}
                             <div className="club-login-field">
                                 <Users size={16} aria-hidden="true" />
                                 <input
                                     type="text"
-                                    autoComplete="organization"
+                                    autoComplete="username"
                                     required
                                     value={club}
-                                    placeholder={t.club_login_user_ph}
+                                    placeholder="••••••••"
                                     onChange={(e) => { setClub(e.target.value); setError(null); }}
                                 />
                             </div>
@@ -1005,19 +1005,26 @@ function ClubSettings({ clubName }: { clubName: string }) {
 
 function ClubProfileSettings({ clubName }: { clubName: string }) {
     const { lang } = useLanguage();
-    const [form,   setForm]   = useState({ contact_name: "", email: "", phone: "", city: "" });
-    const [loaded, setLoaded] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [status, setStatus] = useState<"idle" | "ok">("idle");
+    const [form,     setForm]     = useState({ contact_name: "", email: "", phone: "", city: "" });
+    const [username, setUsername] = useState("");
+    const [loaded,   setLoaded]   = useState(false);
+    const [saving,   setSaving]   = useState(false);
+    const [status,   setStatus]   = useState<"idle" | "ok">("idle");
+    const [userSaving, setUserSaving] = useState(false);
+    const [userStatus, setUserStatus] = useState<"idle" | "ok">("idle");
 
     useEffect(() => {
-        supabase.from("club_profiles").select("*").eq("id", clubName).maybeSingle().then(({ data }) => {
+        Promise.all([
+            supabase.from("club_profiles").select("*").eq("id", clubName).maybeSingle(),
+            supabase.from("credentials").select("username").eq("id", clubName).eq("type", "club").maybeSingle(),
+        ]).then(([{ data: profile }, { data: cred }]) => {
             setForm({
-                contact_name: data?.contact_name ?? "",
-                email:        data?.email        ?? "",
-                phone:        data?.phone        ?? "",
-                city:         data?.city         ?? "",
+                contact_name: profile?.contact_name ?? "",
+                email:        profile?.email        ?? "",
+                phone:        profile?.phone        ?? "",
+                city:         profile?.city         ?? "",
             });
+            setUsername(cred?.username ?? "");
             setLoaded(true);
         });
     }, [clubName]);
@@ -1034,9 +1041,35 @@ function ClubProfileSettings({ clubName }: { clubName: string }) {
         setTimeout(() => setStatus("idle"), 2500);
     }
 
+    async function handleSaveUsername(e: React.FormEvent) {
+        e.preventDefault();
+        setUserSaving(true);
+        await setClubUsername(clubName, username);
+        setUserSaving(false);
+        setUserStatus("ok");
+        setTimeout(() => setUserStatus("idle"), 2500);
+    }
+
     if (!loaded) return null;
 
     return (
+        <>
+        <section className="admin-panel" style={{ maxWidth: 420 }}>
+            <div className="panel-title-row">
+                <h2>{lang === "sv" ? "Användarnamn" : "Username"}</h2>
+            </div>
+            <form className="club-login-form" onSubmit={handleSaveUsername}>
+                <label>
+                    {lang === "sv" ? "Ditt användarnamn för inloggning" : "Your login username"}
+                    <input type="text" value={username} placeholder="••••••••"
+                        onChange={(e) => { setUsername(e.target.value); setUserStatus("idle"); }} />
+                </label>
+                <button className="primary-action club-login-btn" type="submit" disabled={userSaving || !username.trim()}>
+                    <Save size={16} aria-hidden="true" />
+                    {userSaving ? "…" : userStatus === "ok" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                </button>
+            </form>
+        </section>
         <section className="admin-panel" style={{ maxWidth: 420 }}>
             <div className="panel-title-row">
                 <h2>{lang === "sv" ? "Kontaktuppgifter" : "Contact info"}</h2>
@@ -1068,6 +1101,7 @@ function ClubProfileSettings({ clubName }: { clubName: string }) {
                 </button>
             </form>
         </section>
+        </>
     );
 }
 
