@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addClub, getActiveLockouts, listClubs, removeClub, setAdminPassword, setAdminUsername, setClubPassword, unlockAccount, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
@@ -13,6 +13,16 @@ type ClubRequest = {
     city: string | null;
     status: string;
     created_at: string;
+};
+
+type ClubProfile = {
+    id: string;
+    contact_name: string;
+    email: string;
+    phone: string;
+    city: string;
+    notes: string;
+    created_at?: string;
 };
 
 export default function AdminUsersPage() {
@@ -37,6 +47,12 @@ export default function AdminUsersPage() {
 
     const [lockouts,    setLockouts]    = useState<LockoutRecord[]>([]);
 
+    const [profileClub,   setProfileClub]   = useState<string | null>(null);
+    const [profile,       setProfile]       = useState<ClubProfile | null>(null);
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [profileSaving,  setProfileSaving]  = useState(false);
+    const [profileStatus,  setProfileStatus]  = useState<"idle" | "ok">("idle");
+
     useEffect(() => { refresh(); refreshRequests(); refreshLockouts(); }, []);
 
     async function refreshLockouts() {
@@ -46,6 +62,45 @@ export default function AdminUsersPage() {
     async function handleUnlock(id: string) {
         await unlockAccount(id);
         await refreshLockouts();
+    }
+
+    async function openProfile(clubId: string) {
+        setProfileClub(clubId);
+        setProfileLoading(true);
+        setProfileStatus("idle");
+        const { data } = await supabase
+            .from("club_profiles")
+            .select("*")
+            .eq("id", clubId)
+            .maybeSingle();
+        setProfile({
+            id:           clubId,
+            contact_name: data?.contact_name ?? "",
+            email:        data?.email        ?? "",
+            phone:        data?.phone        ?? "",
+            city:         data?.city         ?? "",
+            notes:        data?.notes        ?? "",
+            created_at:   data?.created_at,
+        });
+        setProfileLoading(false);
+    }
+
+    function closeProfile() {
+        setProfileClub(null);
+        setProfile(null);
+        setProfileStatus("idle");
+    }
+
+    async function saveProfile() {
+        if (!profile) return;
+        setProfileSaving(true);
+        await supabase.from("club_profiles").upsert(
+            { ...profile, updated_at: new Date().toISOString() },
+            { onConflict: "id" }
+        );
+        setProfileSaving(false);
+        setProfileStatus("ok");
+        setTimeout(() => setProfileStatus("idle"), 2500);
     }
 
     async function refresh() {
@@ -68,6 +123,15 @@ export default function AdminUsersPage() {
     async function handleApprove(req: ClubRequest) {
         await addClub(req.club_name, "1337");
         await supabase.from("club_requests").update({ status: "approved" }).eq("id", req.id);
+        await supabase.from("club_profiles").upsert({
+            id:           req.club_name,
+            contact_name: req.contact_name,
+            email:        req.email,
+            phone:        req.phone  ?? "",
+            city:         req.city   ?? "",
+            notes:        "",
+            updated_at:   new Date().toISOString(),
+        }, { onConflict: "id", ignoreDuplicates: true });
         await Promise.all([refresh(), refreshRequests()]);
     }
 
@@ -308,7 +372,16 @@ export default function AdminUsersPage() {
                             <tbody>
                                 {clubs.map((club) => (
                                     <tr key={club}>
-                                        <td><strong>{club}</strong></td>
+                                        <td>
+                                            <button
+                                                type="button"
+                                                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem", fontWeight: 600, color: "inherit" }}
+                                                onClick={() => openProfile(club)}
+                                            >
+                                                {club}
+                                                <ChevronRight size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                                            </button>
+                                        </td>
                                         <td style={{ whiteSpace: "nowrap" }}>
                                             {resetClub === club ? (
                                                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -413,5 +486,119 @@ export default function AdminUsersPage() {
                 </div>
             </section>
         </div>
+
+        {/* ── Club profile drawer ── */}
+        {profileClub && (
+            <>
+                {/* Backdrop */}
+                <div
+                    onClick={closeProfile}
+                    style={{
+                        position: "fixed", inset: 0,
+                        background: "rgba(0,0,0,0.35)",
+                        zIndex: 200,
+                    }}
+                />
+                {/* Panel */}
+                <div style={{
+                    position: "fixed", top: 0, right: 0, bottom: 0,
+                    width: "min(420px, 100vw)",
+                    background: "var(--surface, #fff)",
+                    boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
+                    zIndex: 201,
+                    display: "flex", flexDirection: "column",
+                    overflowY: "auto",
+                }}>
+                    {/* Header */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
+                        <div>
+                            <p className="eyebrow" style={{ marginBottom: "0.1rem" }}>{lang === "sv" ? "Klubbinfo" : "Club info"}</p>
+                            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{profileClub}</h2>
+                        </div>
+                        <button type="button" onClick={closeProfile} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}>
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div style={{ padding: "1.25rem 1.5rem", flex: 1 }}>
+                        {profileLoading ? (
+                            <p style={{ color: "var(--muted)" }}>…</p>
+                        ) : profile ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "Kontaktperson" : "Contact name"}
+                                    <input
+                                        type="text"
+                                        value={profile.contact_name}
+                                        placeholder="—"
+                                        onChange={(e) => setProfile((p) => p ? { ...p, contact_name: e.target.value } : p)}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "E-post" : "Email"}
+                                    <input
+                                        type="email"
+                                        value={profile.email}
+                                        placeholder="—"
+                                        onChange={(e) => setProfile((p) => p ? { ...p, email: e.target.value } : p)}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "Telefon" : "Phone"}
+                                    <input
+                                        type="tel"
+                                        value={profile.phone}
+                                        placeholder="—"
+                                        onChange={(e) => setProfile((p) => p ? { ...p, phone: e.target.value } : p)}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "Ort" : "City"}
+                                    <input
+                                        type="text"
+                                        value={profile.city}
+                                        placeholder="—"
+                                        onChange={(e) => setProfile((p) => p ? { ...p, city: e.target.value } : p)}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
+                                    {lang === "sv" ? "Anteckningar" : "Notes"}
+                                    <textarea
+                                        rows={3}
+                                        value={profile.notes}
+                                        placeholder="—"
+                                        style={{ resize: "vertical" }}
+                                        onChange={(e) => setProfile((p) => p ? { ...p, notes: e.target.value } : p)}
+                                    />
+                                </label>
+                                {profile.created_at && (
+                                    <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: 0 }}>
+                                        {lang === "sv" ? "Tillagd" : "Added"}{" "}
+                                        {new Date(profile.created_at).toLocaleDateString("sv-SE")}
+                                    </p>
+                                )}
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid var(--border)", display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                        <button
+                            type="button"
+                            className="primary-action score-button"
+                            disabled={profileSaving || profileLoading}
+                            onClick={saveProfile}
+                        >
+                            <Save size={15} aria-hidden="true" />
+                            {profileSaving ? "…" : profileStatus === "ok" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                        </button>
+                        <button type="button" className="secondary-action score-button" onClick={closeProfile}>
+                            {lang === "sv" ? "Stäng" : "Close"}
+                        </button>
+                    </div>
+                </div>
+            </>
+        )}
     );
 }
