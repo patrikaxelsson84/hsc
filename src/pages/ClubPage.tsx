@@ -1001,6 +1001,76 @@ function ClubSettings({ clubName }: { clubName: string }) {
     );
 }
 
+// ── Club profile (contact info) ───────────────────────────────────────────────
+
+function ClubProfileSettings({ clubName }: { clubName: string }) {
+    const { lang } = useLanguage();
+    const [form,   setForm]   = useState({ contact_name: "", email: "", phone: "", city: "" });
+    const [loaded, setLoaded] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [status, setStatus] = useState<"idle" | "ok">("idle");
+
+    useEffect(() => {
+        supabase.from("club_profiles").select("*").eq("id", clubName).maybeSingle().then(({ data }) => {
+            setForm({
+                contact_name: data?.contact_name ?? "",
+                email:        data?.email        ?? "",
+                phone:        data?.phone        ?? "",
+                city:         data?.city         ?? "",
+            });
+            setLoaded(true);
+        });
+    }, [clubName]);
+
+    async function handleSave(e: React.FormEvent) {
+        e.preventDefault();
+        setSaving(true);
+        await supabase.from("club_profiles").upsert(
+            { id: clubName, ...form, updated_at: new Date().toISOString() },
+            { onConflict: "id" }
+        );
+        setSaving(false);
+        setStatus("ok");
+        setTimeout(() => setStatus("idle"), 2500);
+    }
+
+    if (!loaded) return null;
+
+    return (
+        <section className="admin-panel" style={{ maxWidth: 420 }}>
+            <div className="panel-title-row">
+                <h2>{lang === "sv" ? "Kontaktuppgifter" : "Contact info"}</h2>
+            </div>
+            <form className="club-login-form" onSubmit={handleSave}>
+                <label>
+                    {lang === "sv" ? "Kontaktperson" : "Contact name"}
+                    <input type="text" value={form.contact_name} placeholder="—"
+                        onChange={(e) => { setForm((f) => ({ ...f, contact_name: e.target.value })); setStatus("idle"); }} />
+                </label>
+                <label>
+                    {lang === "sv" ? "E-post" : "Email"}
+                    <input type="email" value={form.email} placeholder="—"
+                        onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setStatus("idle"); }} />
+                </label>
+                <label>
+                    {lang === "sv" ? "Telefon" : "Phone"}
+                    <input type="tel" value={form.phone} placeholder="—"
+                        onChange={(e) => { setForm((f) => ({ ...f, phone: e.target.value })); setStatus("idle"); }} />
+                </label>
+                <label>
+                    {lang === "sv" ? "Ort" : "City"}
+                    <input type="text" value={form.city} placeholder="—"
+                        onChange={(e) => { setForm((f) => ({ ...f, city: e.target.value })); setStatus("idle"); }} />
+                </label>
+                <button className="primary-action club-login-btn" type="submit" disabled={saving}>
+                    <Save size={16} aria-hidden="true" />
+                    {saving ? "…" : status === "ok" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
+                </button>
+            </form>
+        </section>
+    );
+}
+
 // ── Club own competition (full setup flow) ────────────────────────────────────
 
 function OwnCompetition({ clubName }: { clubName: string }) {
@@ -3485,7 +3555,10 @@ export default function ClubPage() {
 
                 {/* ── Settings tab ── */}
                 {tab === "settings" && (
-                    <ClubSettings clubName={clubName} />
+                    <div className="club-comp-section">
+                        <ClubProfileSettings clubName={clubName} />
+                        <ClubSettings clubName={clubName} />
+                    </div>
                 )}
             </div>
 
