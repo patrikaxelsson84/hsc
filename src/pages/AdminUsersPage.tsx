@@ -185,6 +185,7 @@ export default function AdminUsersPage() {
     }
 
     return (
+        <>
         <div className="admin-page">
             <div className="admin-page-header">
                 <div>
@@ -600,5 +601,6 @@ export default function AdminUsersPage() {
                 </div>
             </>
         )}
+        </>
     );
 }
