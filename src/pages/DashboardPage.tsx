@@ -9,8 +9,8 @@ const navItems = [
         icon: Trophy,
         label: "Serie spel",
         desc: "Följ serieresultat och tabeller för säsongen.",
-        color: "#2563eb",
-        bg: "#eff6ff",
+        color: "#60a5fa",
+        bg: "#f0f7ff",
         darkBg: "#1e3a5f",
     },
     {
@@ -18,8 +18,8 @@ const navItems = [
         icon: Star,
         label: "Bonus jakten",
         desc: "Specialtävling med bonuspoäng och extra utmaningar.",
-        color: "#d97706",
-        bg: "#fffbeb",
+        color: "#fbbf24",
+        bg: "#fffdf0",
         darkBg: "#4a3000",
     },
     {
@@ -27,8 +27,8 @@ const navItems = [
         icon: BookOpen,
         label: "Regler",
         desc: "Officiella tävlingsregler och riktlinjer.",
-        color: "#059669",
-        bg: "#ecfdf5",
+        color: "#34d399",
+        bg: "#f0fdf8",
         darkBg: "#0a3d2e",
     },
     {
@@ -36,8 +36,8 @@ const navItems = [
         icon: MessageSquare,
         label: "Gästbok",
         desc: "Läs och lämna hälsningar från besökare.",
-        color: "#7c3aed",
-        bg: "#f5f3ff",
+        color: "#a78bfa",
+        bg: "#f8f5ff",
         darkBg: "#2e1a5e",
     },
 ];
