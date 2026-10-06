@@ -161,6 +161,10 @@ export default function AdminUsersPage() {
         const pw   = newClubPw.trim() || "1337";
         if (!name) return;
         await addClub(name, pw);
+        await supabase.from("club_profiles").upsert(
+            { id: name, contact_name: "", email: "", phone: "", city: "", notes: "", updated_at: new Date().toISOString() },
+            { onConflict: "id", ignoreDuplicates: true }
+        );
         setNewClubName("");
         setNewClubPw("");
         await refresh();
