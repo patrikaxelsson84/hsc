@@ -9,36 +9,40 @@ const navItems = [
         icon: Trophy,
         label: "Serie spel",
         desc: "Följ serieresultat och tabeller för säsongen.",
-        color: "#60a5fa",
-        bg: "#f0f7ff",
-        darkBg: "#1e3a5f",
+        iconColor: "#3b82f6",
+        iconBg: "#dbeafe",
+        cardBg: "#eff6ff",
+        border: "#bfdbfe",
     },
     {
         key: "bonus",
         icon: Star,
         label: "Bonus jakten",
         desc: "Specialtävling med bonuspoäng och extra utmaningar.",
-        color: "#fbbf24",
-        bg: "#fffdf0",
-        darkBg: "#4a3000",
+        iconColor: "#f59e0b",
+        iconBg: "#fef3c7",
+        cardBg: "#fffbeb",
+        border: "#fde68a",
     },
     {
         key: "regler",
         icon: BookOpen,
         label: "Regler",
         desc: "Officiella tävlingsregler och riktlinjer.",
-        color: "#34d399",
-        bg: "#f0fdf8",
-        darkBg: "#0a3d2e",
+        iconColor: "#10b981",
+        iconBg: "#d1fae5",
+        cardBg: "#ecfdf5",
+        border: "#a7f3d0",
     },
     {
         key: "gastbok",
         icon: MessageSquare,
         label: "Gästbok",
         desc: "Läs och lämna hälsningar från besökare.",
-        color: "#a78bfa",
-        bg: "#f8f5ff",
-        darkBg: "#2e1a5e",
+        iconColor: "#8b5cf6",
+        iconBg: "#ede9fe",
+        cardBg: "#f5f3ff",
+        border: "#ddd6fe",
     },
 ];
 
@@ -120,14 +124,11 @@ export default function DashboardPage() {
                         : "This is how the menu items will appear on the public site."}
                 </p>
                 <div className="dash-nav-grid">
-                    {navItems.map(({ key, icon: Icon, label, desc, color, bg, darkBg }) => (
+                    {navItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, cardBg, border }) => (
                         <div className="dash-nav-card" key={key}
-                            style={{
-                                "--nav-color": color,
-                                "--nav-bg": bg,
-                                "--nav-bg-dark": darkBg,
-                            } as React.CSSProperties}>
-                            <span className="dash-nav-icon">
+                            style={{ background: cardBg, borderColor: border }}>
+                            <span className="dash-nav-icon"
+                                style={{ background: iconBg, color: iconColor }}>
                                 <Icon size={22} aria-hidden="true" />
                             </span>
                             <span className="dash-nav-text">

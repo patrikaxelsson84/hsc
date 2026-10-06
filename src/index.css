@@ -3384,8 +3384,7 @@ a {
     align-items: flex-start;
     gap: 14px;
     padding: 16px 18px;
-    background: var(--nav-bg);
-    border: 1px solid color-mix(in srgb, var(--nav-color) 20%, transparent);
+    border: 1px solid;
     border-radius: 10px;
     transition: transform 0.12s, box-shadow 0.12s;
     cursor: default;
@@ -3393,7 +3392,7 @@ a {
 
 .dash-nav-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--nav-color) 15%, transparent);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .dash-nav-icon {
@@ -3403,8 +3402,6 @@ a {
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    background: color-mix(in srgb, var(--nav-color) 15%, transparent);
-    color: var(--nav-color);
     flex-shrink: 0;
 }
 
@@ -3424,12 +3421,6 @@ a {
     font-size: 0.8rem;
     color: var(--text-muted);
     line-height: 1.4;
-}
-
-@media (prefers-color-scheme: dark) {
-    .dash-nav-card {
-        background: var(--nav-bg-dark);
-    }
 }
 
 @media (max-width: 560px) {
