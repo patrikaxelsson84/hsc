@@ -2168,6 +2168,54 @@ a {
 
 }
 
+/* ── Public results page layout ─────────────────────── */
+.results-public-page {
+  padding-bottom: 48px;
+}
+
+.results-public-intro {
+  padding: 28px 24px 16px;
+  max-width: 900px;
+}
+
+.results-public-intro h1 {
+  font-size: 1.6rem;
+  margin: 4px 0 6px;
+}
+
+.results-public-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.results-live-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e03535;
+  flex-shrink: 0;
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+.results-public-grid {
+  grid-template-columns: repeat(2, 1fr);
+  padding: 0 16px;
+}
+
+@media (max-width: 700px) {
+  .results-public-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Empty state (no active contest) ────────────────── */
 .results-empty-state {
   display: flex;

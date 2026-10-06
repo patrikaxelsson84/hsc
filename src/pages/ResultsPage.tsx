@@ -1,12 +1,14 @@
 import { GripVertical, Maximize, Minimize, Printer, Trophy } from "lucide-react";
 import { fetchLiveResults } from "../lib/liveResults";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import type { ClassLevel, PlayerScore, TeamAssignment, TeamResult } from "../lib/scoring";
 import { rankPlayers, rankTeams } from "../lib/scoring";
 import { useLanguage } from "../lib/language";
 import { typeNameFromRunId } from "../lib/contestTypes";
 import { useCompetitions } from "../contexts/CompetitionsContext";
+import LangSelect from "../components/LangSelect";
 
 const liveScorePrefix    = "hsc-live-v1";
 const teamsStoragePrefix = "hsc-teams-v1";
@@ -109,7 +111,6 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
 
     if (rankings.length === 0) return <p className="results-empty-cat">{t.results_empty_heading}</p>;
 
-    // A round is "played" if at least one player has a non-zero score for it
     const playedRounds = new Set(
         players.flatMap((p) => p.rounds.map((s, i) => s !== 0 ? i : -1).filter((i) => i >= 0))
     );
@@ -287,7 +288,7 @@ function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.R
 
 type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 
-export default function ResultsPage() {
+export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) {
     const { t, lang } = useLanguage();
     const { competitions } = useCompetitions();
     const [liveData, setLiveData] = useState(readLiveData);
@@ -319,12 +320,13 @@ export default function ResultsPage() {
         return () => document.removeEventListener("fullscreenchange", onChange);
     }, []);
 
+    // Auto-fullscreen only on the admin TV display, not for public visitors
     useEffect(() => {
-        if (liveData && !autoFullscreenDone.current && !document.fullscreenElement) {
+        if (isAdmin && liveData && !autoFullscreenDone.current && !document.fullscreenElement) {
             autoFullscreenDone.current = true;
             document.documentElement.requestFullscreen().catch(() => {});
         }
-    }, [liveData]);
+    }, [liveData, isAdmin]);
 
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
@@ -347,7 +349,6 @@ export default function ResultsPage() {
         refresh();
         const interval = setInterval(refresh, 5000);
 
-        // Realtime: instant cross-device updates when live_contest row changes
         const channel = supabase
             .channel("live-contest-watch")
             .on("postgres_changes", { event: "*", schema: "public", table: "live_contest" }, () => {
@@ -368,6 +369,24 @@ export default function ResultsPage() {
     }, []);
 
     if (!liveData) {
+        if (!isAdmin) {
+            return (
+                <main className="public-page">
+                    <header className="site-header">
+                        <Link className="brand" to="/" aria-label="HSC home">
+                            <span className="brand-mark">HSC</span>
+                            <span>{t.brand_subtitle}</span>
+                        </Link>
+                        <LangSelect />
+                    </header>
+                    <div className="results-empty-state">
+                        <span className="results-empty-icon"><Trophy size={40} aria-hidden="true" /></span>
+                        <h2>{t.results_empty_heading}</h2>
+                        <p>{t.results_empty_desc}</p>
+                    </div>
+                </main>
+            );
+        }
         return (
             <div className="admin-page">
                 <div className="results-empty-state">
@@ -445,37 +464,74 @@ export default function ResultsPage() {
                 onDrop={(e) => { e.stopPropagation(); drop(col, null); }}
             >
                 {keys.map((key) => {
-                    const handle = (
+                    const handle = isAdmin ? (
                         <div className="results-drag-handle" draggable
                             onDragStart={(e) => { e.stopPropagation(); setDragKey(key); }}
                             onDragEnd={() => { setDragKey(null); setDropTarget(null); }}
                             title="Dra för att flytta">
                             <GripVertical size={13} />
                         </div>
-                    );
+                    ) : null;
                     const isDropHere = dropTarget?.col === col && dropTarget?.before === key;
                     return (
                         <div key={key}>
-                            <div
-                                className={`results-drop-zone${isDropHere ? " results-drop-zone-active" : ""}`}
-                                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey && dragKey !== key) setDropTarget({ col, before: key }); }}
-                                onDrop={(e) => { e.stopPropagation(); drop(col, key); }}
-                            />
+                            {isAdmin && (
+                                <div
+                                    className={`results-drop-zone${isDropHere ? " results-drop-zone-active" : ""}`}
+                                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey && dragKey !== key) setDropTarget({ col, before: key }); }}
+                                    onDrop={(e) => { e.stopPropagation(); drop(col, key); }}
+                                />
+                            )}
                             <div className={`results-drag-item${dragKey === key ? " results-dragging" : ""}`}>
                                 {sections[key]!(handle)}
                             </div>
                         </div>
                     );
                 })}
-                <div
-                    className={`results-drop-zone results-drop-zone-end${dropTarget?.col === col && dropTarget?.before === null ? " results-drop-zone-active" : ""}`}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey) setDropTarget({ col, before: null }); }}
-                    onDrop={(e) => { e.stopPropagation(); drop(col, null); }}
-                />
+                {isAdmin && (
+                    <div
+                        className={`results-drop-zone results-drop-zone-end${dropTarget?.col === col && dropTarget?.before === null ? " results-drop-zone-active" : ""}`}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (dragKey) setDropTarget({ col, before: null }); }}
+                        onDrop={(e) => { e.stopPropagation(); drop(col, null); }}
+                    />
+                )}
             </div>
         );
     }
 
+    // ── Public view ──────────────────────────────────────────────────────────
+    if (!isAdmin) {
+        return (
+            <main className="public-page results-public-page">
+                <header className="site-header">
+                    <Link className="brand" to="/" aria-label="HSC home">
+                        <span className="brand-mark">HSC</span>
+                        <span>{t.brand_subtitle}</span>
+                    </Link>
+                    <LangSelect />
+                </header>
+
+                <div className="results-public-intro">
+                    <p className="eyebrow results-live-eyebrow">
+                        <span className="live-dot" aria-hidden="true" />
+                        {t.results_eyebrow}
+                    </p>
+                    <h1>{active.contestName}</h1>
+                    <p className="results-public-meta">
+                        {liveTypeName} · {players.length}{" "}
+                        {players.length === 1 ? t.results_player_s : t.results_player_p}{" "}
+                        · {t.results_updates_auto}
+                    </p>
+                </div>
+
+                <div className="results-class-grid results-public-grid">
+                    {COL_IDS.map((col) => renderColumn(col, colKeys[col]))}
+                </div>
+            </main>
+        );
+    }
+
+    // ── Admin / TV display view ───────────────────────────────────────────────
     return (
         <div className="admin-page">
             <div className="admin-page-header results-page-header results-no-print">

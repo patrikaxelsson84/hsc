@@ -128,8 +128,8 @@ const en = {
     players_cancel:         "Cancel",
 
     // ── Results page ───────────────────────────────────────────────
-    results_empty_heading:  "No active contest",
-    results_empty_desc:     "Start a contest in Contest center to see live standings here.",
+    results_empty_heading:  "No competition going on right now",
+    results_empty_desc:     "Check back here when a competition is underway — results update live.",
     results_eyebrow:        "Live results",
     results_updates_auto:   "updates automatically",
     results_print:          "Print",
@@ -496,8 +496,8 @@ const sv: Record<keyof typeof en, string> = {
     players_cancel:         "Avbryt",
 
     // ── Results page ───────────────────────────────────────────────
-    results_empty_heading:  "Ingen aktiv tävling",
-    results_empty_desc:     "Starta en tävling i Tävlingscenter för att se liveresultat här.",
+    results_empty_heading:  "Ingen tävling pågår just nu",
+    results_empty_desc:     "Kolla in här när en tävling är igång — resultaten uppdateras live.",
     results_eyebrow:        "Liveresultat",
     results_updates_auto:   "uppdateras automatiskt",
     results_print:          "Skriv ut",
@@ -864,8 +864,8 @@ const pl: Record<keyof typeof en, string> = {
     players_cancel:         "Anuluj",
 
     // ── Results page ───────────────────────────────────────────────
-    results_empty_heading:  "Brak aktywnych zawodów",
-    results_empty_desc:     "Rozpocznij zawody w centrum zawodów, aby zobaczyć wyniki na żywo.",
+    results_empty_heading:  "Żadne zawody nie są teraz w toku",
+    results_empty_desc:     "Wróć tutaj, gdy trwają zawody — wyniki aktualizują się na żywo.",
     results_eyebrow:        "Wyniki na żywo",
     results_updates_auto:   "aktualizuje się automatycznie",
     results_print:          "Drukuj",
