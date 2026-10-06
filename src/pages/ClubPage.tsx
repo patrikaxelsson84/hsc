@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, Camera, CheckSquare, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckSquare, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage, compressImage, scanProtokoll } from "../lib/scanProtokoll";
 import type { RecognizedScore, ScanResult } from "../lib/scanProtokoll";
@@ -2276,10 +2276,6 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         lang,
                     })}>
                     <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Laguppställning" : "Team lineup"}
-                </button>
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => setPhotoStep("upload")}>
-                    <Camera size={17} aria-hidden="true" /> {lang === "sv" ? "Importera foto" : "Import photo"}
                 </button>
                 <label className="secondary-action score-button scan-btn" style={{ cursor: "pointer" }}>
                     <ScanLine size={17} aria-hidden="true" />
