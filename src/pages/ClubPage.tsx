@@ -2322,7 +2322,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         ? <><Play size={17} aria-hidden="true" />{lang === "sv" ? "Visa liveresultat" : "Show live results"}</>
                         : <><Pause size={17} aria-hidden="true" />{lang === "sv" ? "Pausa liveresultat" : "Pause live results"}</>}
                 </button>
-                <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
+                <a className="primary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
                 </a>
                 <button className="primary-action score-button" type="button" onClick={saveScores}>
