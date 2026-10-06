@@ -1,7 +1,46 @@
-import { CalendarDays, Trophy, Users } from "lucide-react";
+import { BookOpen, CalendarDays, MessageSquare, Star, Trophy, Users } from "lucide-react";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
 import { useCompetitions } from "../contexts/CompetitionsContext";
+
+const navItems = [
+    {
+        key: "serie",
+        icon: Trophy,
+        label: "Serie spel",
+        desc: "Följ serieresultat och tabeller för säsongen.",
+        color: "#2563eb",
+        bg: "#eff6ff",
+        darkBg: "#1e3a5f",
+    },
+    {
+        key: "bonus",
+        icon: Star,
+        label: "Bonus jakten",
+        desc: "Specialtävling med bonuspoäng och extra utmaningar.",
+        color: "#d97706",
+        bg: "#fffbeb",
+        darkBg: "#4a3000",
+    },
+    {
+        key: "regler",
+        icon: BookOpen,
+        label: "Regler",
+        desc: "Officiella tävlingsregler och riktlinjer.",
+        color: "#059669",
+        bg: "#ecfdf5",
+        darkBg: "#0a3d2e",
+    },
+    {
+        key: "gastbok",
+        icon: MessageSquare,
+        label: "Gästbok",
+        desc: "Läs och lämna hälsningar från besökare.",
+        color: "#7c3aed",
+        bg: "#f5f3ff",
+        darkBg: "#2e1a5e",
+    },
+];
 
 export default function DashboardPage() {
     const { lang } = useLanguage();
@@ -16,21 +55,9 @@ export default function DashboardPage() {
     const nextComp = upcoming[0] ?? null;
 
     const stats = [
-        {
-            icon: Users,
-            value: players.length,
-            label: lang === "sv" ? "Spelare" : "Players",
-        },
-        {
-            icon: Trophy,
-            value: clubCount,
-            label: lang === "sv" ? "Klubbar" : "Clubs",
-        },
-        {
-            icon: CalendarDays,
-            value: upcoming.length,
-            label: lang === "sv" ? "Kommande tävlingar" : "Upcoming contests",
-        },
+        { icon: Users,       value: players.length,   label: lang === "sv" ? "Spelare"             : "Players" },
+        { icon: Trophy,      value: clubCount,         label: lang === "sv" ? "Klubbar"             : "Clubs" },
+        { icon: CalendarDays,value: upcoming.length,   label: lang === "sv" ? "Kommande tävlingar"  : "Upcoming contests" },
     ];
 
     return (
@@ -81,17 +108,35 @@ export default function DashboardPage() {
                 </section>
             )}
 
-            {/* Placeholder for future settings */}
-            <section className="admin-panel" style={{ opacity: 0.5 }}>
+            {/* Public nav preview */}
+            <section className="admin-panel">
                 <div className="panel-title-row">
-                    <h2>{lang === "sv" ? "Inställningar" : "Settings"}</h2>
-                    <span className="club-tab-count">{lang === "sv" ? "Kommer snart" : "Coming soon"}</span>
+                    <h2>{lang === "sv" ? "Webbplatsmeny" : "Site menu"}</h2>
+                    <span className="club-tab-count">{lang === "sv" ? "Förhandsvisning" : "Preview"}</span>
                 </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
                     {lang === "sv"
-                        ? "Här kommer du kunna konfigurera systemet, hantera notifieringar och mer."
-                        : "Here you will be able to configure the system, manage notifications, and more."}
+                        ? "Så här kommer menyalternativen se ut på den publika sidan."
+                        : "This is how the menu items will appear on the public site."}
                 </p>
+                <div className="dash-nav-grid">
+                    {navItems.map(({ key, icon: Icon, label, desc, color, bg, darkBg }) => (
+                        <div className="dash-nav-card" key={key}
+                            style={{
+                                "--nav-color": color,
+                                "--nav-bg": bg,
+                                "--nav-bg-dark": darkBg,
+                            } as React.CSSProperties}>
+                            <span className="dash-nav-icon">
+                                <Icon size={22} aria-hidden="true" />
+                            </span>
+                            <span className="dash-nav-text">
+                                <strong>{label}</strong>
+                                <span>{desc}</span>
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </section>
         </div>
     );
