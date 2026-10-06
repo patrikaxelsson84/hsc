@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, Camera, CheckSquare, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Camera, CheckSquare, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage, compressImage, scanProtokoll } from "../lib/scanProtokoll";
 import type { RecognizedScore, ScanResult } from "../lib/scanProtokoll";
@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { submitPendingChange, loadRejectedAddIds, loadResolvedDeleteChanges } from "../lib/pendingChanges";
-import { pushLiveResults } from "../lib/liveResults";
+import { pushLiveResults, setPauseLiveResults } from "../lib/liveResults";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -1132,6 +1132,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [teamAssignments,    setTeamAssignments]    = useState<{ id: string; name: string; playerIds: string[] }[]>([]);
     const [activeTeamId,       setActiveTeamId]       = useState<string | null>(null);
     const [status,             setStatus]             = useState<"idle" | "saved" | "reset">("idle");
+    const [isPaused,           setIsPaused]           = useState(false);
     const [laneScoreFilter,    setLaneScoreFilter]    = useState<number | "all">("all");
     const [classFilter,        setClassFilter]        = useState<ClassLevel | "all">("all");
     const [photoStep,          setPhotoStep]          = useState<"closed" | "upload" | "analyzing" | "review">("closed");
@@ -1595,7 +1596,13 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         localStorage.setItem(`${SCORE_PREFIX}-${currentRunId}`, JSON.stringify(players));
         localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId: currentRunId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
         setStatus("saved");
-        pushLiveResults(currentRunId, selectedComp?.name ?? currentRunId, typeName(typeIds, lang), players, teamAssignments);
+        pushLiveResults(currentRunId, selectedComp?.name ?? currentRunId, typeName(typeIds, lang), players, teamAssignments, isPaused);
+    }
+
+    async function togglePause() {
+        const next = !isPaused;
+        setIsPaused(next);
+        await setPauseLiveResults(next);
     }
 
     function resetScores() {
@@ -2292,6 +2299,16 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <button className="secondary-action score-button" type="button"
                     onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); setAddPlayerTab("search"); }}>
                     <Plus size={17} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
+                </button>
+                <button
+                    className={isPaused ? "primary-action score-button" : "secondary-action score-button"}
+                    type="button"
+                    onClick={togglePause}
+                    title={isPaused ? (lang === "sv" ? "Publiken ser inga resultat just nu" : "Public cannot see results right now") : ""}
+                >
+                    {isPaused
+                        ? <><Play size={17} aria-hidden="true" />{lang === "sv" ? "Visa liveresultat" : "Show live results"}</>
+                        : <><Pause size={17} aria-hidden="true" />{lang === "sv" ? "Pausa liveresultat" : "Pause live results"}</>}
                 </button>
                 <a className="secondary-action score-button" href="/results" target="_blank" rel="noopener noreferrer">
                     <Trophy size={17} aria-hidden="true" /> {lang === "sv" ? "Resultat" : "Results"}
