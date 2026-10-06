@@ -1,5 +1,5 @@
 import { ArrowLeft, Archive, CalendarDays, ClipboardList, Download, MapPin, Play, Printer, RotateCcw, Save, ScanLine, Trash2, Trophy } from "lucide-react";
-import { pushLiveResults } from "../lib/liveResults";
+import { clearLiveResults, pushLiveResults } from "../lib/liveResults";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { compressImage, scanProtokoll } from "../lib/scanProtokoll";
@@ -247,6 +247,7 @@ export default function ScoringPage() {
 
     function startRegisteredContest() {
         const registered = resetPlayerScores(registrationPlayers.filter((p) => selectedPlayerIds.includes(p.id)));
+        clearLiveResults();
         localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(registered));
         setPlayers(registered); setTeamAssignments([]); setActiveTeamId(null);
@@ -423,6 +424,7 @@ export default function ScoringPage() {
     }
 
     function resetScores() {
+        clearLiveResults();
         localStorage.removeItem(`${scoreStoragePrefix}-${currentRunId}`);
         localStorage.removeItem(`${liveScorePrefix}-${currentRunId}`);
         localStorage.removeItem(`${teamsStoragePrefix}-${currentRunId}`);
@@ -449,6 +451,7 @@ export default function ScoringPage() {
 
     function resetEverything() {
         if (!window.confirm(lang === "sv" ? "Radera ALLA tävlingar och poäng? Detta går inte att ångra." : "Delete ALL contests and scores? This cannot be undone.")) return;
+        clearLiveResults();
         Object.keys(localStorage)
             .filter((k) =>
                 k.startsWith(`${scoreStoragePrefix}-`) ||

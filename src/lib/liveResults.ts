@@ -25,6 +25,10 @@ export async function pushLiveResults(
     }, { onConflict: 'id' });
 }
 
+export async function clearLiveResults(): Promise<void> {
+    await supabase.from('live_contest').delete().eq('id', 'current');
+}
+
 export async function fetchLiveResults(): Promise<LiveContestData | null> {
     const { data } = await supabase
         .from('live_contest')
