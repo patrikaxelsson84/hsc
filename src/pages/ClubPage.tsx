@@ -1145,6 +1145,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const scanFileRef = useRef<HTMLInputElement>(null);
     const [preCompOpen, setPreCompOpen] = useState(false);
     const preCompRef = useRef<HTMLDivElement>(null);
+    const [teamMenuOpen, setTeamMenuOpen] = useState(false);
+    const teamMenuRef = useRef<HTMLDivElement>(null);
     const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
     const [csvMatches,         setCsvMatches]         = useState<{ csvName: string; round: number; score: number; matchedId: string | null }[]>([]);
     const [csvError,           setCsvError]           = useState("");
@@ -1164,6 +1166,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     useEffect(() => {
         function handler(e: MouseEvent) {
             if (preCompRef.current && !preCompRef.current.contains(e.target as Node)) setPreCompOpen(false);
+            if (teamMenuRef.current && !teamMenuRef.current.contains(e.target as Node)) setTeamMenuOpen(false);
         }
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
@@ -2269,12 +2272,28 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 onClick={() => { setPreCompOpen(false); printLaguppställning({ competitionName: selectedComp?.name ?? "", players, teamAssignments, lang }); }}>
                                 <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Laguppställning" : "Team lineup"}
                             </button>
+                        </div>
+                    )}
+                </div>
+                <div className="score-dropdown-wrap" ref={teamMenuRef}>
+                    <button className="secondary-action score-button" type="button"
+                        onClick={() => setTeamMenuOpen((v) => !v)}>
+                        <Users size={17} aria-hidden="true" />
+                        {lang === "sv" ? "Lag & spelare" : "Teams & players"}
+                        <ChevronDown size={14} className={teamMenuOpen ? "login-chevron open" : "login-chevron"} aria-hidden="true" />
+                    </button>
+                    {teamMenuOpen && (
+                        <div className="score-dropdown">
                             {teamAssignments.length > 0 && (
                                 <button className="score-dropdown-item" type="button"
-                                    onClick={() => { setPreCompOpen(false); setView("teams"); }}>
+                                    onClick={() => { setTeamMenuOpen(false); setView("teams"); }}>
                                     {lang === "sv" ? "Redigera lag" : "Edit teams"}
                                 </button>
                             )}
+                            <button className="score-dropdown-item" type="button"
+                                onClick={() => { setTeamMenuOpen(false); setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); setAddPlayerTab("search"); }}>
+                                <Plus size={15} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
+                            </button>
                         </div>
                     )}
                 </div>
@@ -2293,10 +2312,6 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             e.target.value = "";
                         }} />
                 </label>
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => { setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); setAddPlayerTab("search"); }}>
-                    <Plus size={17} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
-                </button>
                 <button
                     className={isPaused ? "primary-action score-button" : "secondary-action score-button"}
                     type="button"
