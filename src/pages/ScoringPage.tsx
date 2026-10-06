@@ -1,4 +1,4 @@
-import { ArrowLeft, Archive, CalendarDays, ClipboardList, Download, MapPin, Play, Printer, RotateCcw, Save, ScanLine, Trash2, Trophy } from "lucide-react";
+import { ArrowLeft, Archive, CalendarDays, ClipboardList, Download, MapPin, Pause, Play, Printer, RotateCcw, Save, ScanLine, Trash2, Trophy } from "lucide-react";
 import { clearLiveResults, pushLiveResults, setPauseLiveResults } from "../lib/liveResults";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
@@ -1120,8 +1120,8 @@ export default function ScoringPage() {
                     title={isPaused ? (lang === "sv" ? "Publiken ser inga resultat just nu" : "Public cannot see results right now") : ""}
                 >
                     {isPaused
-                        ? (lang === "sv" ? "▶ Visa liveresultat" : "▶ Show live results")
-                        : (lang === "sv" ? "⏸ Pausa liveresultat" : "⏸ Pause live results")}
+                        ? <><Play size={17} aria-hidden="true" />{lang === "sv" ? "Visa liveresultat" : "Show live results"}</>
+                        : <><Pause size={17} aria-hidden="true" />{lang === "sv" ? "Pausa liveresultat" : "Pause live results"}</>}
                 </button>
                 <button className="secondary-action score-button startlist-no-print" type="button" onClick={resetScores}>
                     <RotateCcw size={17} aria-hidden="true" />
