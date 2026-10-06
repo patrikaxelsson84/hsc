@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { PlayerScore, TeamAssignment } from './scoring';
 
 export interface LiveContestData {
-    active: { runId: string; contestName: string; typeName: string };
+    active: { runId: string; contestName: string; typeName: string; paused: boolean };
     players: PlayerScore[];
     teamAssignments: TeamAssignment[];
 }
@@ -12,7 +12,8 @@ export async function pushLiveResults(
     contestName: string,
     typeName: string,
     players: PlayerScore[],
-    teamAssignments: TeamAssignment[]
+    teamAssignments: TeamAssignment[],
+    paused = false,
 ): Promise<void> {
     await supabase.from('live_contest').upsert({
         id: 'current',
@@ -21,8 +22,13 @@ export async function pushLiveResults(
         type_name: typeName,
         players,
         team_assignments: teamAssignments,
+        paused,
         updated_at: new Date().toISOString(),
     }, { onConflict: 'id' });
+}
+
+export async function setPauseLiveResults(paused: boolean): Promise<void> {
+    await supabase.from('live_contest').update({ paused }).eq('id', 'current');
 }
 
 export async function clearLiveResults(): Promise<void> {
@@ -37,7 +43,7 @@ export async function fetchLiveResults(): Promise<LiveContestData | null> {
         .single();
     if (!data) return null;
     return {
-        active: { runId: data.run_id, contestName: data.contest_name, typeName: data.type_name },
+        active: { runId: data.run_id, contestName: data.contest_name, typeName: data.type_name, paused: data.paused ?? false },
         players: data.players as PlayerScore[],
         teamAssignments: data.team_assignments as TeamAssignment[],
     };

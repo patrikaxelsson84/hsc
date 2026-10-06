@@ -501,6 +501,25 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
 
     // ── Public view ──────────────────────────────────────────────────────────
     if (!isAdmin) {
+        if (active.paused) {
+            return (
+                <main className="public-page">
+                    <header className="site-header">
+                        <Link className="brand" to="/" aria-label="HSC home">
+                            <span className="brand-mark">HSC</span>
+                            <span>{t.brand_subtitle}</span>
+                        </Link>
+                        <LangSelect />
+                    </header>
+                    <div className="results-empty-state">
+                        <span className="results-empty-icon"><Trophy size={40} aria-hidden="true" /></span>
+                        <h2>{active.contestName}</h2>
+                        <p>{lang === "sv" ? "Resultaten tillkännages strax — håll utkik här!" : "Results will be announced shortly — stay tuned!"}</p>
+                    </div>
+                </main>
+            );
+        }
+
         return (
             <main className="public-page results-public-page">
                 <header className="site-header">

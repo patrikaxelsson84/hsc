@@ -1,5 +1,5 @@
 import { ArrowLeft, Archive, CalendarDays, ClipboardList, Download, MapPin, Play, Printer, RotateCcw, Save, ScanLine, Trash2, Trophy } from "lucide-react";
-import { clearLiveResults, pushLiveResults } from "../lib/liveResults";
+import { clearLiveResults, pushLiveResults, setPauseLiveResults } from "../lib/liveResults";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AgeCategory, ClassLevel, PlayerScore, TeamAssignment } from "../lib/scoring";
 import { compressImage, scanProtokoll } from "../lib/scanProtokoll";
@@ -148,6 +148,7 @@ export default function ScoringPage() {
     const [players,                 setPlayers]                 = useState<PlayerScore[]>([]);
     const [status,                  setStatus]                  = useState<"idle" | "saved" | "reset">("idle");
     const [oldContestIds,           setOldContestIds]           = useState<string[]>(getSavedContestIds);
+    const [isPaused,                 setIsPaused]                = useState(false);
     const [scanState,               setScanState]               = useState<"idle" | "loading" | "review">("idle");
     const [scanResult,              setScanResult]              = useState<ScanResult | null>(null);
     const [scanError,               setScanError]               = useState("");
@@ -256,6 +257,7 @@ export default function ScoringPage() {
         localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(registered));
         setPlayers(registered); setTeamAssignments([]); setActiveTeamId(null);
         setOldContestIds((cur) => cur.filter((id) => id !== currentRunId));
+        setIsPaused(false);
         setLaneAssignments({}); setActiveLane(null); setLaneScoreFilter("all");
         setClassFilter(allClasses); setStatus("idle");
         if (laneCount > 1) setView("lanes");
@@ -424,11 +426,18 @@ export default function ScoringPage() {
         localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         setOldContestIds((cur) => cur.includes(currentRunId) ? cur : [...cur, currentRunId]);
         setStatus("saved");
-        pushLiveResults(currentRunId, competition.name, contestType.name, players, teamAssignments);
+        pushLiveResults(currentRunId, competition.name, contestType.name, players, teamAssignments, isPaused);
         pushGpResult(currentRunId, competition.name, competition.date ?? null, contestType.name, players, competition.is_sm ?? false);
     }
 
+    async function togglePause() {
+        const next = !isPaused;
+        setIsPaused(next);
+        await setPauseLiveResults(next);
+    }
+
     function resetScores() {
+        setIsPaused(false);
         clearLiveResults();
         localStorage.removeItem(`${scoreStoragePrefix}-${currentRunId}`);
         localStorage.removeItem(`${liveScorePrefix}-${currentRunId}`);
@@ -1103,6 +1112,16 @@ export default function ScoringPage() {
                     })}>
                     <ClipboardList size={17} aria-hidden="true" />
                     {lang === "sv" ? "Laguppställning" : "Team lineup"}
+                </button>
+                <button
+                    className={isPaused ? "primary-action score-button startlist-no-print" : "secondary-action score-button startlist-no-print"}
+                    type="button"
+                    onClick={togglePause}
+                    title={isPaused ? (lang === "sv" ? "Publiken ser inga resultat just nu" : "Public cannot see results right now") : ""}
+                >
+                    {isPaused
+                        ? (lang === "sv" ? "▶ Visa liveresultat" : "▶ Show live results")
+                        : (lang === "sv" ? "⏸ Pausa liveresultat" : "⏸ Pause live results")}
                 </button>
                 <button className="secondary-action score-button startlist-no-print" type="button" onClick={resetScores}>
                     <RotateCcw size={17} aria-hidden="true" />
