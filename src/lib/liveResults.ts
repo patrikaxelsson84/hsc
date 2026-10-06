@@ -35,6 +35,55 @@ export async function clearLiveResults(): Promise<void> {
     await supabase.from('live_contest').delete().eq('id', 'current');
 }
 
+export interface ContestResult {
+    id: string;
+    runId: string;
+    contestName: string;
+    typeName: string;
+    clubId: string;
+    players: PlayerScore[];
+    teamAssignments: TeamAssignment[];
+    completedAt: string;
+}
+
+export async function saveContestResult(
+    runId: string,
+    contestName: string,
+    typeName: string,
+    clubId: string,
+    players: PlayerScore[],
+    teamAssignments: TeamAssignment[],
+): Promise<void> {
+    await supabase.from('contest_results').insert({
+        run_id: runId,
+        contest_name: contestName,
+        type_name: typeName,
+        club_id: clubId,
+        players,
+        team_assignments: teamAssignments,
+    });
+}
+
+export async function fetchContestResults(clubId?: string): Promise<ContestResult[]> {
+    let query = supabase
+        .from('contest_results')
+        .select('*')
+        .order('completed_at', { ascending: false });
+    if (clubId) query = query.eq('club_id', clubId);
+    const { data } = await query;
+    if (!data) return [];
+    return data.map((r) => ({
+        id: r.id,
+        runId: r.run_id,
+        contestName: r.contest_name,
+        typeName: r.type_name,
+        clubId: r.club_id,
+        players: r.players as PlayerScore[],
+        teamAssignments: r.team_assignments as TeamAssignment[],
+        completedAt: r.completed_at,
+    }));
+}
+
 export async function fetchLiveResults(): Promise<LiveContestData | null> {
     const { data } = await supabase
         .from('live_contest')

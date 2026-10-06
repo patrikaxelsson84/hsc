@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, Camera, CheckSquare, ChevronDown, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Camera, CheckSquare, ChevronDown, ClipboardList, Download, FileSpreadsheet, History, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users, XCircle } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage, compressImage, scanProtokoll } from "../lib/scanProtokoll";
 import type { RecognizedScore, ScanResult } from "../lib/scanProtokoll";
@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { submitPendingChange, loadRejectedAddIds, loadResolvedDeleteChanges } from "../lib/pendingChanges";
-import { pushLiveResults, setPauseLiveResults } from "../lib/liveResults";
+import { pushLiveResults, setPauseLiveResults, saveContestResult, clearLiveResults, fetchContestResults, type ContestResult } from "../lib/liveResults";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
@@ -1133,6 +1133,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [activeTeamId,       setActiveTeamId]       = useState<string | null>(null);
     const [status,             setStatus]             = useState<"idle" | "saved" | "reset">("idle");
     const [isPaused,           setIsPaused]           = useState(false);
+    const [showEndConfirm,     setShowEndConfirm]     = useState(false);
+    const [pastResults,        setPastResults]        = useState<ContestResult[]>([]);
+    const [viewingResult,      setViewingResult]      = useState<ContestResult | null>(null);
     const [laneScoreFilter,    setLaneScoreFilter]    = useState<number | "all">("all");
     const [classFilter,        setClassFilter]        = useState<ClassLevel | "all">("all");
     const [photoStep,          setPhotoStep]          = useState<"closed" | "upload" | "analyzing" | "review">("closed");
@@ -1179,6 +1182,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         const state = { view, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments };
         localStorage.setItem(flowKey, JSON.stringify(state));
     }, [view, selectedCompId, typeIds, laneCount, selectedPlayerIds, laneAssignments, teamAssignments]);
+
+    useEffect(() => {
+        fetchContestResults(clubName).then(setPastResults);
+    }, [clubName]);
 
     // Pool: all players registered for the selected competition
     const compPlayers: PlayerScore[] = selectedCompId
@@ -1618,6 +1625,24 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         await setPauseLiveResults(next);
     }
 
+    async function endContest() {
+        await saveContestResult(
+            currentRunId,
+            selectedComp?.name ?? currentRunId,
+            typeName(typeIds, lang),
+            clubName,
+            players,
+            teamAssignments,
+        );
+        await clearLiveResults();
+        localStorage.removeItem(ACTIVE_KEY);
+        setIsPaused(false);
+        setShowEndConfirm(false);
+        const updated = await fetchContestResults(clubName);
+        setPastResults(updated);
+        setView("pick");
+    }
+
     function resetScores() {
         localStorage.removeItem(`${SCORE_PREFIX}-${currentRunId}`);
         localStorage.removeItem(`${LIVE_PREFIX}-${currentRunId}`);
@@ -1694,6 +1719,70 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         );
                     })}
                 </div>
+
+                {pastResults.length > 0 && (
+                    <div className="contest-history-section">
+                        <h3 className="contest-history-heading">
+                            <History size={16} aria-hidden="true" /> {lang === "sv" ? "Historik" : "History"}
+                        </h3>
+                        <div className="contest-history-list">
+                            {pastResults.map((r) => (
+                                <button key={r.id} type="button" className="contest-history-item"
+                                    onClick={() => setViewingResult(r)}>
+                                    <span className="contest-history-name">{r.contestName}</span>
+                                    <span className="contest-history-meta">
+                                        {r.typeName} · {new Date(r.completedAt).toLocaleDateString("sv-SE")}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {viewingResult && (
+                    <div className="modal-overlay" onClick={() => setViewingResult(null)}>
+                        <div className="modal-card" style={{ maxWidth: 680, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                <div>
+                                    <h2 style={{ margin: 0 }}>{viewingResult.contestName}</h2>
+                                    <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                                        {viewingResult.typeName} · {new Date(viewingResult.completedAt).toLocaleString("sv-SE")}
+                                    </p>
+                                </div>
+                                <button className="secondary-action score-button" type="button" onClick={() => setViewingResult(null)}>
+                                    {lang === "sv" ? "Stäng" : "Close"}
+                                </button>
+                            </div>
+                            <div style={{ overflowY: "auto", maxHeight: "60vh" }}>
+                                <table className="score-table" style={{ width: "100%" }}>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>{lang === "sv" ? "Namn" : "Name"}</th>
+                                            <th>{lang === "sv" ? "Klubb" : "Club"}</th>
+                                            <th>{lang === "sv" ? "Totalt" : "Total"}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[...viewingResult.players]
+                                            .sort((a, b) => b.rounds.reduce((s, v) => s + v, 0) + b.sevenMeters - (a.rounds.reduce((s, v) => s + v, 0) + a.sevenMeters))
+                                            .map((p, i) => {
+                                                const total = p.rounds.reduce((s, v) => s + v, 0) + (p.sevenMeters ?? 0);
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td>{i + 1}</td>
+                                                        <td>{p.name}</td>
+                                                        <td>{p.club}</td>
+                                                        <td><strong>{total}</strong></td>
+                                                    </tr>
+                                                );
+                                            })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -2328,7 +2417,31 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 <button className="primary-action score-button" type="button" onClick={saveScores}>
                     <Save size={17} aria-hidden="true" /> {t.sc_save_scores}
                 </button>
+                <button className="danger-action score-button" type="button" onClick={() => setShowEndConfirm(true)}>
+                    <XCircle size={17} aria-hidden="true" /> {lang === "sv" ? "Avsluta tävling" : "End contest"}
+                </button>
             </section>
+
+            {showEndConfirm && (
+                <div className="modal-overlay" onClick={() => setShowEndConfirm(false)}>
+                    <div className="modal-card" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ marginBottom: "0.5rem" }}>{lang === "sv" ? "Avsluta tävling?" : "End contest?"}</h2>
+                        <p style={{ marginBottom: "1.25rem", color: "var(--text-muted)" }}>
+                            {lang === "sv"
+                                ? "Resultaten sparas och kan ses igen under Historik. Liveresultaten stängs av för publiken."
+                                : "Results will be saved and can be viewed under History. Live results will be hidden from the public."}
+                        </p>
+                        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                            <button className="secondary-action score-button" type="button" onClick={() => setShowEndConfirm(false)}>
+                                {lang === "sv" ? "Avbryt" : "Cancel"}
+                            </button>
+                            <button className="danger-action score-button" type="button" onClick={endContest}>
+                                <XCircle size={16} aria-hidden="true" /> {lang === "sv" ? "Ja, avsluta" : "Yes, end it"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {status !== "idle" && (
                 <p className="form-message">
