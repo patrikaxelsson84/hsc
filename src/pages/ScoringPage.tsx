@@ -248,9 +248,14 @@ export default function ScoringPage() {
     function startRegisteredContest() {
         const registered = resetPlayerScores(registrationPlayers.filter((p) => selectedPlayerIds.includes(p.id)));
         clearLiveResults();
+        // Wipe any leftover data from a previous run with the same runId
+        localStorage.removeItem(`${scoreStoragePrefix}-${currentRunId}`);
+        localStorage.removeItem(`${teamsStoragePrefix}-${currentRunId}`);
+        localStorage.removeItem(`${lanesStoragePrefix}-${currentRunId}`);
         localStorage.setItem(activeContestKey, JSON.stringify({ runId: currentRunId, contestName: competition.name, typeName: contestType.name }));
         localStorage.setItem(`${liveScorePrefix}-${currentRunId}`, JSON.stringify(registered));
         setPlayers(registered); setTeamAssignments([]); setActiveTeamId(null);
+        setOldContestIds((cur) => cur.filter((id) => id !== currentRunId));
         setLaneAssignments({}); setActiveLane(null); setLaneScoreFilter("all");
         setClassFilter(allClasses); setStatus("idle");
         if (laneCount > 1) setView("lanes");
