@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, CheckSquare, ChevronDown, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Camera, CheckSquare, ChevronDown, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage, compressImage, scanProtokoll } from "../lib/scanProtokoll";
 import type { RecognizedScore, ScanResult } from "../lib/scanProtokoll";

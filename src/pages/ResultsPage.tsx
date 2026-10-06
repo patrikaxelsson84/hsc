@@ -88,7 +88,7 @@ function buildMixedPairs(players: PlayerScore[], competitionId: string, regs: Re
     }
 }
 
-type ActiveContest = { runId: string; contestName: string; typeName: string };
+type ActiveContest = { runId: string; contestName: string; typeName: string; paused?: boolean };
 
 function readLiveData(): { active: ActiveContest; players: PlayerScore[]; teamAssignments: TeamAssignment[] } | null {
     try {
