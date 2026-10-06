@@ -3437,35 +3437,40 @@ a {
 .dash-nav-submenu {
     position: absolute;
     top: 0;
-    left: calc(100% + 8px);
+    left: calc(100% + 10px);
     z-index: 100;
-    min-width: 200px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    padding: 6px;
+    min-width: 210px;
     display: flex;
     flex-direction: column;
+    gap: 6px;
 }
 
 .dash-nav-submenu-item {
     display: flex;
     align-items: center;
-    padding: 10px 14px;
-    border-radius: 7px;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-strong);
-    background: none;
-    border: none;
     cursor: pointer;
     text-align: left;
-    transition: background 0.1s;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .dash-nav-submenu-item:hover {
-    background: var(--surface-raised, rgba(0,0,0,0.05));
+    transform: translateX(3px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.dash-nav-submenu-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 @media (max-width: 560px) {

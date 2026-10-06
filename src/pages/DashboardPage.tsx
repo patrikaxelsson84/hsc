@@ -147,7 +147,9 @@ export default function DashboardPage() {
                             {submenu && hoveredKey === key && (
                                 <div className="dash-nav-submenu">
                                     {submenu.map((item) => (
-                                        <button key={item} className="dash-nav-submenu-item" type="button">
+                                        <button key={item} className="dash-nav-submenu-item" type="button"
+                                            style={{ background: cardBg, borderColor: border }}>
+                                            <span className="dash-nav-submenu-dot" style={{ background: iconColor }} />
                                             {item}
                                         </button>
                                     ))}
