@@ -1,4 +1,5 @@
-import { BookOpen, CalendarDays, MessageSquare, Star, Trophy, Users } from "lucide-react";
+import { BookOpen, CalendarDays, ChevronRight, MessageSquare, Star, Trophy, Users } from "lucide-react";
+import { useState } from "react";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
 import { useCompetitions } from "../contexts/CompetitionsContext";
@@ -13,6 +14,7 @@ const navItems = [
         iconBg: "#dbeafe",
         cardBg: "#eff6ff",
         border: "#bfdbfe",
+        submenu: ["Division 1", "Division 2", "Seriespelsranking", "Maratontabell"],
     },
     {
         key: "bonus",
@@ -57,6 +59,8 @@ export default function DashboardPage() {
         .filter((c) => c.date >= today)
         .sort((a, b) => a.date.localeCompare(b.date));
     const nextComp = upcoming[0] ?? null;
+
+    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
     const stats = [
         { icon: Users,       value: players.length,   label: lang === "sv" ? "Spelare"             : "Players" },
@@ -124,17 +128,31 @@ export default function DashboardPage() {
                         : "This is how the menu items will appear on the public site."}
                 </p>
                 <div className="dash-nav-grid">
-                    {navItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, cardBg, border }) => (
-                        <div className="dash-nav-card" key={key}
-                            style={{ background: cardBg, borderColor: border }}>
-                            <span className="dash-nav-icon"
-                                style={{ background: iconBg, color: iconColor }}>
-                                <Icon size={22} aria-hidden="true" />
-                            </span>
-                            <span className="dash-nav-text">
-                                <strong>{label}</strong>
-                                <span>{desc}</span>
-                            </span>
+                    {navItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, cardBg, border, submenu }) => (
+                        <div className="dash-nav-card-wrap" key={key}
+                            onMouseEnter={() => submenu && setHoveredKey(key)}
+                            onMouseLeave={() => setHoveredKey(null)}>
+                            <div className="dash-nav-card"
+                                style={{ background: cardBg, borderColor: border }}>
+                                <span className="dash-nav-icon"
+                                    style={{ background: iconBg, color: iconColor }}>
+                                    <Icon size={22} aria-hidden="true" />
+                                </span>
+                                <span className="dash-nav-text">
+                                    <strong>{label}</strong>
+                                    <span>{desc}</span>
+                                </span>
+                                {submenu && <ChevronRight size={16} className="dash-nav-chevron" aria-hidden="true" />}
+                            </div>
+                            {submenu && hoveredKey === key && (
+                                <div className="dash-nav-submenu">
+                                    {submenu.map((item) => (
+                                        <button key={item} className="dash-nav-submenu-item" type="button">
+                                            {item}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

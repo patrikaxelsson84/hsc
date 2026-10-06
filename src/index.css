@@ -3373,6 +3373,10 @@ a {
 }
 
 /* ── Dashboard public nav preview ───────────────────── */
+.dash-nav-card-wrap {
+    position: relative;
+}
+
 .dash-nav-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -3421,6 +3425,47 @@ a {
     font-size: 0.8rem;
     color: var(--text-muted);
     line-height: 1.4;
+}
+
+.dash-nav-chevron {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    align-self: center;
+}
+
+.dash-nav-submenu {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 8px);
+    z-index: 100;
+    min-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-nav-submenu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-strong);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s;
+}
+
+.dash-nav-submenu-item:hover {
+    background: var(--surface-raised, rgba(0,0,0,0.05));
 }
 
 @media (max-width: 560px) {
