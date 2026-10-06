@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, CheckSquare, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckSquare, ChevronDown, ClipboardList, Download, FileSpreadsheet, Inbox, Lock, LogIn, Pause, Pencil, Play, Plus, Save, ScanLine, Send, Settings, Square, Trash2, Trophy, Users } from "lucide-react";
 import { printProtokoll, printStartordning, printLaguppställning } from "../lib/printProtokoll";
 import { extractScoresFromImage, compressImage, scanProtokoll } from "../lib/scanProtokoll";
 import type { RecognizedScore, ScanResult } from "../lib/scanProtokoll";
@@ -1143,6 +1143,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [scanResult,         setScanResult]         = useState<ScanResult | null>(null);
     const [scanError,          setScanError]          = useState("");
     const scanFileRef = useRef<HTMLInputElement>(null);
+    const [preCompOpen, setPreCompOpen] = useState(false);
+    const preCompRef = useRef<HTMLDivElement>(null);
     const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
     const [csvMatches,         setCsvMatches]         = useState<{ csvName: string; round: number; score: number; matchedId: string | null }[]>([]);
     const [csvError,           setCsvError]           = useState("");
@@ -1158,6 +1160,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     const selectedComp = myComps.find((c) => c.id === selectedCompId) ?? null;
     const currentRunId = selectedCompId ? `${selectedCompId}__${buildTypeId(typeIds)}` : "";
+
+    useEffect(() => {
+        function handler(e: MouseEvent) {
+            if (preCompRef.current && !preCompRef.current.contains(e.target as Node)) setPreCompOpen(false);
+        }
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
     // Auto-save flow state at every step so the user can resume after navigating away
     useEffect(() => {
@@ -2238,45 +2248,36 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         </select>
                     </label>
                 )}
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => printStartordning({
-                        competitionName: selectedComp?.name ?? "",
-                        players,
-                        laneAssignments,
-                        laneCount,
-                        teamAssignments,
-                        laneFilter: laneScoreFilter,
-                        lang,
-                    })}>
-                    <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Startordning" : "Start list"}
-                </button>
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => printProtokoll({
-                        competitionName: selectedComp?.name ?? "",
-                        typeName: typeName(typeIds, lang),
-                        players,
-                        laneAssignments,
-                        laneCount,
-                        laneFilter: laneScoreFilter,
-                        lang,
-                    })}>
-                    <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Domarprotokoll" : "Protocol"}
-                </button>
-                {teamAssignments.length > 0 && (
+                <div className="score-dropdown-wrap" ref={preCompRef}>
                     <button className="secondary-action score-button" type="button"
-                        onClick={() => setView("teams")}>
-                        {lang === "sv" ? "Redigera lag" : "Edit teams"}
+                        onClick={() => setPreCompOpen((v) => !v)}>
+                        <ClipboardList size={17} aria-hidden="true" />
+                        {lang === "sv" ? "Inför tävlingen" : "Before contest"}
+                        <ChevronDown size={14} className={preCompOpen ? "login-chevron open" : "login-chevron"} aria-hidden="true" />
                     </button>
-                )}
-                <button className="secondary-action score-button" type="button"
-                    onClick={() => printLaguppställning({
-                        competitionName: selectedComp?.name ?? "",
-                        players,
-                        teamAssignments,
-                        lang,
-                    })}>
-                    <ClipboardList size={17} aria-hidden="true" /> {lang === "sv" ? "Laguppställning" : "Team lineup"}
-                </button>
+                    {preCompOpen && (
+                        <div className="score-dropdown">
+                            <button className="score-dropdown-item" type="button"
+                                onClick={() => { setPreCompOpen(false); printStartordning({ competitionName: selectedComp?.name ?? "", players, laneAssignments, laneCount, teamAssignments, laneFilter: laneScoreFilter, lang }); }}>
+                                <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Startordning" : "Start list"}
+                            </button>
+                            <button className="score-dropdown-item" type="button"
+                                onClick={() => { setPreCompOpen(false); printProtokoll({ competitionName: selectedComp?.name ?? "", typeName: typeName(typeIds, lang), players, laneAssignments, laneCount, laneFilter: laneScoreFilter, lang }); }}>
+                                <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Domarprotokoll" : "Protocol"}
+                            </button>
+                            <button className="score-dropdown-item" type="button"
+                                onClick={() => { setPreCompOpen(false); printLaguppställning({ competitionName: selectedComp?.name ?? "", players, teamAssignments, lang }); }}>
+                                <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Laguppställning" : "Team lineup"}
+                            </button>
+                            {teamAssignments.length > 0 && (
+                                <button className="score-dropdown-item" type="button"
+                                    onClick={() => { setPreCompOpen(false); setView("teams"); }}>
+                                    {lang === "sv" ? "Redigera lag" : "Edit teams"}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
                 <label className="secondary-action score-button scan-btn" style={{ cursor: "pointer" }}>
                     <ScanLine size={17} aria-hidden="true" />
                     {lang === "sv" ? "📷 Skanna protokoll" : "📷 Scan protocol"}
