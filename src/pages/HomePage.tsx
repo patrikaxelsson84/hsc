@@ -30,16 +30,16 @@ const exploreItems = [
         iconColor: "#2563eb",
         iconBg: "#dbeafe",
         accent: "#3b82f6",
-        submenu: ["Sverigeranking", "Juniorranking", "Miniorranking", "Seriespel", "Bonusjakten", "Årets raket", "Lagranking", "100-klubben"],
-    },
-    {
-        key: "bonus",
-        icon: Star,
-        label: "Bonus jakten",
-        desc: "Specialtävling med bonuspoäng och extra utmaningar.",
-        iconColor: "#d97706",
-        iconBg: "#fef3c7",
-        accent: "#f59e0b",
+        submenu: [
+            { label: "Sverigeranking" },
+            { label: "Juniorranking" },
+            { label: "Miniorranking" },
+            { label: "Seriespel" },
+            { label: "Bonusjakten", icon: Star },
+            { label: "Årets raket" },
+            { label: "Lagranking" },
+            { label: "100-klubben" },
+        ],
     },
     {
         key: "regler",
@@ -267,13 +267,19 @@ export default function HomePage() {
                                 )}
                                 {submenu && (
                                     <div className="explore-submenu" style={{ borderColor: `${accent}40` }}>
-                                        {submenu.map((item) => (
-                                            <button key={item} className="explore-submenu-item" type="button"
-                                                style={{ "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties}>
-                                                <span className="explore-submenu-dot" style={{ background: iconColor }} />
-                                                {item}
-                                            </button>
-                                        ))}
+                                        {submenu.map((item) => {
+                                            const ItemIcon = item.icon;
+                                            return (
+                                                <button key={item.label} className="explore-submenu-item" type="button"
+                                                    style={{ "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties}>
+                                                    {ItemIcon
+                                                        ? <ItemIcon size={13} style={{ color: "#d97706", flexShrink: 0 }} />
+                                                        : <span className="explore-submenu-dot" style={{ background: iconColor }} />
+                                                    }
+                                                    {item.label}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
