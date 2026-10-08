@@ -14,6 +14,7 @@ import type { AgeCategory, ClassLevel, PlayerScore } from "../lib/scoring";
 import { rankPlayers, rankTeams, titleToAgeCategory } from "../lib/scoring";
 import { usePlayers } from "../contexts/PlayersContext";
 import { checkClubPassword, ensureClubsExist, loginClub, setClubPassword, setClubUsername } from "../lib/auth";
+import { setOnline, setOffline, startHeartbeat } from "../lib/presence";
 import { supabase } from "../lib/supabase";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -2960,6 +2961,16 @@ export default function ClubPage() {
     const [syncError, setSyncError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!clubName) return;
+        setOnline(clubName);
+        const stopHeartbeat = startHeartbeat(clubName);
+        return () => {
+            stopHeartbeat();
+            setOffline(clubName);
+        };
+    }, [clubName]);
+
+    useEffect(() => {
         if (baseLoading || !clubName) return;
         const name = clubName;
         (async () => {
@@ -3077,6 +3088,7 @@ export default function ClubPage() {
 
     function handleLogout() {
         sessionStorage.removeItem(CLUB_SESSION_KEY);
+        if (clubName) setOffline(clubName);
         setClubName(null);
     }
 
