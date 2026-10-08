@@ -1572,10 +1572,18 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     function togglePlayerInTeam(playerId: string) {
         if (!activeTeamId) return;
         setTeamAssignments((cur) => {
-            const next = cur.map((team) => {
+            const isMoving = cur.some((t) => t.id !== activeTeamId && t.playerIds.includes(playerId));
+            // Remove from any OTHER team first (allows moving between teams)
+            const withoutPlayer = cur.map((team) =>
+                team.id === activeTeamId || !team.playerIds.includes(playerId)
+                    ? team
+                    : { ...team, playerIds: team.playerIds.filter((id) => id !== playerId) }
+            );
+            const next = withoutPlayer.map((team) => {
                 if (team.id !== activeTeamId) return team;
                 if (team.playerIds.includes(playerId)) return { ...team, playerIds: team.playerIds.filter((id) => id !== playerId) };
-                if (team.playerIds.length >= 4) return team;
+                // Allow adding even when full if we're moving from another team
+                if (team.playerIds.length >= 4 && !isMoving) return team;
                 let { name } = team;
                 const newIds = [...team.playerIds, playerId];
                 if (newIds.length === 1) {
@@ -2280,7 +2288,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                             return (
                                                 <button key={player.id} type="button"
                                                     className={["team-player-card", inActive ? "is-pending" : "", inOther ? "is-assigned" : ""].filter(Boolean).join(" ")}
-                                                    disabled={inOther || (activeTeamFull && !inActive)}
+                                                    disabled={activeTeamFull && !inActive && !inOther}
                                                     onClick={() => togglePlayerInTeam(player.id)}>
                                                     <span className="team-player-name">{player.name}</span>
                                                     <span className="team-player-meta">
@@ -2382,12 +2390,10 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     </button>
                     {teamMenuOpen && (
                         <div className="score-dropdown">
-                            {teamAssignments.length > 0 && (
-                                <button className="score-dropdown-item" type="button"
-                                    onClick={() => { setTeamMenuOpen(false); setView("teams"); }}>
-                                    {lang === "sv" ? "Redigera lag" : "Edit teams"}
-                                </button>
-                            )}
+                            <button className="score-dropdown-item" type="button"
+                                onClick={() => { setTeamMenuOpen(false); setView("teams"); }}>
+                                <Users size={15} aria-hidden="true" /> {lang === "sv" ? "Ändra lag" : "Edit teams"}
+                            </button>
                             <button className="score-dropdown-item" type="button"
                                 onClick={() => { setTeamMenuOpen(false); setAddPlayerOpen(true); setAddPlayerSearch(""); setAddPlayerLane(activeLane ?? 1); setAddPlayerTab("search"); }}>
                                 <Plus size={15} aria-hidden="true" /> {lang === "sv" ? "Lägg till spelare" : "Add player"}
