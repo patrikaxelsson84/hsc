@@ -6,6 +6,7 @@ import {
     ClipboardList,
     BarChart3,
     ShieldCheck,
+    MessageSquare,
 } from "lucide-react";
 import { useLanguage } from "../lib/language";
 
@@ -19,6 +20,7 @@ export default function AppSidebar() {
         { title: t.menu_registration, icon: ClipboardList, path: "/admin/registration" },
         { title: t.menu_results,      icon: BarChart3,     path: "/admin/results" },
         { title: t.menu_users,        icon: ShieldCheck,   path: "/admin/users" },
+        { title: "Gästbok",           icon: MessageSquare, path: "/admin/guestbook" },
     ];
 
     return (
