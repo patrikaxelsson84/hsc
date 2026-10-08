@@ -1535,8 +1535,12 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
     function proceedFromLanes() {
         saveLanes(laneCount, laneAssignments); setActiveLane(null);
-        // Re-sort each team's players by their lane assignment so throwing order = bantilldelning order
         if (Object.keys(laneAssignments).length > 0) {
+            // Sort players array so scoring view matches start-list order (grouped by lane)
+            setPlayers((prev) => [...prev].sort((a, b) =>
+                (laneAssignments[a.id] ?? 999) - (laneAssignments[b.id] ?? 999)
+            ));
+            // Re-sort each team's players by their lane assignment so throwing order = lane order
             setTeamAssignments((prev) => prev.map((team) => ({
                 ...team,
                 playerIds: [...team.playerIds].sort((a, b) =>
@@ -1544,7 +1548,8 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                 ),
             })));
         }
-        if (typeIds.includes("team")) setView("teams"); else setView("scoring");
+        // Show teams step if type includes team OR if registrations pre-built teams
+        if (typeIds.includes("team") || teamAssignments.length > 0) setView("teams"); else setView("scoring");
     }
 
     function saveTeams(assignments: typeof teamAssignments) {
