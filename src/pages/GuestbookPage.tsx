@@ -6,6 +6,19 @@ import { supabase } from "../lib/supabase";
 const EDGE_URL  = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/moderate-guestbook`;
 const ANON_KEY  = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
+const BANNED = [
+    "helvete","fan","jävla","jäkla","skit","skitig","skitsnack","hora","fitta","kuk","pik",
+    "knulla","knullad","bög","cp","mongo","satans","djävla","förbannad","dra åt helvete",
+    "håll käften","käften","arsle","röv","rövhål","svin","din mamma","ditt as",
+    "fuck","fucking","fucked","shit","bitch","asshole","bastard","cunt","cock","dick",
+    "pussy","whore","nigger","nigga","faggot","retard",
+];
+
+function clientWordBlock(text: string): boolean {
+    const lower = text.toLowerCase();
+    return BANNED.some((w) => lower.includes(w));
+}
+
 interface Entry {
     id: string;
     name: string;
@@ -47,7 +60,14 @@ export default function GuestbookPage() {
         setStatus("checking");
         setFeedback("");
 
-        // Moderate with Claude
+        // Client-side fast check first
+        if (clientWordBlock(name) || clientWordBlock(message)) {
+            setStatus("rejected");
+            setFeedback("Inlägget innehåller olämpliga ord och kan inte publiceras.");
+            return;
+        }
+
+        // Moderate with Claude (edge function)
         let approved = false;
         let reason   = "";
         try {
