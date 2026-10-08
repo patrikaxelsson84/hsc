@@ -58,6 +58,7 @@ const exploreItems = [
         iconColor: "#7c3aed",
         iconBg: "#ede9fe",
         accent: "#8b5cf6",
+        link: "/gastbok",
     },
 ];
 
@@ -238,8 +239,20 @@ export default function HomePage() {
                         </p>
                     </div>
                     <div className="explore-grid">
-                        {exploreItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, accent, submenu }) => (
+                        {exploreItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, accent, submenu, link }) => (
                             <div className="explore-card-wrap" key={key}>
+                                {link ? (
+                                    <Link to={link} className="explore-card" style={{ "--card-accent": accent } as React.CSSProperties}>
+                                        <span className="explore-card-icon" style={{ background: iconBg, color: iconColor }}>
+                                            <Icon size={24} aria-hidden="true" />
+                                        </span>
+                                        <div className="explore-card-body">
+                                            <h3>{label}</h3>
+                                            <p>{desc}</p>
+                                        </div>
+                                        <ChevronRight size={18} className="explore-card-arrow" aria-hidden="true" />
+                                    </Link>
+                                ) : (
                                 <div className="explore-card" style={{ "--card-accent": accent } as React.CSSProperties}>
                                     <span className="explore-card-icon" style={{ background: iconBg, color: iconColor }}>
                                         <Icon size={24} aria-hidden="true" />
@@ -250,6 +263,7 @@ export default function HomePage() {
                                     </div>
                                     <ChevronRight size={18} className="explore-card-arrow" aria-hidden="true" />
                                 </div>
+                                )}
                                 {submenu && (
                                     <div className="explore-submenu" style={{ borderColor: `${accent}40` }}>
                                         {submenu.map((item) => (

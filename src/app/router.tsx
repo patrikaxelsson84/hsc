@@ -14,6 +14,7 @@ import ScoringPage from "../pages/ScoringPage";
 import AdminUsersPage from "../pages/AdminUsersPage";
 import PrivacyPage from "../pages/PrivacyPage";
 import GrandPrixPage from "../pages/GrandPrixPage";
+import GuestbookPage from "../pages/GuestbookPage";
 
 export const router = createBrowserRouter([
     {
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
     {
         path: "/grand-prix",
         element: <GrandPrixPage />,
+    },
+    {
+        path: "/gastbok",
+        element: <GuestbookPage />,
     },
     {
         path: "/privacy",
