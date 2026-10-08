@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ChevronRight, MessageSquare, Radio, Star, Trophy, Users } from "lucide-react";
+import { BookOpen, CalendarDays, ChevronRight, Radio, Star, Trophy, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
@@ -36,16 +36,6 @@ const navItems = [
         iconBg: "#d1fae5",
         cardBg: "#ecfdf5",
         border: "#a7f3d0",
-    },
-    {
-        key: "gastbok",
-        icon: MessageSquare,
-        label: "Gästbok",
-        desc: "Läs och lämna hälsningar från besökare.",
-        iconColor: "#8b5cf6",
-        iconBg: "#ede9fe",
-        cardBg: "#f5f3ff",
-        border: "#ddd6fe",
     },
 ];
 
