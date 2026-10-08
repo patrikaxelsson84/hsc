@@ -51,11 +51,12 @@ ${body}
 
 interface PrintProtokollParams {
     competitionName: string;
-    typeName: string;
+    typeName?: string;
     players: PlayerScore[];
     laneAssignments: Record<string, number>;
     laneCount: number;
     laneFilter?: number | "all";
+    roundFilter?: number | "all";
     lang?: string;
 }
 
@@ -65,6 +66,7 @@ export function printProtokoll({
     laneAssignments,
     laneCount,
     laneFilter = "all",
+    roundFilter = "all",
     lang = "sv",
 }: PrintProtokollParams): void {
     const hasLanes = laneCount > 1 && Object.keys(laneAssignments).length > 0;
@@ -88,6 +90,10 @@ export function printProtokoll({
         laneGroups.push({ laneNum: 1, players });
     }
 
+    const roundsToShow = roundFilter === "all"
+        ? Array.from({ length: numRounds }, (_, i) => i + 1)
+        : [roundFilter as number];
+
     const pages: string[] = [];
     for (const { laneNum, players: lp } of laneGroups) {
         const filledRows = lp.map((p, i) =>
@@ -99,7 +105,7 @@ export function printProtokoll({
         );
         const rows = [...filledRows, ...emptyRows].join("");
 
-        for (let round = 1; round <= numRounds; round++) {
+        for (const round of roundsToShow) {
             pages.push(`<div class="proto-page">
 <div class="proto-header">
   <span class="proto-comp">${competitionName}</span>

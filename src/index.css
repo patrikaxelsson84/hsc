@@ -3162,14 +3162,69 @@ a {
 .modal-card {
     width: 500px;
     max-width: 95vw;
-
     background: #1f1f1f;
-
     border-radius: 18px;
-
     padding: 30px;
-
     border: 1px solid #333;
+}
+
+/* ── Print protocol modal ────────────────────────────── */
+.print-proto-modal {
+    width: 480px;
+}
+
+.print-proto-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.print-proto-label {
+    min-width: 72px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-top: 6px;
+}
+
+.print-proto-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.print-proto-pill {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.print-proto-pill:hover {
+    background: #333;
+    color: var(--text);
+}
+
+.print-proto-pill.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+
+.print-proto-summary {
+    margin: 4px 0 24px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
 }
 
 .modal-card h2 {

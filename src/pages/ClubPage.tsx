@@ -1149,6 +1149,9 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const scanFileRef = useRef<HTMLInputElement>(null);
     const [preCompOpen, setPreCompOpen] = useState(false);
     const preCompRef = useRef<HTMLDivElement>(null);
+    const [printProtoOpen,  setPrintProtoOpen]  = useState(false);
+    const [printProtoLane,  setPrintProtoLane]  = useState<"all" | number>("all");
+    const [printProtoRound, setPrintProtoRound] = useState<"all" | number>("all");
     const [teamMenuOpen, setTeamMenuOpen] = useState(false);
     const teamMenuRef = useRef<HTMLDivElement>(null);
     const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
@@ -2355,7 +2358,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Startordning" : "Start list"}
                             </button>
                             <button className="score-dropdown-item" type="button"
-                                onClick={() => { setPreCompOpen(false); printProtokoll({ competitionName: selectedComp?.name ?? "", typeName: typeName(typeIds, lang), players, laneAssignments, laneCount, laneFilter: laneScoreFilter, lang }); }}>
+                                onClick={() => { setPreCompOpen(false); setPrintProtoLane("all"); setPrintProtoRound("all"); setPrintProtoOpen(true); }}>
                                 <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Domarprotokoll" : "Protocol"}
                             </button>
                             <button className="score-dropdown-item" type="button"
@@ -2453,6 +2456,78 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                     {status === "saved" ? t.club_own_saved : (lang === "sv" ? "Poäng återställda." : "Scores reset.")}
                 </p>
             )}
+
+            {printProtoOpen && (() => {
+                const numRounds = 10;
+                const activeLanes = laneCount > 1
+                    ? Array.from({ length: laneCount }, (_, i) => i + 1)
+                    : [];
+                const lanesCount  = printProtoLane  === "all" ? Math.max(1, laneCount) : 1;
+                const roundsCount = printProtoRound === "all" ? numRounds : 1;
+                const totalPages  = lanesCount * roundsCount;
+                return (
+                    <div className="modal-overlay" onClick={() => setPrintProtoOpen(false)}>
+                        <div className="modal-card print-proto-modal" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="modal-title">{lang === "sv" ? "Skriv ut domarprotokoll" : "Print protocol"}</h2>
+
+                            {activeLanes.length > 0 && (
+                                <div className="print-proto-row">
+                                    <span className="print-proto-label">{lang === "sv" ? "Bana" : "Lane"}</span>
+                                    <div className="print-proto-pills">
+                                        <button type="button"
+                                            className={printProtoLane === "all" ? "print-proto-pill active" : "print-proto-pill"}
+                                            onClick={() => setPrintProtoLane("all")}>
+                                            {lang === "sv" ? "Alla" : "All"}
+                                        </button>
+                                        {activeLanes.map((n) => (
+                                            <button key={n} type="button"
+                                                className={printProtoLane === n ? "print-proto-pill active" : "print-proto-pill"}
+                                                onClick={() => setPrintProtoLane(n)}>
+                                                {n}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="print-proto-row">
+                                <span className="print-proto-label">{lang === "sv" ? "Omgång" : "Round"}</span>
+                                <div className="print-proto-pills">
+                                    <button type="button"
+                                        className={printProtoRound === "all" ? "print-proto-pill active" : "print-proto-pill"}
+                                        onClick={() => setPrintProtoRound("all")}>
+                                        {lang === "sv" ? "Alla" : "All"}
+                                    </button>
+                                    {Array.from({ length: numRounds }, (_, i) => i + 1).map((n) => (
+                                        <button key={n} type="button"
+                                            className={printProtoRound === n ? "print-proto-pill active" : "print-proto-pill"}
+                                            onClick={() => setPrintProtoRound(n)}>
+                                            {n}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <p className="print-proto-summary">
+                                {totalPages} {lang === "sv" ? `protokoll${totalPages !== 1 ? "" : ""} kommer att skrivas ut` : `protocol${totalPages !== 1 ? "s" : ""} will be printed`}
+                            </p>
+
+                            <div className="modal-actions">
+                                <button className="secondary-action" type="button" onClick={() => setPrintProtoOpen(false)}>
+                                    {lang === "sv" ? "Avbryt" : "Cancel"}
+                                </button>
+                                <button className="primary-action" type="button" onClick={() => {
+                                    setPrintProtoOpen(false);
+                                    printProtokoll({ competitionName: selectedComp?.name ?? "", players, laneAssignments, laneCount, laneFilter: printProtoLane, roundFilter: printProtoRound, lang });
+                                }}>
+                                    <Download size={15} aria-hidden="true" />
+                                    {lang === "sv" ? "Skriv ut" : "Print"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {scanState === "loading" && (
                 <div className="scan-loading">
