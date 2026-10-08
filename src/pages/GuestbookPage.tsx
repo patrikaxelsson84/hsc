@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, MessageSquare, Send } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-const EDGE_URL = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/moderate-guestbook`;
+const EDGE_URL  = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/moderate-guestbook`;
+const ANON_KEY  = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 interface Entry {
     id: string;
@@ -47,21 +48,26 @@ export default function GuestbookPage() {
         setFeedback("");
 
         // Moderate with Claude
-        let approved = true;
+        let approved = false;
         let reason   = "";
         try {
             const resp = await fetch(EDGE_URL, {
                 method:  "POST",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ name: name.trim(), message: message.trim() }),
+                headers: {
+                    "Content-Type":  "application/json",
+                    "Authorization": `Bearer ${ANON_KEY}`,
+                },
+                body: JSON.stringify({ name: name.trim(), message: message.trim() }),
             });
             if (resp.ok) {
                 const result = await resp.json();
-                approved = result.ok !== false;
+                approved = result.ok === true;
                 reason   = result.reason ?? "";
+            } else {
+                reason = "Moderationstjänsten är tillfälligt otillgänglig. Försök igen.";
             }
         } catch {
-            // Network error — allow post so a moderation glitch doesn't block everything
+            reason = "Kunde inte nå moderationstjänsten. Kontrollera din anslutning.";
         }
 
         if (!approved) {
