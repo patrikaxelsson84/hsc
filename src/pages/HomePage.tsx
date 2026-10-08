@@ -1,11 +1,16 @@
 import {
     ArrowRight,
+    BookOpen,
     CalendarDays,
     ChevronDown,
+    ChevronRight,
+    BarChart2,
     MapPin,
     Medal,
+    MessageSquare,
     Radio,
     ShieldCheck,
+    Star,
     Trophy,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +20,46 @@ import { useCompetitions } from "../contexts/CompetitionsContext";
 import HorseshoeArt from "../components/HorseshoeArt";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
+
+const exploreItems = [
+    {
+        key: "ranking",
+        icon: BarChart2,
+        label: "Ranking",
+        desc: "Svenska rankinglistor för spelare och lag i alla klasser.",
+        iconColor: "#2563eb",
+        iconBg: "#dbeafe",
+        accent: "#3b82f6",
+        submenu: ["Sverigeranking", "Juniorranking", "Miniorranking", "Seriespel", "Bonusjakten", "Årets raket", "Lagranking", "100-klubben"],
+    },
+    {
+        key: "bonus",
+        icon: Star,
+        label: "Bonus jakten",
+        desc: "Specialtävling med bonuspoäng och extra utmaningar.",
+        iconColor: "#d97706",
+        iconBg: "#fef3c7",
+        accent: "#f59e0b",
+    },
+    {
+        key: "regler",
+        icon: BookOpen,
+        label: "Regler",
+        desc: "Officiella tävlingsregler och riktlinjer för alla klasser.",
+        iconColor: "#059669",
+        iconBg: "#d1fae5",
+        accent: "#10b981",
+    },
+    {
+        key: "gastbok",
+        icon: MessageSquare,
+        label: "Gästbok",
+        desc: "Läs och lämna hälsningar från spelare och besökare.",
+        iconColor: "#7c3aed",
+        iconBg: "#ede9fe",
+        accent: "#8b5cf6",
+    },
+];
 
 function fmtDate(iso: string) {
     const d = new Date(iso + "T12:00:00");
@@ -181,6 +226,45 @@ export default function HomePage() {
                         <ArrowRight size={15} aria-hidden="true" />
                     </Link>
                 </aside>
+            </section>
+
+            <section className="explore-section">
+                <div className="explore-inner">
+                    <div className="explore-header">
+                        <p className="eyebrow">Utforska</p>
+                        <h2>Allt om hästskokastning</h2>
+                        <p className="explore-sub">
+                            Serier, bonustävlingar, regler och gemenskap – samlat på ett ställe.
+                        </p>
+                    </div>
+                    <div className="explore-grid">
+                        {exploreItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, accent, submenu }) => (
+                            <div className="explore-card-wrap" key={key}>
+                                <div className="explore-card" style={{ "--card-accent": accent } as React.CSSProperties}>
+                                    <span className="explore-card-icon" style={{ background: iconBg, color: iconColor }}>
+                                        <Icon size={24} aria-hidden="true" />
+                                    </span>
+                                    <div className="explore-card-body">
+                                        <h3>{label}</h3>
+                                        <p>{desc}</p>
+                                    </div>
+                                    <ChevronRight size={18} className="explore-card-arrow" aria-hidden="true" />
+                                </div>
+                                {submenu && (
+                                    <div className="explore-submenu" style={{ borderColor: `${accent}40` }}>
+                                        {submenu.map((item) => (
+                                            <button key={item} className="explore-submenu-item" type="button"
+                                                style={{ "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties}>
+                                                <span className="explore-submenu-dot" style={{ background: iconColor }} />
+                                                {item}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </section>
 
             <section className="art-section">

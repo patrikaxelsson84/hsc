@@ -470,6 +470,207 @@ a {
   font-size: 0.82rem;
 }
 
+/* ── Explore / public nav section ───────────────────── */
+.explore-section {
+    padding: 80px 0 88px;
+    position: relative;
+}
+
+.explore-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 60% at 50% 0%, rgba(15, 118, 110, 0.06), transparent),
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.55) 40%, transparent 100%);
+    pointer-events: none;
+}
+
+.explore-inner {
+    position: relative;
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+}
+
+.explore-header {
+    text-align: center;
+    margin-bottom: 52px;
+}
+
+.explore-header h2 {
+    margin: 10px 0 14px;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    color: var(--text-strong);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.explore-sub {
+    margin: 0 auto;
+    max-width: 480px;
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.explore-card-wrap {
+    position: relative;
+}
+
+.explore-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 28px 24px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(226, 229, 226, 0.9);
+    border-top: 3px solid var(--card-accent, var(--brand));
+    border-radius: 12px;
+    box-shadow: 0 2px 14px rgba(31, 41, 55, 0.06);
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+    backdrop-filter: blur(4px);
+}
+
+.explore-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(31, 41, 55, 0.12);
+    border-color: var(--card-accent, var(--brand));
+    border-top-color: var(--card-accent, var(--brand));
+}
+
+.explore-submenu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: #fff;
+    border: 1px solid rgba(226, 229, 226, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(31, 41, 55, 0.13);
+    overflow: hidden;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* Transparent bridge on the wrapper that fills the gap below the card */
+.explore-card-wrap::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 8px;
+}
+
+.explore-card-wrap:hover .explore-submenu {
+    display: grid;
+}
+
+.explore-submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(226, 229, 226, 0.6);
+    border-right: 1px solid rgba(226, 229, 226, 0.6);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.13s ease;
+}
+
+.explore-submenu-item:hover {
+    background: var(--item-bg, #f0fdfa);
+    color: var(--item-accent, var(--brand));
+}
+
+.explore-submenu-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.explore-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.explore-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.explore-card-body h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-strong);
+}
+
+.explore-card-body p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+
+.explore-card-arrow {
+    color: #b0bbc5;
+    flex-shrink: 0;
+    margin-top: 16px;
+    transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.explore-card:hover .explore-card-arrow {
+    transform: translateX(4px);
+    color: var(--card-accent, var(--brand));
+}
+
+@media (max-width: 700px) {
+    .explore-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .explore-section {
+        padding: 56px 0 64px;
+    }
+
+    .explore-header {
+        margin-bottom: 36px;
+    }
+}
+
+@media (max-width: 560px) {
+    .explore-section {
+        padding: 48px 0 56px;
+    }
+}
+
+/* ── END Explore section ─────────────────────────────── */
+
 .art-section {
     background: #0d1f1e;
     padding: 56px 24px;
