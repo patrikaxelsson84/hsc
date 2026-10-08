@@ -5314,8 +5314,8 @@ a {
 
 /* Form */
 .guestbook-form-section {
-    background: var(--surface, #1a1a1a);
-    border: 1px solid var(--border, #2a2a2a);
+    background: #ffffff;
+    border: 1px solid #e2e5e2;
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 40px;
@@ -5333,17 +5333,17 @@ a {
 .guestbook-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: #5b6570;
 }
 
-.guestbook-label .required { color: #f87171; margin-left: 2px; }
+.guestbook-label .required { color: #dc2626; margin-left: 2px; }
 
 .guestbook-input,
 .guestbook-textarea {
-    background: var(--input-bg, #111);
-    border: 1px solid var(--border, #333);
+    background: #f7f7f4;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
-    color: var(--text);
+    color: #121820;
     font-size: 0.95rem;
     padding: 10px 14px;
     transition: border-color 0.15s;
@@ -5388,11 +5388,11 @@ a {
 }
 
 .guestbook-entry {
-    border: 1px solid var(--border, #2a2a2a);
+    border: 1px solid #e2e5e2;
     border-radius: 12px;
     padding: 18px 20px;
     margin-bottom: 14px;
-    background: var(--surface, #1a1a1a);
+    background: #ffffff;
 }
 
 .guestbook-entry-header {
@@ -5407,18 +5407,18 @@ a {
 .guestbook-entry-name {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text);
+    color: #121820;
 }
 
 .guestbook-entry-time {
     font-size: 0.78rem;
-    color: var(--text-muted);
+    color: #5b6570;
 }
 
 .guestbook-entry-message {
     font-size: 0.92rem;
     line-height: 1.6;
-    color: var(--text);
+    color: #3d4752;
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
