@@ -1,17 +1,22 @@
 import {
     ArrowRight,
+    Award,
     BookOpen,
     CalendarDays,
     ChevronDown,
     ChevronRight,
     BarChart2,
+    Layers,
     MapPin,
     Medal,
     MessageSquare,
     Radio,
+    Rocket,
     ShieldCheck,
+    Smile,
     Star,
     Trophy,
+    Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -31,14 +36,14 @@ const exploreItems = [
         iconBg: "#dbeafe",
         accent: "#3b82f6",
         submenu: [
-            { label: "Sverigeranking" },
-            { label: "Juniorranking" },
-            { label: "Miniorranking" },
-            { label: "Seriespel" },
-            { label: "Bonusjakten", icon: Star },
-            { label: "Årets raket" },
-            { label: "Lagranking" },
-            { label: "100-klubben" },
+            { label: "Sverigeranking",  icon: Trophy  },
+            { label: "Juniorranking",   icon: Medal   },
+            { label: "Miniorranking",   icon: Smile   },
+            { label: "Seriespel",       icon: Layers  },
+            { label: "Bonusjakten",     icon: Star    },
+            { label: "Årets raket",     icon: Rocket  },
+            { label: "Lagranking",      icon: Users   },
+            { label: "100-klubben",     icon: Award   },
         ],
     },
     {
@@ -273,7 +278,7 @@ export default function HomePage() {
                                                 <button key={item.label} className="explore-submenu-item" type="button"
                                                     style={{ "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties}>
                                                     {ItemIcon
-                                                        ? <ItemIcon size={13} style={{ color: "#d97706", flexShrink: 0 }} />
+                                                        ? <ItemIcon size={13} style={{ color: iconColor, flexShrink: 0 }} />
                                                         : <span className="explore-submenu-dot" style={{ background: iconColor }} />
                                                     }
                                                     {item.label}
