@@ -26,54 +26,14 @@ import HorseshoeArt from "../components/HorseshoeArt";
 import LangSelect from "../components/LangSelect";
 import { useLanguage } from "../lib/language";
 
-const exploreItems = [
-    {
-        key: "ranking",
-        icon: BarChart2,
-        label: "Ranking",
-        desc: "Svenska rankinglistor för spelare och lag i alla klasser.",
-        iconColor: "#2563eb",
-        iconBg: "#dbeafe",
-        accent: "#3b82f6",
-        submenu: [
-            { label: "Sverigeranking",  icon: Trophy  },
-            { label: "Juniorranking",   icon: Medal   },
-            { label: "Miniorranking",   icon: Smile   },
-            { label: "Seriespel",       icon: Layers  },
-            { label: "Bonusjakten",     icon: Star    },
-            { label: "Årets raket",     icon: Rocket  },
-            { label: "Lagranking",      icon: Users   },
-            { label: "100-klubben",     icon: Award   },
-        ],
-    },
-    {
-        key: "regler",
-        icon: BookOpen,
-        label: "Regler",
-        desc: "Officiella tävlingsregler och riktlinjer för alla klasser.",
-        iconColor: "#059669",
-        iconBg: "#d1fae5",
-        accent: "#10b981",
-        link: "/regler",
-    },
-    {
-        key: "gastbok",
-        icon: MessageSquare,
-        label: "Gästbok",
-        desc: "Läs och lämna hälsningar från spelare och besökare.",
-        iconColor: "#7c3aed",
-        iconBg: "#ede9fe",
-        accent: "#8b5cf6",
-        link: "/gastbok",
-    },
-];
+const LANG_LOCALE: Record<string, string> = { sv: "sv-SE", en: "en-GB", pl: "pl-PL" };
 
-function fmtDate(iso: string) {
+function fmtDate(iso: string, locale: string) {
     const d = new Date(iso + "T12:00:00");
     return {
-        mon: d.toLocaleString("sv-SE", { month: "short" }).toUpperCase(),
+        mon: d.toLocaleString(locale, { month: "short" }).toUpperCase(),
         day: d.getDate(),
-        full: d.toLocaleString("sv-SE", { day: "numeric", month: "long" }),
+        full: d.toLocaleString(locale, { day: "numeric", month: "long" }),
     };
 }
 
@@ -130,7 +90,8 @@ function LoginMenu() {
 
 export default function HomePage() {
     const { competitions } = useCompetitions();
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
+    const locale = LANG_LOCALE[lang] ?? "sv-SE";
     const today = new Date().toISOString().slice(0, 10);
     const [calCountry, setCalCountry] = useState<"SE" | "PL">(() => {
         return (localStorage.getItem("hsc-cal-country") as "SE" | "PL") ?? "SE";
@@ -143,6 +104,48 @@ export default function HomePage() {
         .filter((c) => c.date >= today && (c.country ?? "SE") === calCountry)
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5);
+
+    const exploreItems = [
+        {
+            key: "ranking",
+            icon: BarChart2,
+            label: t.explore_ranking_label,
+            desc: t.explore_ranking_desc,
+            iconColor: "#2563eb",
+            iconBg: "#dbeafe",
+            accent: "#3b82f6",
+            submenu: [
+                { label: "Sverigeranking", icon: Trophy  },
+                { label: "Juniorranking",  icon: Medal   },
+                { label: "Miniorranking",  icon: Smile   },
+                { label: "Seriespel",      icon: Layers  },
+                { label: "Bonusjakten",    icon: Star    },
+                { label: "Årets raket",    icon: Rocket  },
+                { label: "Lagranking",     icon: Users   },
+                { label: "100-klubben",    icon: Award   },
+            ],
+        },
+        {
+            key: "regler",
+            icon: BookOpen,
+            label: t.explore_regler_label,
+            desc: t.explore_regler_desc,
+            iconColor: "#059669",
+            iconBg: "#d1fae5",
+            accent: "#10b981",
+            link: "/regler",
+        },
+        {
+            key: "gastbok",
+            icon: MessageSquare,
+            label: t.explore_gastbok_label,
+            desc: t.explore_gastbok_desc,
+            iconColor: "#7c3aed",
+            iconBg: "#ede9fe",
+            accent: "#8b5cf6",
+            link: "/gastbok",
+        },
+    ];
 
     return (
         <main className="public-page">
@@ -206,7 +209,7 @@ export default function HomePage() {
                             </li>
                         )}
                         {upcoming.map((comp) => {
-                            const { mon, day, full } = fmtDate(comp.date);
+                            const { mon, day, full } = fmtDate(comp.date, locale);
                             return (
                                 <li key={comp.id} className="competition-row">
                                     <div className="comp-date-badge" aria-hidden="true">
@@ -238,11 +241,9 @@ export default function HomePage() {
             <section className="explore-section">
                 <div className="explore-inner">
                     <div className="explore-header">
-                        <p className="eyebrow">Utforska</p>
-                        <h2>Allt om hästskokastning</h2>
-                        <p className="explore-sub">
-                            Serier, bonustävlingar, regler och gemenskap – samlat på ett ställe.
-                        </p>
+                        <p className="eyebrow">{t.explore_eyebrow}</p>
+                        <h2>{t.explore_heading}</h2>
+                        <p className="explore-sub">{t.explore_sub}</p>
                     </div>
                     <div className="explore-grid">
                         {exploreItems.map(({ key, icon: Icon, label, desc, iconColor, iconBg, accent, submenu, link }) => (

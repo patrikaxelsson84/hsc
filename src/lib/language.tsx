@@ -366,6 +366,17 @@ const en = {
     admin_requests_col_date:    "Date",
     admin_requests_pending:     "pending",
 
+    // ── Explore section ────────────────────────────────────────────
+    explore_eyebrow:            "Explore",
+    explore_heading:            "Everything about horseshoe throwing",
+    explore_sub:                "Series, bonus competitions, rules and community – all in one place.",
+    explore_ranking_label:      "Ranking",
+    explore_ranking_desc:       "Swedish rankings for players and teams in all classes.",
+    explore_regler_label:       "Rules",
+    explore_regler_desc:        "Official competition rules and guidelines for all classes.",
+    explore_gastbok_label:      "Guestbook",
+    explore_gastbok_desc:       "Read and leave greetings from players and visitors.",
+
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Privacy Policy",
 } as const;
@@ -734,6 +745,17 @@ const sv: Record<keyof typeof en, string> = {
     admin_requests_col_date:    "Datum",
     admin_requests_pending:     "väntande",
 
+    // ── Explore section ────────────────────────────────────────────
+    explore_eyebrow:            "Utforska",
+    explore_heading:            "Allt om hästskokastning",
+    explore_sub:                "Serier, bonustävlingar, regler och gemenskap – samlat på ett ställe.",
+    explore_ranking_label:      "Ranking",
+    explore_ranking_desc:       "Svenska rankinglistor för spelare och lag i alla klasser.",
+    explore_regler_label:       "Regler",
+    explore_regler_desc:        "Officiella tävlingsregler och riktlinjer för alla klasser.",
+    explore_gastbok_label:      "Gästbok",
+    explore_gastbok_desc:       "Läs och lämna hälsningar från spelare och besökare.",
+
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Integritetspolicy",
 };
@@ -1101,6 +1123,17 @@ const pl: Record<keyof typeof en, string> = {
     admin_requests_col_city:    "Miasto",
     admin_requests_col_date:    "Data",
     admin_requests_pending:     "oczekujących",
+
+    // ── Explore section ────────────────────────────────────────────
+    explore_eyebrow:            "Odkryj",
+    explore_heading:            "Wszystko o rzucie podkową",
+    explore_sub:                "Serie, zawody bonusowe, regulaminy i społeczność – wszystko w jednym miejscu.",
+    explore_ranking_label:      "Ranking",
+    explore_ranking_desc:       "Szwedzkie rankingi zawodników i drużyn we wszystkich klasach.",
+    explore_regler_label:       "Regulaminy",
+    explore_regler_desc:        "Oficjalne regulaminy zawodów i wytyczne dla wszystkich klas.",
+    explore_gastbok_label:      "Księga gości",
+    explore_gastbok_desc:       "Czytaj i pozostaw pozdrowienia od zawodników i odwiedzających.",
 
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Polityka prywatności",
