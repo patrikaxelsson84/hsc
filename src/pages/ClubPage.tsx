@@ -2387,11 +2387,15 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                         </div>
                     )}
                 </div>
-                <label className="secondary-action score-button scan-btn" style={{ cursor: "pointer" }}>
+                <label
+                    className={view === "scoring" ? "secondary-action score-button scan-btn" : "secondary-action score-button scan-btn scan-btn--disabled"}
+                    style={{ cursor: view === "scoring" ? "pointer" : "not-allowed" }}
+                    title={view !== "scoring" ? (lang === "sv" ? "Starta en tävling för att skanna protokoll" : "Start a competition to scan a protocol") : undefined}
+                >
                     <ScanLine size={17} aria-hidden="true" />
                     {lang === "sv" ? "📷 Skanna protokoll" : "📷 Scan protocol"}
                     <input ref={scanFileRef} type="file" accept="image/*" capture="environment"
-                        style={{ display: "none" }} onChange={handleScanFile} />
+                        style={{ display: "none" }} onChange={view === "scoring" ? handleScanFile : undefined} />
                 </label>
                 <label className="secondary-action score-button" style={{ cursor: "pointer" }}>
                     <FileSpreadsheet size={17} aria-hidden="true" /> {lang === "sv" ? "Importera CSV" : "Import CSV"}

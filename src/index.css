@@ -1873,9 +1873,11 @@ a {
   white-space: nowrap;
 }
 
-.score-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+.score-button:disabled,
+.scan-btn--disabled {
+  cursor: not-allowed !important;
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .contest-registration-actions {
