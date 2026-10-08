@@ -5689,3 +5689,90 @@ a {
 @media (max-width: 480px) {
     .regler-doc-desc { display: none; }
 }
+
+/* ══ Admin GP sync ═══════════════════════════════════════════════════════════ */
+
+.gp-sync-info {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.gp-sync-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
+.gp-sync-error {
+    color: #dc2626;
+    font-size: 0.88rem;
+    margin: 8px 0 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.gp-sync-season {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.gp-sync-class { margin-bottom: 28px; }
+.gp-sync-class-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text);
+}
+
+.gp-sync-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.gp-sync-table th, .gp-sync-table td {
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.gp-sync-table th { font-weight: 600; color: var(--text-muted); }
+.gp-sync-table td:first-child, .gp-sync-table th:first-child { width: 36px; text-align: center; color: var(--text-muted); }
+.gp-sync-table td:last-child, .gp-sync-table th:last-child { text-align: right; }
+
+.gp-sync-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.gp-sync-saving {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.gp-sync-done {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    color: #166534;
+    margin-top: 8px;
+}
+.gp-sync-done strong { display: block; font-size: 0.95rem; margin-bottom: 4px; }
+.gp-sync-done p { font-size: 0.85rem; margin: 0; }
+.gp-sync-done > svg { flex-shrink: 0; margin-top: 2px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { animation: spin 1s linear infinite; }
