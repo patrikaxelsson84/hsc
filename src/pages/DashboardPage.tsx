@@ -7,17 +7,6 @@ import { fetchOnlineClubs, subscribeOnlineClubs } from "../lib/presence";
 
 const navItems = [
     {
-        key: "serie",
-        icon: Trophy,
-        label: "Serie spel",
-        desc: "Följ serieresultat och tabeller för säsongen.",
-        iconColor: "#3b82f6",
-        iconBg: "#dbeafe",
-        cardBg: "#eff6ff",
-        border: "#bfdbfe",
-        submenu: ["Division 1", "Division 2", "Seriespelsranking", "Maratontabell"],
-    },
-    {
         key: "bonus",
         icon: Star,
         label: "Bonus jakten",
