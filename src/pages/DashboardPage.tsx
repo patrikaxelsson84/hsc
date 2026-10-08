@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ChevronRight, Radio, Star, Trophy, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, Radio, Star, Trophy, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../lib/language";
 import { usePlayers } from "../contexts/PlayersContext";
@@ -26,16 +26,6 @@ const navItems = [
         iconBg: "#fef3c7",
         cardBg: "#fffbeb",
         border: "#fde68a",
-    },
-    {
-        key: "regler",
-        icon: BookOpen,
-        label: "Regler",
-        desc: "Officiella tävlingsregler och riktlinjer.",
-        iconColor: "#10b981",
-        iconBg: "#d1fae5",
-        cardBg: "#ecfdf5",
-        border: "#a7f3d0",
     },
 ];
 
