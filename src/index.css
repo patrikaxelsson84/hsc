@@ -5495,3 +5495,197 @@ a {
 }
 .gb-admin-delete:hover:not(:disabled) { background: #fee2e2; }
 .gb-admin-delete:disabled { opacity: 0.5; cursor: default; }
+
+/* ══ Regler page ════════════════════════════════════════════════════════════ */
+
+.regler-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+}
+
+.regler-section {
+    margin-bottom: 40px;
+}
+
+.regler-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.regler-section-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+/* Document cards */
+.regler-docs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.regler-doc-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    background: var(--surface, #1a1a1a);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, background 0.15s;
+}
+.regler-doc-card:hover {
+    border-color: #059669;
+    background: #ecfdf540;
+}
+
+.regler-doc-icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: #d1fae5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.regler-doc-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.regler-doc-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.regler-doc-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.regler-doc-tag {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 5px;
+    padding: 2px 7px;
+}
+
+/* Accordion */
+.regler-accordions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.regler-accordion {
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface, #1a1a1a);
+}
+
+.regler-accordion-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+    transition: background 0.15s;
+}
+.regler-accordion-head:hover { background: color-mix(in srgb, var(--acc-bg, #d1fae5) 15%, transparent); }
+
+.regler-acc-dot {
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--acc-accent, #10b981);
+}
+
+.regler-acc-title {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.regler-acc-chevron {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+.regler-acc-chevron.open { transform: rotate(180deg); }
+
+.regler-accordion-body {
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border, #e5e7eb);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.regler-acc-section { padding-top: 14px; }
+
+.regler-acc-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--acc-accent, #10b981);
+    margin: 0 0 8px;
+}
+
+.regler-acc-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.regler-acc-list li {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text);
+}
+.regler-acc-list.ordered { list-style: decimal; }
+
+.regler-source {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 40px;
+}
+.regler-source a { color: var(--text-muted); text-decoration: underline; }
+
+@media (max-width: 480px) {
+    .regler-doc-desc { display: none; }
+}

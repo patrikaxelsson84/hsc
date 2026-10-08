@@ -16,6 +16,7 @@ import PrivacyPage from "../pages/PrivacyPage";
 import GrandPrixPage from "../pages/GrandPrixPage";
 import GuestbookPage from "../pages/GuestbookPage";
 import AdminGuestbookPage from "../pages/AdminGuestbookPage";
+import ReglerPage from "../pages/ReglerPage";
 
 export const router = createBrowserRouter([
     {
@@ -29,6 +30,10 @@ export const router = createBrowserRouter([
     {
         path: "/gastbok",
         element: <GuestbookPage />,
+    },
+    {
+        path: "/regler",
+        element: <ReglerPage />,
     },
     {
         path: "/privacy",

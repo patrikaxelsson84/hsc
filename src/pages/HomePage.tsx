@@ -49,6 +49,7 @@ const exploreItems = [
         iconColor: "#059669",
         iconBg: "#d1fae5",
         accent: "#10b981",
+        link: "/regler",
     },
     {
         key: "gastbok",
