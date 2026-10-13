@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, MessageSquare, Send } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { useLanguage } from "../lib/language";
 
 const EDGE_URL  = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/moderate-guestbook`;
 const ANON_KEY  = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 const BANNED = [
-    "helvete","fan","jävla","jäkla","skit","skitig","skitsnack","hora","fitta","kuk","pik",
+    "helvete","fan","jävla","jäkla","skit","skitsnack","hora","fitta","kuk",
     "knulla","knullad","bög","cp","mongo","satans","djävla","förbannad","dra åt helvete",
     "håll käften","käften","arsle","röv","rövhål","svin","din mamma","ditt as",
     "fuck","fucking","fucked","shit","bitch","asshole","bastard","cunt","cock","dick",
@@ -26,14 +27,18 @@ interface Entry {
     created_at: string;
 }
 
-function fmtDate(iso: string) {
-    return new Date(iso).toLocaleString("sv-SE", {
+const LANG_LOCALE: Record<string, string> = { sv: "sv-SE", en: "en-GB", pl: "pl-PL" };
+
+function fmtDate(iso: string, locale: string) {
+    return new Date(iso).toLocaleString(locale, {
         year: "numeric", month: "long", day: "numeric",
         hour: "2-digit", minute: "2-digit",
     });
 }
 
 export default function GuestbookPage() {
+    const { t, lang } = useLanguage();
+    const locale = LANG_LOCALE[lang] ?? "sv-SE";
     const [entries,   setEntries]   = useState<Entry[]>([]);
     const [loading,   setLoading]   = useState(true);
     const [name,      setName]      = useState("");
@@ -63,7 +68,7 @@ export default function GuestbookPage() {
         // Client-side fast check first
         if (clientWordBlock(name) || clientWordBlock(message)) {
             setStatus("rejected");
-            setFeedback("Inlägget innehåller olämpliga ord och kan inte publiceras.");
+            setFeedback(t.gb_err_words);
             return;
         }
 
@@ -84,15 +89,15 @@ export default function GuestbookPage() {
                 approved = result.ok === true;
                 reason   = result.reason ?? "";
             } else {
-                reason = "Moderationstjänsten är tillfälligt otillgänglig. Försök igen.";
+                reason = t.gb_err_moderation;
             }
         } catch {
-            reason = "Kunde inte nå moderationstjänsten. Kontrollera din anslutning.";
+            reason = t.gb_err_network;
         }
 
         if (!approved) {
             setStatus("rejected");
-            setFeedback(reason || "Ditt inlägg kunde inte publiceras. Kontrollera att det inte innehåller olämpligt innehåll.");
+            setFeedback(reason || t.gb_err_rejected);
             return;
         }
 
@@ -105,7 +110,7 @@ export default function GuestbookPage() {
 
         if (error || !data) {
             setStatus("error");
-            setFeedback("Något gick fel. Försök igen.");
+            setFeedback(t.gb_err_save);
             return;
         }
 
@@ -113,7 +118,7 @@ export default function GuestbookPage() {
         setName("");
         setMessage("");
         setStatus("done");
-        setFeedback("Ditt inlägg har publicerats!");
+        setFeedback(t.gb_success);
         setTimeout(() => { setStatus("idle"); setFeedback(""); }, 4000);
     }
 
@@ -121,7 +126,7 @@ export default function GuestbookPage() {
         <div className="public-page guestbook-page">
             <nav className="guestbook-nav">
                 <Link to="/" className="guestbook-back">
-                    <ArrowLeft size={16} /> Tillbaka till startsidan
+                    <ArrowLeft size={16} /> {t.gb_back}
                 </Link>
             </nav>
 
@@ -130,9 +135,9 @@ export default function GuestbookPage() {
                     <MessageSquare size={28} />
                 </span>
                 <div>
-                    <p className="eyebrow">GÄSTBOK</p>
-                    <h1>Gästbok</h1>
-                    <p className="guestbook-subtitle">Lämna en hälsning till HSC-gemenskapen.</p>
+                    <p className="eyebrow">{t.gb_eyebrow}</p>
+                    <h1>{t.gb_heading}</h1>
+                    <p className="guestbook-subtitle">{t.gb_subtitle}</p>
                 </div>
             </header>
 
@@ -140,28 +145,28 @@ export default function GuestbookPage() {
             <section className="guestbook-form-section">
                 <form ref={formRef} className="guestbook-form" onSubmit={handleSubmit}>
                     <div className="guestbook-form-row">
-                        <label className="guestbook-label" htmlFor="gb-name">Ditt namn <span className="required">*</span></label>
+                        <label className="guestbook-label" htmlFor="gb-name">{t.gb_label_name} <span className="required">*</span></label>
                         <input
                             id="gb-name"
                             className="guestbook-input"
                             type="text"
                             required
                             maxLength={80}
-                            placeholder="Skriv ditt namn"
+                            placeholder={t.gb_ph_name}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             disabled={status === "checking" || status === "saving"}
                         />
                     </div>
                     <div className="guestbook-form-row">
-                        <label className="guestbook-label" htmlFor="gb-message">Meddelande <span className="required">*</span></label>
+                        <label className="guestbook-label" htmlFor="gb-message">{t.gb_label_message} <span className="required">*</span></label>
                         <textarea
                             id="gb-message"
                             className="guestbook-textarea"
                             required
                             maxLength={1000}
                             rows={4}
-                            placeholder="Skriv din hälsning här…"
+                            placeholder={t.gb_ph_message}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             disabled={status === "checking" || status === "saving"}
@@ -180,7 +185,7 @@ export default function GuestbookPage() {
                         type="submit"
                         disabled={status === "checking" || status === "saving" || !name.trim() || !message.trim()}
                     >
-                        {status === "checking" ? "Granskar…" : status === "saving" ? "Sparar…" : <><Send size={15} /> Skicka inlägg</>}
+                        {status === "checking" ? t.gb_btn_checking : status === "saving" ? t.gb_btn_saving : <><Send size={15} /> {t.gb_btn_submit}</>}
                     </button>
                 </form>
             </section>
@@ -188,13 +193,13 @@ export default function GuestbookPage() {
             {/* Entries */}
             <section className="guestbook-entries">
                 <h2 className="guestbook-entries-title">
-                    {loading ? "Laddar…" : entries.length === 0 ? "Inga inlägg ännu — bli den första!" : `${entries.length} inlägg`}
+                    {loading ? t.gb_loading : entries.length === 0 ? t.gb_empty : `${entries.length} ${t.gb_count}`}
                 </h2>
                 {!loading && entries.map((e) => (
                     <article key={e.id} className="guestbook-entry">
                         <div className="guestbook-entry-header">
                             <strong className="guestbook-entry-name">{e.name}</strong>
-                            <time className="guestbook-entry-time">{fmtDate(e.created_at)}</time>
+                            <time className="guestbook-entry-time">{fmtDate(e.created_at, locale)}</time>
                         </div>
                         <p className="guestbook-entry-message">{e.message}</p>
                     </article>

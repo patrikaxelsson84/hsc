@@ -377,6 +377,28 @@ const en = {
     explore_gastbok_label:      "Guestbook",
     explore_gastbok_desc:       "Read and leave greetings from players and visitors.",
 
+    // ── Guestbook page ─────────────────────────────────────────────
+    gb_eyebrow:                 "GUESTBOOK",
+    gb_heading:                 "Guestbook",
+    gb_subtitle:                "Leave a greeting to the HSC community.",
+    gb_back:                    "Back to home",
+    gb_label_name:              "Your name",
+    gb_ph_name:                 "Write your name",
+    gb_label_message:           "Message",
+    gb_ph_message:              "Write your greeting here…",
+    gb_btn_checking:            "Checking…",
+    gb_btn_saving:              "Saving…",
+    gb_btn_submit:              "Post entry",
+    gb_loading:                 "Loading…",
+    gb_empty:                   "No entries yet — be the first!",
+    gb_count:                   "entries",
+    gb_err_words:               "The entry contains inappropriate words and cannot be published.",
+    gb_err_moderation:          "The moderation service is temporarily unavailable. Try again.",
+    gb_err_network:             "Could not reach the moderation service. Check your connection.",
+    gb_err_rejected:            "Your entry could not be published. Make sure it does not contain inappropriate content.",
+    gb_err_save:                "Something went wrong. Try again.",
+    gb_success:                 "Your entry has been published!",
+
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Privacy Policy",
 } as const;
@@ -756,6 +778,28 @@ const sv: Record<keyof typeof en, string> = {
     explore_gastbok_label:      "Gästbok",
     explore_gastbok_desc:       "Läs och lämna hälsningar från spelare och besökare.",
 
+    // ── Guestbook page ─────────────────────────────────────────────
+    gb_eyebrow:                 "GÄSTBOK",
+    gb_heading:                 "Gästbok",
+    gb_subtitle:                "Lämna en hälsning till HSC-gemenskapen.",
+    gb_back:                    "Tillbaka till startsidan",
+    gb_label_name:              "Ditt namn",
+    gb_ph_name:                 "Skriv ditt namn",
+    gb_label_message:           "Meddelande",
+    gb_ph_message:              "Skriv din hälsning här…",
+    gb_btn_checking:            "Granskar…",
+    gb_btn_saving:              "Sparar…",
+    gb_btn_submit:              "Skicka inlägg",
+    gb_loading:                 "Laddar…",
+    gb_empty:                   "Inga inlägg ännu — bli den första!",
+    gb_count:                   "inlägg",
+    gb_err_words:               "Inlägget innehåller olämpliga ord och kan inte publiceras.",
+    gb_err_moderation:          "Moderationstjänsten är tillfälligt otillgänglig. Försök igen.",
+    gb_err_network:             "Kunde inte nå moderationstjänsten. Kontrollera din anslutning.",
+    gb_err_rejected:            "Ditt inlägg kunde inte publiceras. Kontrollera att det inte innehåller olämpligt innehåll.",
+    gb_err_save:                "Något gick fel. Försök igen.",
+    gb_success:                 "Ditt inlägg har publicerats!",
+
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Integritetspolicy",
 };
@@ -1134,6 +1178,28 @@ const pl: Record<keyof typeof en, string> = {
     explore_regler_desc:        "Oficjalne regulaminy zawodów i wytyczne dla wszystkich klas.",
     explore_gastbok_label:      "Księga gości",
     explore_gastbok_desc:       "Czytaj i pozostaw pozdrowienia od zawodników i odwiedzających.",
+
+    // ── Guestbook page ─────────────────────────────────────────────
+    gb_eyebrow:                 "KSIĘGA GOŚCI",
+    gb_heading:                 "Księga gości",
+    gb_subtitle:                "Zostaw pozdrowienie dla społeczności HSC.",
+    gb_back:                    "Powrót do strony głównej",
+    gb_label_name:              "Twoje imię",
+    gb_ph_name:                 "Wpisz swoje imię",
+    gb_label_message:           "Wiadomość",
+    gb_ph_message:              "Napisz swoje pozdrowienie tutaj…",
+    gb_btn_checking:            "Sprawdzanie…",
+    gb_btn_saving:              "Zapisywanie…",
+    gb_btn_submit:              "Wyślij wpis",
+    gb_loading:                 "Ładowanie…",
+    gb_empty:                   "Brak wpisów — bądź pierwszy!",
+    gb_count:                   "wpisów",
+    gb_err_words:               "Wpis zawiera nieodpowiednie słowa i nie może zostać opublikowany.",
+    gb_err_moderation:          "Usługa moderacji jest tymczasowo niedostępna. Spróbuj ponownie.",
+    gb_err_network:             "Nie można dotrzeć do usługi moderacji. Sprawdź połączenie.",
+    gb_err_rejected:            "Twój wpis nie mógł zostać opublikowany. Upewnij się, że nie zawiera nieodpowiednich treści.",
+    gb_err_save:                "Coś poszło nie tak. Spróbuj ponownie.",
+    gb_success:                 "Twój wpis został opublikowany!",
 
     // ── Footer ─────────────────────────────────────────────────────
     footer_privacy:             "Polityka prywatności",
