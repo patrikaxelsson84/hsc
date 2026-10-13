@@ -119,7 +119,7 @@ export default function HomePage() {
                 { label: "Juniorranking",  icon: Medal   },
                 { label: "Miniorranking",  icon: Smile   },
                 { label: "Seriespel",      icon: Layers  },
-                { label: "Bonusjakten",    icon: Star    },
+                { label: "Bonusjakten",    icon: Star,   link: "/bonusjakten" },
                 { label: "Årets raket",    icon: Rocket  },
                 { label: "Lagranking",     icon: Users   },
                 { label: "100-klubben",    icon: Award   },
@@ -275,16 +275,19 @@ export default function HomePage() {
                                     <div className="explore-submenu" style={{ borderColor: `${accent}40` }}>
                                         {submenu.map((item) => {
                                             const ItemIcon = item.icon;
-                                            return (
-                                                <button key={item.label} className="explore-submenu-item" type="button"
-                                                    style={{ "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties}>
+                                            const inner = (
+                                                <>
                                                     {ItemIcon
                                                         ? <ItemIcon size={13} style={{ color: iconColor, flexShrink: 0 }} />
                                                         : <span className="explore-submenu-dot" style={{ background: iconColor }} />
                                                     }
                                                     {item.label}
-                                                </button>
+                                                </>
                                             );
+                                            const style = { "--item-accent": iconColor, "--item-bg": iconBg } as React.CSSProperties;
+                                            return item.link
+                                                ? <Link key={item.label} to={item.link} className="explore-submenu-item" style={style}>{inner}</Link>
+                                                : <button key={item.label} className="explore-submenu-item" type="button" style={style}>{inner}</button>;
                                         })}
                                     </div>
                                 )}

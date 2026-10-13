@@ -18,6 +18,7 @@ import GuestbookPage from "../pages/GuestbookPage";
 import AdminGuestbookPage from "../pages/AdminGuestbookPage";
 import AdminGrandPrixSyncPage from "../pages/AdminGrandPrixSyncPage";
 import ReglerPage from "../pages/ReglerPage";
+import BonusjaktenPage from "../pages/BonusjaktenPage";
 
 export const router = createBrowserRouter([
     {
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
     {
         path: "/regler",
         element: <ReglerPage />,
+    },
+    {
+        path: "/bonusjakten",
+        element: <BonusjaktenPage />,
     },
     {
         path: "/privacy",

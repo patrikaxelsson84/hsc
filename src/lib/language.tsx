@@ -377,6 +377,18 @@ const en = {
     explore_gastbok_label:      "Guestbook",
     explore_gastbok_desc:       "Read and leave greetings from players and visitors.",
 
+    // ── Bonusjakten page ───────────────────────────────────────────
+    bonus_eyebrow:             "BONUS HUNT",
+    bonus_heading:             "Bonus Hunt",
+    bonus_subtitle:            "Players who score all five horseshoes in the same round earn 5 bonus points. Points accumulate across all competitions during the season.",
+    bonus_back:                "Back to home",
+    bonus_loading:             "Loading…",
+    bonus_empty:               "No bonus results yet — check back after the first competition.",
+    bonus_col_rank:            "#",
+    bonus_col_name:            "Name",
+    bonus_col_club:            "Club",
+    bonus_col_total:           "Total",
+
     // ── Rules page ─────────────────────────────────────────────────
     regler_back:               "Back to home",
     regler_eyebrow:            "RULES",
@@ -822,6 +834,18 @@ const sv: Record<keyof typeof en, string> = {
     explore_gastbok_label:      "Gästbok",
     explore_gastbok_desc:       "Läs och lämna hälsningar från spelare och besökare.",
 
+    // ── Bonusjakten page ───────────────────────────────────────────
+    bonus_eyebrow:             "BONUSJAKTEN",
+    bonus_heading:             "Bonusjakten",
+    bonus_subtitle:            "Spelare som poängsätter alla fem hästskor i samma omgång får 5 bonuspoäng. Poängen ackumuleras över alla tävlingar under säsongen.",
+    bonus_back:                "Tillbaka till startsidan",
+    bonus_loading:             "Laddar…",
+    bonus_empty:               "Inga bonusresultat ännu — kom tillbaka efter den första tävlingen.",
+    bonus_col_rank:            "#",
+    bonus_col_name:            "Namn",
+    bonus_col_club:            "Klubb",
+    bonus_col_total:           "Totalt",
+
     // ── Rules page ─────────────────────────────────────────────────
     regler_back:               "Tillbaka till startsidan",
     regler_eyebrow:            "REGLER",
@@ -1266,6 +1290,18 @@ const pl: Record<keyof typeof en, string> = {
     explore_regler_desc:        "Oficjalne regulaminy zawodów i wytyczne dla wszystkich klas.",
     explore_gastbok_label:      "Księga gości",
     explore_gastbok_desc:       "Czytaj i pozostaw pozdrowienia od zawodników i odwiedzających.",
+
+    // ── Bonusjakten page ───────────────────────────────────────────
+    bonus_eyebrow:             "POLOWANIE NA BONUSY",
+    bonus_heading:             "Polowanie na Bonusy",
+    bonus_subtitle:            "Zawodnicy, którzy zdobędą punkty wszystkimi pięcioma podkowami w tej samej rundzie, otrzymują 5 punktów bonusowych. Punkty sumują się przez cały sezon.",
+    bonus_back:                "Powrót do strony głównej",
+    bonus_loading:             "Ładowanie…",
+    bonus_empty:               "Brak wyników bonusowych — wróć po pierwszych zawodach.",
+    bonus_col_rank:            "#",
+    bonus_col_name:            "Nazwa",
+    bonus_col_club:            "Klub",
+    bonus_col_total:           "Suma",
 
     // ── Rules page ─────────────────────────────────────────────────
     regler_back:               "Powrót do strony głównej",
