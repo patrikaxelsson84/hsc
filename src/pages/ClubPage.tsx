@@ -785,6 +785,7 @@ function CompSetup({ clubName }: { clubName: string }) {
     );
     const [saving,     setSaving]     = useState<string | null>(null);
     const [requesting, setRequesting] = useState<string | null>(null);
+    const [toggling,   setToggling]   = useState<string | null>(null);
 
     // Sync localDiscs when competitions reload
     useEffect(() => {
@@ -808,6 +809,13 @@ function CompSetup({ clubName }: { clubName: string }) {
         }).eq("id", comp.id);
         await refresh();
         setSaving(null);
+    }
+
+    async function handleToggleOpen(comp: { id: string; registrationOpen: boolean }) {
+        setToggling(comp.id);
+        await supabase.from("competitions").update({ registration_open: !comp.registrationOpen }).eq("id", comp.id);
+        await refresh();
+        setToggling(null);
     }
 
     async function handleUnlockRequest(comp: { id: string; name: string }) {
@@ -903,15 +911,30 @@ function CompSetup({ clubName }: { clubName: string }) {
                                             return def ? (lang === "sv" ? def.sv : def.en) : d;
                                         }).join(", ") ?? "–"}
                                     </span>
-                                    <button
-                                        type="button"
-                                        className="secondary-action score-button"
-                                        style={{ fontSize: "0.8rem" }}
-                                        disabled={requesting === comp.id}
-                                        onClick={() => handleUnlockRequest(comp)}
-                                    >
-                                        {lang === "sv" ? "Begär upplåsning" : "Request unlock"}
-                                    </button>
+                                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                                        <button
+                                            type="button"
+                                            className={comp.registrationOpen ? "secondary-action score-button" : "primary-action score-button"}
+                                            style={{ fontSize: "0.8rem" }}
+                                            disabled={toggling === comp.id}
+                                            onClick={() => handleToggleOpen(comp)}
+                                        >
+                                            {toggling === comp.id
+                                                ? "…"
+                                                : comp.registrationOpen
+                                                    ? (lang === "sv" ? "Stäng anmälningar" : "Close registration")
+                                                    : (lang === "sv" ? "Öppna anmälningar" : "Open registration")}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="secondary-action score-button"
+                                            style={{ fontSize: "0.8rem" }}
+                                            disabled={requesting === comp.id}
+                                            onClick={() => handleUnlockRequest(comp)}
+                                        >
+                                            {lang === "sv" ? "Begär upplåsning" : "Request unlock"}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
