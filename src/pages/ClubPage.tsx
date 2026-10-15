@@ -1230,15 +1230,20 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         else if (view === "scoring")      setView("pick");
     }
 
-    function pickComp(id: string) {
+    async function pickComp(id: string) {
         localStorage.removeItem(`${FLOW_PREFIX}-${id}`);
-        const savedDisciplines = competitions.find((c) => c.id === id)?.disciplines ?? [];
+        const comp = competitions.find((c) => c.id === id);
+        const savedDisciplines = comp?.disciplines ?? [];
         setSelectedCompId(id);
         setTypeIds(savedDisciplines); setLaneCount(1); setSelectedPlayerIds([]);
         setPlayers([]); setLaneAssignments({}); setActiveLane(null);
         setTeamAssignments([]); setActiveTeamId(null); setStatus("idle");
         setFreshStart(true);
-        setView("type");
+        if (comp?.locked && savedDisciplines.length > 0) {
+            await proceedFromType(id, savedDisciplines);
+        } else {
+            setView("type");
+        }
     }
 
     function resumeContest(compId: string) {
@@ -1429,14 +1434,16 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setStatus("idle");
     }
 
-    async function proceedFromType() {
-        if (typeIds.length === 0) return;
+    async function proceedFromType(overrideCompId?: string, overrideTypeIds?: string[]) {
+        const compId = overrideCompId ?? selectedCompId;
+        const tIds   = overrideTypeIds ?? typeIds;
+        if (tIds.length === 0) return;
 
         // Fresh fetch — OwnCompetition.allRegs only loads once on mount and may be stale
         const { data: freshData } = await supabase
             .from('registrations')
             .select('*')
-            .eq('competition_id', selectedCompId);
+            .eq('competition_id', compId);
         const compRegs = (freshData ?? []).map(rowToRegEntry);
 
         // Deduplicate by name — individual (numeric category) takes priority over team/pair
@@ -1502,14 +1509,15 @@ function OwnCompetition({ clubName }: { clubName: string }) {
 
         const allIds = chosen.map((p) => p.id);
         setSelectedPlayerIds(allIds);
-        const runId = `${selectedCompId}__${buildTypeId(typeIds)}`;
-        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: selectedComp?.name, typeName: typeName(typeIds, lang) }));
+        const runId = `${compId}__${buildTypeId(tIds)}`;
+        const compName = competitions.find((c) => c.id === compId)?.name ?? compId;
+        localStorage.setItem(ACTIVE_KEY, JSON.stringify({ runId, contestName: compName, typeName: typeName(tIds, lang) }));
         localStorage.setItem(`${LIVE_PREFIX}-${runId}`, JSON.stringify(chosen));
         setPlayers(chosen);
         setTeamAssignments(preTeams);
         setLaneAssignments({}); setActiveLane(null); setActiveTeamId(null); setStatus("idle");
         if (laneCount > 1) setView("lanes");
-        else if (preTeams.length > 0 || typeIds.includes("team")) setView("teams");
+        else if (preTeams.length > 0 || tIds.includes("team")) setView("teams");
         else setView("scoring");
     }
 
