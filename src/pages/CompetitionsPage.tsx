@@ -1,4 +1,4 @@
-import { CalendarDays, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { CalendarDays, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { contestTypeDefs } from "../lib/contestTypes";
 
 const DISCIPLINES = contestTypeDefs.filter((d) =>
@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { type Competition, isCompetitionOpen } from "../data/competitions";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import { useLanguage } from "../lib/language";
+import { supabase } from "../lib/supabase";
+import { clearLiveResults } from "../lib/liveResults";
 
 function parseSvhkfDate(raw: string): string {
     const rangeMatch = raw.match(/^(\d+)(?:-\d+)?\/(\d+)\s+(\d{4})$/);
@@ -120,8 +122,10 @@ export default function CompetitionsPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const { competitions, saveCompetitions, loading } = useCompetitions();
-    const [noResultsFor, setNoResultsFor] = useState<string | null>(null);
-    const [showForm,    setShowForm]    = useState(false);
+    const [noResultsFor,  setNoResultsFor]  = useState<string | null>(null);
+    const [confirmReset,  setConfirmReset]  = useState<string | null>(null);
+    const [resetting,     setResetting]     = useState<string | null>(null);
+    const [showForm,      setShowForm]      = useState(false);
     const [form,        setForm]        = useState(emptyForm);
     const [syncStatus,  setSyncStatus]  = useState<"idle" | "loading" | "done" | "error">("idle");
     const autoSyncDone = useRef(false);
@@ -162,6 +166,38 @@ export default function CompetitionsPage() {
         await saveCompetitions(
             competitions.map((c) => c.id === id ? { ...c, is_sm: !(c.is_sm ?? false) } : c)
         );
+    }
+
+    async function resetCompetition(comp: Competition) {
+        setResetting(comp.id);
+        setConfirmReset(null);
+        // Clear all registrations for this competition
+        await supabase.from('registrations').delete().eq('competition_id', comp.id);
+        // Reset competition state
+        await saveCompetitions(
+            competitions.map((c) => c.id === comp.id
+                ? { ...c, registrationOpen: false, locked: false, disciplines: undefined, unlockRequested: false }
+                : c
+            )
+        );
+        // Clear live contest row
+        await clearLiveResults();
+        // Clear localStorage scores/live/flow for this competition
+        const idPrefix = comp.id + "__";
+        for (const key of Object.keys(localStorage)) {
+            if (
+                key.startsWith(`hsc-scores-v3-${idPrefix}`) ||
+                key.startsWith(`hsc-live-v1-${idPrefix}`) ||
+                key === `hsc-flow-v1-${comp.id}`
+            ) {
+                localStorage.removeItem(key);
+            }
+        }
+        try {
+            const active = JSON.parse(localStorage.getItem('hsc-active-v1') ?? 'null') as { runId?: string } | null;
+            if (active?.runId?.startsWith(idPrefix)) localStorage.removeItem('hsc-active-v1');
+        } catch { /* ignore */ }
+        setResetting(null);
     }
 
     // Auto-sync on page load if last sync was more than 1 hour ago
@@ -422,7 +458,40 @@ const pastByYear = useMemo(() => {
                                             {isCompetitionOpen(comp) ? t.status_open : t.status_closed}
                                         </button>
                                     </td>
-                                    <td>
+                                    <td style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                                        {confirmReset === comp.id ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    className="comp-delete-btn"
+                                                    style={{ color: "#dc2626", borderColor: "#dc2626" }}
+                                                    disabled={resetting === comp.id}
+                                                    onClick={() => resetCompetition(comp)}
+                                                    title="Bekräfta nollställning"
+                                                >
+                                                    {resetting === comp.id ? "…" : "Säker?"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="comp-delete-btn"
+                                                    onClick={() => setConfirmReset(null)}
+                                                    title="Avbryt"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="comp-delete-btn"
+                                                aria-label={`Nollställ ${comp.name}`}
+                                                title="Nollställ — raderar anmälningar och återställer tävlingen"
+                                                disabled={resetting === comp.id}
+                                                onClick={() => setConfirmReset(comp.id)}
+                                            >
+                                                <RotateCcw size={15} />
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             className="comp-delete-btn"
