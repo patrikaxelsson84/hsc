@@ -3232,6 +3232,17 @@ a {
     color: #fff;
 }
 
+.print-proto-pill.printed {
+    border-style: dashed;
+    opacity: 0.65;
+}
+
+.print-proto-pill.active.printed {
+    opacity: 1;
+    background: var(--brand);
+    border-style: dashed;
+}
+
 .print-proto-summary {
     margin: 4px 0 24px;
     font-size: 0.85rem;

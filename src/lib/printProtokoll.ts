@@ -55,8 +55,8 @@ interface PrintProtokollParams {
     players: PlayerScore[];
     laneAssignments: Record<string, number>;
     laneCount: number;
-    laneFilter?: number | "all";
-    roundFilter?: number | "all";
+    laneFilter?: number | "all" | number[];
+    roundFilter?: number | "all" | number[];
     lang?: string;
 }
 
@@ -80,9 +80,11 @@ export function printProtokoll({
 
     const laneGroups: { laneNum: number; players: PlayerScore[] }[] = [];
     if (hasLanes) {
-        const lanesToShow = laneFilter !== "all"
-            ? [laneFilter as number]
-            : Array.from({ length: laneCount }, (_, i) => i + 1);
+        const lanesToShow = Array.isArray(laneFilter) && laneFilter.length > 0
+            ? laneFilter
+            : laneFilter !== "all"
+                ? [laneFilter as number]
+                : Array.from({ length: laneCount }, (_, i) => i + 1);
         for (const lane of lanesToShow) {
             laneGroups.push({ laneNum: lane, players: players.filter((p) => laneAssignments[p.id] === lane) });
         }
@@ -90,9 +92,11 @@ export function printProtokoll({
         laneGroups.push({ laneNum: 1, players });
     }
 
-    const roundsToShow = roundFilter === "all"
-        ? Array.from({ length: numRounds }, (_, i) => i + 1)
-        : [roundFilter as number];
+    const roundsToShow = Array.isArray(roundFilter) && roundFilter.length > 0
+        ? roundFilter
+        : roundFilter === "all"
+            ? Array.from({ length: numRounds }, (_, i) => i + 1)
+            : [roundFilter as number];
 
     const pages: string[] = [];
     for (const { laneNum, players: lp } of laneGroups) {
@@ -226,33 +230,56 @@ export function printStartordning({
         laneGroups.push({ laneNum: 0, players: sortLanePlayers(players) });
     }
 
-    const tables = laneGroups.map(({ laneNum, players: lp }) => {
-        const header = laneNum > 0
-            ? `<tr><th colspan="5" class="lh">${banaLabel} ${laneNum}</th></tr>`
+    const kastordLabel = lang === "sv" ? "Kastordning" : "Throwing order";
+
+    const sections = laneGroups.map(({ laneNum, players: lp }) => {
+        const laneHeader = laneNum > 0
+            ? `<div class="so-lane-header">${banaLabel} ${laneNum}</div>`
             : "";
         const rows = lp.map((p, i) => {
             const teamName = playerTeamMap.get(p.id);
-            const teamCell = teamName ? `<td style="color:#555;font-size:9px">${lagLabel}: ${teamName}</td>` : `<td></td>`;
             return `<tr>
-                <td class="num">${i + 1}</td>
-                <td class="nc">${p.name}</td>
-                <td>${p.club || "–"}</td>
-                <td>${p.classLevel}</td>
-                ${teamCell}
+                <td class="so-num">${i + 1}</td>
+                <td class="so-name">${p.name}</td>
+                <td class="so-club">${p.club || "–"}</td>
+                <td class="so-class">${p.classLevel}</td>
+                <td class="so-team">${teamName ? `${lagLabel}: ${teamName}` : ""}</td>
             </tr>`;
         }).join("");
-        return `<div class="lb"><table>
-            <thead>
-                ${header}
-                <tr><th class="num">#</th><th class="nt">Namn</th><th>${klubbLabel}</th><th>${klassLabel}</th><th></th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table></div>`;
+        return `<div class="so-section">
+${laneHeader}
+<table class="so-table">
+    <thead>
+        <tr>
+            <th class="so-num">#</th>
+            <th class="so-name">${kastordLabel}</th>
+            <th class="so-club">${klubbLabel}</th>
+            <th class="so-class">${klassLabel}</th>
+            <th class="so-team"></th>
+        </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+</table></div>`;
     }).join("");
+
+    const soStyles = `
+@page{size:A4 portrait;margin:12mm}
+body{padding:0 !important}
+.so-section{margin-bottom:14mm;break-inside:avoid}
+.so-lane-header{font-size:20px;font-weight:bold;background:#b0b0d8;padding:6px 10px;border:1px solid #555;border-bottom:none}
+.so-table{border-collapse:collapse;width:100%}
+.so-table th,.so-table td{border:1px solid #555;padding:5px 8px;font-size:13px}
+.so-table th{background:#d8d8ee;font-size:12px;text-align:left}
+.so-num{width:36px;text-align:center;font-weight:bold}
+.so-name{min-width:160px}
+.so-club{min-width:80px}
+.so-class{width:70px;text-align:center}
+.so-team{font-size:11px;color:#555}
+@media print{.toolbar{display:none}}`;
 
     openPrint(`${competitionName} – Startordning`, `
 <div class="ph"><div><h1>${competitionName}</h1><p>Startordning</p></div></div>
-<div class="grid">${tables}</div>`, lang);
+${sections}`, lang, soStyles);
 }
 
 // ── Laguppställning ───────────────────────────────────────────────────────────

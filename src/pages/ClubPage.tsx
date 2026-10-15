@@ -1029,13 +1029,11 @@ function ClubSettings({ clubName }: { clubName: string }) {
 
 function ClubProfileSettings({ clubName }: { clubName: string }) {
     const { lang } = useLanguage();
-    const [form,     setForm]     = useState({ contact_name: "", email: "", phone: "", city: "" });
+    const [form,    setForm]    = useState({ contact_name: "", email: "", phone: "", city: "" });
     const [username, setUsername] = useState("");
-    const [loaded,   setLoaded]   = useState(false);
-    const [saving,   setSaving]   = useState(false);
-    const [status,   setStatus]   = useState<"idle" | "ok">("idle");
-    const [userSaving, setUserSaving] = useState(false);
-    const [userStatus, setUserStatus] = useState<"idle" | "ok">("idle");
+    const [loaded,  setLoaded]  = useState(false);
+    const [saving,  setSaving]  = useState(false);
+    const [status,  setStatus]  = useState<"idle" | "ok">("idle");
 
     useEffect(() => {
         Promise.all([
@@ -1056,49 +1054,31 @@ function ClubProfileSettings({ clubName }: { clubName: string }) {
     async function handleSave(e: React.FormEvent) {
         e.preventDefault();
         setSaving(true);
-        await supabase.from("club_profiles").upsert(
-            { id: clubName, ...form, updated_at: new Date().toISOString() },
-            { onConflict: "id" }
-        );
+        await Promise.all([
+            supabase.from("club_profiles").upsert(
+                { id: clubName, ...form, updated_at: new Date().toISOString() },
+                { onConflict: "id" }
+            ),
+            username.trim() ? setClubUsername(clubName, username) : Promise.resolve(),
+        ]);
         setSaving(false);
         setStatus("ok");
         setTimeout(() => setStatus("idle"), 2500);
     }
 
-    async function handleSaveUsername(e: React.FormEvent) {
-        e.preventDefault();
-        setUserSaving(true);
-        await setClubUsername(clubName, username);
-        setUserSaving(false);
-        setUserStatus("ok");
-        setTimeout(() => setUserStatus("idle"), 2500);
-    }
-
     if (!loaded) return null;
 
     return (
-        <>
         <section className="admin-panel" style={{ maxWidth: 420 }}>
             <div className="panel-title-row">
-                <h2>{lang === "sv" ? "Användarnamn" : "Username"}</h2>
-            </div>
-            <form className="club-login-form" onSubmit={handleSaveUsername}>
-                <label>
-                    {lang === "sv" ? "Ditt användarnamn för inloggning" : "Your login username"}
-                    <input type="text" value={username} placeholder="••••••••"
-                        onChange={(e) => { setUsername(e.target.value); setUserStatus("idle"); }} />
-                </label>
-                <button className="primary-action club-login-btn" type="submit" disabled={userSaving || !username.trim()}>
-                    <Save size={16} aria-hidden="true" />
-                    {userSaving ? "…" : userStatus === "ok" ? (lang === "sv" ? "Sparat!" : "Saved!") : (lang === "sv" ? "Spara" : "Save")}
-                </button>
-            </form>
-        </section>
-        <section className="admin-panel" style={{ maxWidth: 420 }}>
-            <div className="panel-title-row">
-                <h2>{lang === "sv" ? "Kontaktuppgifter" : "Contact info"}</h2>
+                <h2>{lang === "sv" ? "Klubbinformation" : "Club info"}</h2>
             </div>
             <form className="club-login-form" onSubmit={handleSave}>
+                <label>
+                    {lang === "sv" ? "Användarnamn för inloggning" : "Login username"}
+                    <input type="text" value={username} placeholder="—"
+                        onChange={(e) => { setUsername(e.target.value); setStatus("idle"); }} />
+                </label>
                 <label>
                     {lang === "sv" ? "Kontaktperson" : "Contact name"}
                     <input type="text" value={form.contact_name} placeholder="—"
@@ -1125,7 +1105,6 @@ function ClubProfileSettings({ clubName }: { clubName: string }) {
                 </button>
             </form>
         </section>
-        </>
     );
 }
 
@@ -1173,8 +1152,12 @@ function OwnCompetition({ clubName }: { clubName: string }) {
     const [preCompOpen, setPreCompOpen] = useState(false);
     const preCompRef = useRef<HTMLDivElement>(null);
     const [printProtoOpen,  setPrintProtoOpen]  = useState(false);
-    const [printProtoLane,  setPrintProtoLane]  = useState<"all" | number>("all");
-    const [printProtoRound, setPrintProtoRound] = useState<"all" | number>("all");
+    const [printProtoLanes,  setPrintProtoLanes]  = useState<number[]>([]);
+    const [printProtoRounds, setPrintProtoRounds] = useState<number[]>([]);
+    const [printedCombos,    setPrintedCombos]    = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem(`hsc-printed-protos`) ?? "[]") as string[]); }
+        catch { return new Set(); }
+    });
     const [teamMenuOpen, setTeamMenuOpen] = useState(false);
     const teamMenuRef = useRef<HTMLDivElement>(null);
     const [csvStep,            setCsvStep]            = useState<"closed" | "review">("closed");
@@ -1246,7 +1229,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         }
     }
 
-    function resumeContest(compId: string) {
+    async function resumeContest(compId: string) {
         // Try to restore from flow state (any step)
         const flowRaw = localStorage.getItem(`${FLOW_PREFIX}-${compId}`);
         const flow: { view: OwnView; typeIds: string[]; laneCount: number; selectedPlayerIds: string[]; laneAssignments: Record<string, number>; teamAssignments: { id: string; name: string; playerIds: string[] }[] } | null = (() => {
@@ -1278,7 +1261,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
         setSelectedPlayerIds(flow?.selectedPlayerIds ?? savedPlayers.map((p) => p.id));
         setActiveLane(null); setActiveTeamId(null); setStatus("idle");
         setFreshStart(false);
-        setView(flow?.view ?? "scoring");
+
+        const savedView = flow?.view ?? "scoring";
+        const comp = competitions.find((c) => c.id === compId);
+        if (savedView === "type" && comp?.locked && restoredTypeIds.length > 0) {
+            await proceedFromType(compId, restoredTypeIds);
+        } else {
+            setView(savedView);
+        }
     }
 
     function bestPhotoMatch(name: string): string | null {
@@ -2402,7 +2392,7 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Startordning" : "Start list"}
                             </button>
                             <button className="score-dropdown-item" type="button"
-                                onClick={() => { setPreCompOpen(false); setPrintProtoLane("all"); setPrintProtoRound("all"); setPrintProtoOpen(true); }}>
+                                onClick={() => { setPreCompOpen(false); setPrintProtoLanes([]); setPrintProtoRounds([]); setPrintProtoOpen(true); }}>
                                 <ClipboardList size={15} aria-hidden="true" /> {lang === "sv" ? "Domarprotokoll" : "Protocol"}
                             </button>
                             <button className="score-dropdown-item" type="button"
@@ -2500,13 +2490,20 @@ function OwnCompetition({ clubName }: { clubName: string }) {
             )}
 
             {printProtoOpen && (() => {
-                const numRounds = 10;
-                const activeLanes = laneCount > 1
-                    ? Array.from({ length: laneCount }, (_, i) => i + 1)
-                    : [];
-                const lanesCount  = printProtoLane  === "all" ? Math.max(1, laneCount) : 1;
-                const roundsCount = printProtoRound === "all" ? numRounds : 1;
-                const totalPages  = lanesCount * roundsCount;
+                const numRounds  = 10;
+                const activeLanes = laneCount > 1 ? Array.from({ length: laneCount }, (_, i) => i + 1) : [];
+                const selLanes   = printProtoLanes.length > 0 ? printProtoLanes : activeLanes.length > 0 ? activeLanes : [1];
+                const selRounds  = printProtoRounds.length > 0 ? printProtoRounds : Array.from({ length: numRounds }, (_, i) => i + 1);
+                const totalPages = selLanes.length * selRounds.length;
+
+                function comboKey(l: number, r: number) { return `${currentRunId}-l${l}-r${r}`; }
+                function toggleLane(n: number) {
+                    setPrintProtoLanes((prev) => prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]);
+                }
+                function toggleRound(n: number) {
+                    setPrintProtoRounds((prev) => prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]);
+                }
+
                 return (
                     <div className="modal-overlay" onClick={() => setPrintProtoOpen(false)}>
                         <div className="modal-card print-proto-modal" onClick={(e) => e.stopPropagation()}>
@@ -2516,18 +2513,18 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <div className="print-proto-row">
                                     <span className="print-proto-label">{lang === "sv" ? "Bana" : "Lane"}</span>
                                     <div className="print-proto-pills">
-                                        <button type="button"
-                                            className={printProtoLane === "all" ? "print-proto-pill active" : "print-proto-pill"}
-                                            onClick={() => setPrintProtoLane("all")}>
-                                            {lang === "sv" ? "Alla" : "All"}
-                                        </button>
-                                        {activeLanes.map((n) => (
-                                            <button key={n} type="button"
-                                                className={printProtoLane === n ? "print-proto-pill active" : "print-proto-pill"}
-                                                onClick={() => setPrintProtoLane(n)}>
-                                                {n}
-                                            </button>
-                                        ))}
+                                        {activeLanes.map((n) => {
+                                            const printed = selRounds.every((r) => printedCombos.has(comboKey(n, r)));
+                                            const sel = printProtoLanes.includes(n) || printProtoLanes.length === 0;
+                                            return (
+                                                <button key={n} type="button"
+                                                    className={`print-proto-pill${sel ? " active" : ""}${printed ? " printed" : ""}`}
+                                                    onClick={() => toggleLane(n)}>
+                                                    {printed && <CheckSquare size={12} style={{ marginRight: 3 }} />}
+                                                    {n}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -2535,23 +2532,23 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             <div className="print-proto-row">
                                 <span className="print-proto-label">{lang === "sv" ? "Omgång" : "Round"}</span>
                                 <div className="print-proto-pills">
-                                    <button type="button"
-                                        className={printProtoRound === "all" ? "print-proto-pill active" : "print-proto-pill"}
-                                        onClick={() => setPrintProtoRound("all")}>
-                                        {lang === "sv" ? "Alla" : "All"}
-                                    </button>
-                                    {Array.from({ length: numRounds }, (_, i) => i + 1).map((n) => (
-                                        <button key={n} type="button"
-                                            className={printProtoRound === n ? "print-proto-pill active" : "print-proto-pill"}
-                                            onClick={() => setPrintProtoRound(n)}>
-                                            {n}
-                                        </button>
-                                    ))}
+                                    {Array.from({ length: numRounds }, (_, i) => i + 1).map((n) => {
+                                        const printed = selLanes.every((l) => printedCombos.has(comboKey(l, n)));
+                                        const sel = printProtoRounds.includes(n) || printProtoRounds.length === 0;
+                                        return (
+                                            <button key={n} type="button"
+                                                className={`print-proto-pill${sel ? " active" : ""}${printed ? " printed" : ""}`}
+                                                onClick={() => toggleRound(n)}>
+                                                {printed && <CheckSquare size={12} style={{ marginRight: 3 }} />}
+                                                {n}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
                             <p className="print-proto-summary">
-                                {totalPages} {lang === "sv" ? `protokoll${totalPages !== 1 ? "" : ""} kommer att skrivas ut` : `protocol${totalPages !== 1 ? "s" : ""} will be printed`}
+                                {totalPages} {lang === "sv" ? "protokoll kommer att skrivas ut" : `protocol${totalPages !== 1 ? "s" : ""} will be printed`}
                             </p>
 
                             <div className="modal-actions">
@@ -2560,7 +2557,11 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 </button>
                                 <button className="primary-action" type="button" onClick={() => {
                                     setPrintProtoOpen(false);
-                                    printProtokoll({ competitionName: selectedComp?.name ?? "", players, laneAssignments, laneCount, laneFilter: printProtoLane, roundFilter: printProtoRound, lang });
+                                    printProtokoll({ competitionName: selectedComp?.name ?? "", players, laneAssignments, laneCount, laneFilter: printProtoLanes.length > 0 ? printProtoLanes : "all", roundFilter: printProtoRounds.length > 0 ? printProtoRounds : "all", lang });
+                                    const next = new Set(printedCombos);
+                                    for (const l of selLanes) for (const r of selRounds) next.add(comboKey(l, r));
+                                    setPrintedCombos(next);
+                                    localStorage.setItem("hsc-printed-protos", JSON.stringify([...next]));
                                 }}>
                                     <Download size={15} aria-hidden="true" />
                                     {lang === "sv" ? "Skriv ut" : "Print"}
