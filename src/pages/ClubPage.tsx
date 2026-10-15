@@ -2513,9 +2513,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                                 <div className="print-proto-row">
                                     <span className="print-proto-label">{lang === "sv" ? "Bana" : "Lane"}</span>
                                     <div className="print-proto-pills">
+                                        <button type="button"
+                                            className={`print-proto-pill${printProtoLanes.length === 0 ? " active" : ""}`}
+                                            onClick={() => setPrintProtoLanes([])}>
+                                            {lang === "sv" ? "Alla" : "All"}
+                                        </button>
                                         {activeLanes.map((n) => {
                                             const printed = selRounds.every((r) => printedCombos.has(comboKey(n, r)));
-                                            const sel = printProtoLanes.includes(n) || printProtoLanes.length === 0;
+                                            const sel = printProtoLanes.includes(n);
                                             return (
                                                 <button key={n} type="button"
                                                     className={`print-proto-pill${sel ? " active" : ""}${printed ? " printed" : ""}`}
@@ -2532,9 +2537,14 @@ function OwnCompetition({ clubName }: { clubName: string }) {
                             <div className="print-proto-row">
                                 <span className="print-proto-label">{lang === "sv" ? "Omgång" : "Round"}</span>
                                 <div className="print-proto-pills">
+                                    <button type="button"
+                                        className={`print-proto-pill${printProtoRounds.length === 0 ? " active" : ""}`}
+                                        onClick={() => setPrintProtoRounds([])}>
+                                        {lang === "sv" ? "Alla" : "All"}
+                                    </button>
                                     {Array.from({ length: numRounds }, (_, i) => i + 1).map((n) => {
                                         const printed = selLanes.every((l) => printedCombos.has(comboKey(l, n)));
-                                        const sel = printProtoRounds.includes(n) || printProtoRounds.length === 0;
+                                        const sel = printProtoRounds.includes(n);
                                         return (
                                             <button key={n} type="button"
                                                 className={`print-proto-pill${sel ? " active" : ""}${printed ? " printed" : ""}`}
