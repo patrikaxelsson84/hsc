@@ -113,7 +113,7 @@ export function printProtokoll({
 </div>
 <table class="proto-table">
     <colgroup>
-        <col style="width:24px">
+        <col style="width:52px">
         <col style="width:22%">
         <col><col><col><col><col><col>
     </colgroup>
@@ -143,17 +143,17 @@ body{padding:0 !important}
 .proto-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px}
 .proto-page{border:1px solid #ccc;padding:6px;background:#fff}
 .proto-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3mm}
-.proto-comp{font-size:12px;font-weight:bold;color:#000}
-.proto-omg{font-size:11px;color:#000}
-.proto-omg-num{border:2px solid #000;padding:1px 6px;font-size:20px;font-weight:bold;margin-left:3px;color:#000;display:inline-block;line-height:1}
+.proto-comp{font-size:18px;font-weight:bold;color:#000}
+.proto-omg{font-size:16px;color:#000}
+.proto-omg-num{border:2px solid #000;padding:2px 8px;font-size:26px;font-weight:bold;margin-left:4px;color:#000;display:inline-block;line-height:1}
 .proto-table{border-collapse:collapse;width:100%;table-layout:fixed}
 .proto-row{height:12mm}
-.proto-th{border:1px solid #000;text-align:center;font-size:11px;background:#fff !important;padding:2px;color:#000}
-.proto-th-bana{border:1px solid #000;text-align:left;padding-left:4px;font-size:12px;font-weight:bold;background:#fff !important;color:#000}
-.proto-th-name{text-align:left;padding-left:4px;color:#c00 !important}
-.proto-table td{border:1px solid #000;padding:2px;text-align:center;font-size:11px;color:#000}
-.proto-nr{width:24px;text-align:center}
-.proto-name{text-align:left;padding-left:4px;white-space:nowrap}
+.proto-th{border:1px solid #000;text-align:center;font-size:15px;background:#fff !important;padding:3px;color:#000}
+.proto-th-bana{border:1px solid #000;text-align:left;padding-left:6px;font-size:16px;font-weight:bold;background:#fff !important;color:#000}
+.proto-th-name{text-align:left;padding-left:6px;color:#c00 !important}
+.proto-table td{border:1px solid #000;padding:3px;text-align:center;font-size:15px;color:#000}
+.proto-nr{width:52px !important;min-width:52px !important;text-align:center;font-weight:bold}
+.proto-name{text-align:left;padding-left:6px;white-space:nowrap;font-size:17px}
 @media print{
   .toolbar{display:none}
   body{padding:0 !important}
