@@ -124,13 +124,13 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                         <th>{t.results_col_num}</th>
                         <th>{t.results_col_player}</th>
                         <th>{t.results_col_club}</th>
-                        {showClass && <th>{t.results_class_prefix}</th>}
-                        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                        <th className="results-subtotal">1–5</th>
-                        <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
-                        <th className="results-subtotal">6–10</th>
+                        {showClass && <th className="round-col">{t.results_class_prefix}</th>}
+                        <th className="round-col">1</th><th className="round-col">2</th><th className="round-col">3</th><th className="round-col">4</th><th className="round-col">5</th>
+                        <th className="results-subtotal round-col">1–5</th>
+                        <th className="round-col">6</th><th className="round-col">7</th><th className="round-col">8</th><th className="round-col">9</th><th className="round-col">10</th>
+                        <th className="results-subtotal round-col">6–10</th>
                         <th className="results-subtotal">{t.results_col_total}</th>
-                        <th className="results-subtotal">{t.results_col_bonus}</th>
+                        <th className="results-subtotal round-col">{t.results_col_bonus}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -140,12 +140,12 @@ function RankingTable({ players, showClass = false }: { players: PlayerScore[]; 
                             <td><strong>{player.name}</strong></td>
                             <td>{player.club || "–"}</td>
                             {showClass && <td>{player.classLevel}</td>}
-                            {player.rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
-                            <td className="results-subtotal">{player.firstHalf}</td>
-                            {player.rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
-                            <td className="results-subtotal">{player.secondHalf}</td>
+                            {player.rounds.slice(0, 5).map((r, i) => <td key={i} className="round-col">{cell(r, i)}</td>)}
+                            <td className="results-subtotal round-col">{player.firstHalf}</td>
+                            {player.rounds.slice(5, 10).map((r, i) => <td key={i} className="round-col">{cell(r, i + 5)}</td>)}
+                            <td className="results-subtotal round-col">{player.secondHalf}</td>
                             <td className="results-subtotal"><strong>{player.total}</strong></td>
-                            <td className="results-subtotal">{player.bonusPoints > 0 ? <strong>+{player.bonusPoints}</strong> : ""}</td>
+                            <td className="results-subtotal round-col">{player.bonusPoints > 0 ? <strong>+{player.bonusPoints}</strong> : ""}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -198,10 +198,10 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
                         <tr>
                             <th>{t.results_col_num}</th>
                             <th>{t.results_col_teams_name}</th>
-                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                            <th className="results-subtotal">1–5</th>
-                            <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
-                            <th className="results-subtotal">6–10</th>
+                            <th className="round-col">1</th><th className="round-col">2</th><th className="round-col">3</th><th className="round-col">4</th><th className="round-col">5</th>
+                            <th className="results-subtotal round-col">1–5</th>
+                            <th className="round-col">6</th><th className="round-col">7</th><th className="round-col">8</th><th className="round-col">9</th><th className="round-col">10</th>
+                            <th className="results-subtotal round-col">6–10</th>
                             <th className="results-subtotal">{t.results_col_total}</th>
                         </tr>
                     </thead>
@@ -220,10 +220,10 @@ function TeamResultBox({ teams, handle }: { teams: TeamResult[]; handle: React.R
                                 <tr key={team.id} className={team.rank <= 3 ? "top-rank" : undefined}>
                                     <td className="rank-cell">{team.rank}</td>
                                     <td><strong>{team.name}</strong></td>
-                                    {rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
-                                    <td className="results-subtotal">{played.size > 0 ? firstHalf : ""}</td>
-                                    {rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
-                                    <td className="results-subtotal">{played.size > 0 ? secondHalf : ""}</td>
+                                    {rounds.slice(0, 5).map((r, i) => <td key={i} className="round-col">{cell(r, i)}</td>)}
+                                    <td className="results-subtotal round-col">{played.size > 0 ? firstHalf : ""}</td>
+                                    {rounds.slice(5, 10).map((r, i) => <td key={i} className="round-col">{cell(r, i + 5)}</td>)}
+                                    <td className="results-subtotal round-col">{played.size > 0 ? secondHalf : ""}</td>
                                     <td className="results-subtotal"><strong>{played.size > 0 ? team.total : ""}</strong></td>
                                 </tr>
                             );
@@ -255,10 +255,10 @@ function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.R
                             <th>#</th>
                             <th>{t.reg_mr}</th>
                             <th>{t.reg_mrs}</th>
-                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                            <th className="results-subtotal">1–5</th>
-                            <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
-                            <th className="results-subtotal">6–10</th>
+                            <th className="round-col">1</th><th className="round-col">2</th><th className="round-col">3</th><th className="round-col">4</th><th className="round-col">5</th>
+                            <th className="results-subtotal round-col">1–5</th>
+                            <th className="round-col">6</th><th className="round-col">7</th><th className="round-col">8</th><th className="round-col">9</th><th className="round-col">10</th>
+                            <th className="results-subtotal round-col">6–10</th>
                             <th className="results-subtotal">Total</th>
                         </tr>
                     </thead>
@@ -271,10 +271,10 @@ function MixedPairsBox({ pairs, handle }: { pairs: PairResult[]; handle: React.R
                                     <td className="rank-cell">{pair.rank}</td>
                                     <td><strong>{pair.mrName}</strong></td>
                                     <td><strong>{pair.mrsName}</strong></td>
-                                    {pair.rounds.slice(0, 5).map((r, i) => <td key={i}>{cell(r, i)}</td>)}
-                                    <td className="results-subtotal">{playedRounds.size > 0 ? firstHalf : ""}</td>
-                                    {pair.rounds.slice(5, 10).map((r, i) => <td key={i}>{cell(r, i + 5)}</td>)}
-                                    <td className="results-subtotal">{playedRounds.size > 0 ? secondHalf : ""}</td>
+                                    {pair.rounds.slice(0, 5).map((r, i) => <td key={i} className="round-col">{cell(r, i)}</td>)}
+                                    <td className="results-subtotal round-col">{playedRounds.size > 0 ? firstHalf : ""}</td>
+                                    {pair.rounds.slice(5, 10).map((r, i) => <td key={i} className="round-col">{cell(r, i + 5)}</td>)}
+                                    <td className="results-subtotal round-col">{playedRounds.size > 0 ? secondHalf : ""}</td>
                                     <td className="results-subtotal"><strong>{playedRounds.size > 0 ? pair.total : ""}</strong></td>
                                 </tr>
                             );
@@ -544,7 +544,7 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
                 </div>
 
                 <div className="results-class-grid results-public-grid">
-                    {COL_IDS.map((col) => renderColumn(col, colKeys[col]))}
+                    {COL_IDS.filter((col) => colKeys[col].length > 0).map((col) => renderColumn(col, colKeys[col]))}
                 </div>
             </main>
         );

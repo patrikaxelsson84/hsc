@@ -2464,6 +2464,21 @@ a {
 /* ── Public results page layout ─────────────────────── */
 .results-public-page {
   padding-bottom: 48px;
+  overflow: visible;
+}
+
+/* On mobile: single column, hide round cols, allow table scroll */
+@media (max-width: 600px) {
+  .results-public-page .results-public-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .results-public-page .round-col {
+    display: none;
+  }
+  .results-public-page .results-class-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .results-public-intro {
