@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ChevronRight, Lock, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Lock, Mail, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addClub, getActiveLockouts, initDefaultUsernames, listClubsWithInfo, removeClub, setAdminPassword, setAdminUsername, setClubPassword, setClubUsername, unlockAccount, type ClubInfo, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
@@ -31,6 +31,7 @@ export default function AdminUsersPage() {
     const [requests,    setRequests]    = useState<ClubRequest[]>([]);
     const [reqLoading,  setReqLoading]  = useState(true);
     const [clubs,       setClubs]       = useState<ClubInfo[]>([]);
+    const [clubEmails,  setClubEmails]  = useState<Record<string, string>>({});
     const [loading,     setLoading]     = useState(true);
     const [newClubName, setNewClubName] = useState("");
     const [newClubPw,   setNewClubPw]   = useState("");
@@ -121,7 +122,16 @@ export default function AdminUsersPage() {
 
     async function refresh() {
         setLoading(true);
-        setClubs(await listClubsWithInfo());
+        const [clubList, { data: profiles }] = await Promise.all([
+            listClubsWithInfo(),
+            supabase.from("club_profiles").select("id, email"),
+        ]);
+        setClubs(clubList);
+        const emailMap: Record<string, string> = {};
+        for (const p of profiles ?? []) {
+            if (p.email) emailMap[p.id] = p.email;
+        }
+        setClubEmails(emailMap);
         setLoading(false);
     }
 
@@ -340,6 +350,16 @@ export default function AdminUsersPage() {
                 <div className="panel-title-row">
                     <h2>{t.admin_users_clubs_heading}</h2>
                     <span className="club-tab-count">{clubs.length}</span>
+                    {Object.values(clubEmails).length > 0 && (
+                        <a
+                            href={`mailto:?bcc=${Object.values(clubEmails).join(",")}`}
+                            className="secondary-action score-button"
+                            style={{ marginLeft: "auto", textDecoration: "none" }}
+                        >
+                            <Mail size={14} aria-hidden="true" />
+                            {lang === "sv" ? `Maila alla (${Object.values(clubEmails).length})` : `Mail all (${Object.values(clubEmails).length})`}
+                        </a>
+                    )}
                     {clubs.some((c) => !c.username) && (
                         <button
                             type="button"
@@ -413,14 +433,33 @@ export default function AdminUsersPage() {
                                 {clubs.map((club) => (
                                     <tr key={club.id}>
                                         <td>
-                                            <button
-                                                type="button"
-                                                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem", fontWeight: 600, color: "inherit" }}
-                                                onClick={() => openProfile(club.id)}
-                                            >
-                                                {club.id}
-                                                <ChevronRight size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
-                                            </button>
+                                            <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                                                <button
+                                                    type="button"
+                                                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem", fontWeight: 600, color: "inherit" }}
+                                                    onClick={() => openProfile(club.id)}
+                                                >
+                                                    {club.id}
+                                                    <ChevronRight size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                                                </button>
+                                                {clubEmails[club.id] ? (
+                                                    <a
+                                                        href={`mailto:${clubEmails[club.id]}`}
+                                                        title={clubEmails[club.id]}
+                                                        style={{ color: "var(--muted)", display: "flex", alignItems: "center", lineHeight: 1 }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Mail size={14} />
+                                                    </a>
+                                                ) : (
+                                                    <span
+                                                        title={lang === "sv" ? "Ingen e-post registrerad" : "No email registered"}
+                                                        style={{ color: "var(--muted)", opacity: 0.3, display: "flex", alignItems: "center", lineHeight: 1, cursor: "default" }}
+                                                    >
+                                                        <Mail size={14} />
+                                                    </span>
+                                                )}
+                                            </span>
                                         </td>
                                         <td style={{ fontSize: "0.875rem", color: club.username ? "inherit" : "var(--muted)" }}>
                                             {club.username ?? (lang === "sv" ? "Ej satt" : "Not set")}
