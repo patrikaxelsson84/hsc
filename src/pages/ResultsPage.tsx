@@ -10,10 +10,6 @@ import { typeNameFromRunId } from "../lib/contestTypes";
 import { useCompetitions } from "../contexts/CompetitionsContext";
 import LangSelect from "../components/LangSelect";
 
-const liveScorePrefix    = "hsc-live-v1";
-const teamsStoragePrefix = "hsc-teams-v1";
-const activeContestKey   = "hsc-active-v1";
-
 export type SectionKey = "mixed-pairs" | "class-1" | "class-2" | "class-3" | "class-4" | "herr" | "dam" | "junior" | "minior" | "teams";
 const DEFAULT_ORDER: SectionKey[] = ["mixed-pairs", "class-1", "class-2", "class-3", "class-4", "herr", "dam", "junior", "minior", "teams"];
 
@@ -90,20 +86,6 @@ function buildMixedPairs(players: PlayerScore[], competitionId: string, regs: Re
 
 type ActiveContest = { runId: string; contestName: string; typeName: string; paused?: boolean };
 
-function readLiveData(): { active: ActiveContest; players: PlayerScore[]; teamAssignments: TeamAssignment[] } | null {
-    try {
-        const raw = localStorage.getItem(activeContestKey);
-        if (!raw) return null;
-        const active = JSON.parse(raw) as ActiveContest;
-        const playersRaw = localStorage.getItem(`${liveScorePrefix}-${active.runId}`);
-        if (!playersRaw) return null;
-        const teamsRaw = localStorage.getItem(`${teamsStoragePrefix}-${active.runId}`);
-        const teamAssignments: TeamAssignment[] = teamsRaw ? JSON.parse(teamsRaw) : [];
-        return { active, players: JSON.parse(playersRaw) as PlayerScore[], teamAssignments };
-    } catch {
-        return null;
-    }
-}
 
 function RankingTable({ players, showClass = false }: { players: PlayerScore[]; showClass?: boolean }) {
     const { t } = useLanguage();
@@ -291,7 +273,7 @@ type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) {
     const { t, lang } = useLanguage();
     const { competitions } = useCompetitions();
-    const [liveData, setLiveData] = useState<ReturnType<typeof readLiveData>>(null);
+    const [liveData, setLiveData] = useState<{ active: ActiveContest; players: PlayerScore[]; teamAssignments: TeamAssignment[] } | null>(null);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [supabaseRegs, setSupabaseRegs] = useState<RegRow[]>([]);
 

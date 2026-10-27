@@ -350,15 +350,22 @@ export default function AdminUsersPage() {
                 <div className="panel-title-row">
                     <h2>{t.admin_users_clubs_heading}</h2>
                     <span className="club-tab-count">{clubs.length}</span>
-                    {Object.values(clubEmails).length > 0 && (
-                        <a
-                            href={`mailto:?bcc=${Object.values(clubEmails).join(",")}`}
-                            className="secondary-action score-button"
-                            style={{ marginLeft: "auto", textDecoration: "none" }}
-                        >
-                            <Mail size={14} aria-hidden="true" />
-                            {lang === "sv" ? `Maila alla (${Object.values(clubEmails).length})` : `Mail all (${Object.values(clubEmails).length})`}
-                        </a>
+                    {clubs.length > 0 && (
+                        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                                {Object.values(clubEmails).length}/{clubs.length} {lang === "sv" ? "har e-post" : "have email"}
+                            </span>
+                            {Object.values(clubEmails).length > 0 && (
+                                <a
+                                    href={`mailto:?bcc=${Object.values(clubEmails).join(",")}`}
+                                    className="secondary-action score-button"
+                                    style={{ textDecoration: "none" }}
+                                >
+                                    <Mail size={14} aria-hidden="true" />
+                                    {lang === "sv" ? `Maila alla (${Object.values(clubEmails).length})` : `Mail all (${Object.values(clubEmails).length})`}
+                                </a>
+                            )}
+                        </span>
                     )}
                     {clubs.some((c) => !c.username) && (
                         <button
@@ -452,12 +459,14 @@ export default function AdminUsersPage() {
                                                         <Mail size={14} />
                                                     </a>
                                                 ) : (
-                                                    <span
-                                                        title={lang === "sv" ? "Ingen e-post registrerad" : "No email registered"}
-                                                        style={{ color: "var(--muted)", opacity: 0.3, display: "flex", alignItems: "center", lineHeight: 1, cursor: "default" }}
+                                                    <button
+                                                        type="button"
+                                                        title={lang === "sv" ? "Ingen e-post — klicka för att lägga till" : "No email — click to add"}
+                                                        style={{ background: "none", border: "none", padding: 0, color: "var(--muted)", opacity: 0.3, display: "flex", alignItems: "center", lineHeight: 1, cursor: "pointer" }}
+                                                        onClick={() => openProfile(club.id)}
                                                     >
                                                         <Mail size={14} />
-                                                    </span>
+                                                    </button>
                                                 )}
                                             </span>
                                         </td>
