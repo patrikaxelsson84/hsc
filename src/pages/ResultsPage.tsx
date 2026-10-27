@@ -291,7 +291,7 @@ type SectionFactory = (handle: React.ReactNode) => React.ReactNode;
 export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) {
     const { t, lang } = useLanguage();
     const { competitions } = useCompetitions();
-    const [liveData, setLiveData] = useState(readLiveData);
+    const [liveData, setLiveData] = useState<ReturnType<typeof readLiveData>>(null);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [supabaseRegs, setSupabaseRegs] = useState<RegRow[]>([]);
 
@@ -339,12 +339,7 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
     useEffect(() => {
         async function refresh() {
             const remote = await fetchLiveResults();
-            if (remote) {
-                setLiveData(remote);
-            } else {
-                const local = readLiveData();
-                if (local) setLiveData(local);
-            }
+            setLiveData(remote);
         }
         refresh();
         const interval = setInterval(refresh, 5000);
@@ -356,15 +351,9 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
             })
             .subscribe();
 
-        const onStorage = () => {
-            const local = readLiveData();
-            if (local) setLiveData(local);
-        };
-        window.addEventListener("storage", onStorage);
         return () => {
             clearInterval(interval);
             supabase.removeChannel(channel);
-            window.removeEventListener("storage", onStorage);
         };
     }, []);
 
