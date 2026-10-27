@@ -274,6 +274,7 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
     const { t, lang } = useLanguage();
     const { competitions } = useCompetitions();
     const [liveData, setLiveData] = useState<{ active: ActiveContest; players: PlayerScore[]; teamAssignments: TeamAssignment[] } | null>(null);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [colLayout, setColLayout] = useState<ColLayout>(loadColLayout);
     const [supabaseRegs, setSupabaseRegs] = useState<RegRow[]>([]);
 
@@ -322,6 +323,7 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
         async function refresh() {
             const remote = await fetchLiveResults();
             setLiveData(remote);
+            setInitialLoading(false);
         }
         refresh();
         const interval = setInterval(refresh, 5000);
@@ -340,6 +342,7 @@ export default function ResultsPage({ isAdmin = false }: { isAdmin?: boolean }) 
     }, []);
 
     if (!liveData) {
+        if (initialLoading) return null;
         if (!isAdmin) {
             return (
                 <main className="public-page">

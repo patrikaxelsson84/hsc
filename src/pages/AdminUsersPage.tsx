@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, ChevronRight, Lock, Mail, Plus, RefreshCw, Save, ShieldOff, Trash2, User, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addClub, getActiveLockouts, initDefaultUsernames, listClubsWithInfo, removeClub, setAdminPassword, setAdminUsername, setClubPassword, setClubUsername, unlockAccount, type ClubInfo, type LockoutRecord } from "../lib/auth";
 import { useLanguage } from "../lib/language";
 import { supabase } from "../lib/supabase";
@@ -51,6 +51,8 @@ export default function AdminUsersPage() {
     const [profileClub,       setProfileClub]       = useState<string | null>(null);
     const [profile,           setProfile]           = useState<ClubProfile | null>(null);
     const [profileLoading,    setProfileLoading]    = useState(false);
+    const emailInputRef = useRef<HTMLInputElement>(null);
+    const focusEmailRef = useRef(false);
     const [profileSaving,     setProfileSaving]     = useState(false);
     const [profileStatus,     setProfileStatus]     = useState<"idle" | "ok">("idle");
     const [drawerUsername,    setDrawerUsername]    = useState("");
@@ -69,7 +71,8 @@ export default function AdminUsersPage() {
         await refreshLockouts();
     }
 
-    async function openProfile(clubId: string) {
+    async function openProfile(clubId: string, focusEmail = false) {
+        focusEmailRef.current = focusEmail;
         setProfileClub(clubId);
         setProfileLoading(true);
         setProfileStatus("idle");
@@ -90,6 +93,14 @@ export default function AdminUsersPage() {
         setDrawerUsername(cred?.username ?? "");
         setProfileLoading(false);
     }
+
+    useEffect(() => {
+        if (!profileLoading && focusEmailRef.current && emailInputRef.current) {
+            emailInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            emailInputRef.current.focus();
+            focusEmailRef.current = false;
+        }
+    }, [profileLoading]);
 
     function closeProfile() {
         setProfileClub(null);
@@ -463,7 +474,7 @@ export default function AdminUsersPage() {
                                                         type="button"
                                                         title={lang === "sv" ? "Ingen e-post — klicka för att lägga till" : "No email — click to add"}
                                                         style={{ background: "none", border: "none", padding: 0, color: "var(--muted)", opacity: 0.3, display: "flex", alignItems: "center", lineHeight: 1, cursor: "pointer" }}
-                                                        onClick={() => openProfile(club.id)}
+                                                        onClick={() => openProfile(club.id, true)}
                                                     >
                                                         <Mail size={14} />
                                                     </button>
@@ -649,6 +660,7 @@ export default function AdminUsersPage() {
                                 <label style={{ display: "flex", flexDirection: "column", gap: "0.3rem", fontSize: "0.875rem", fontWeight: 500 }}>
                                     {lang === "sv" ? "E-post" : "Email"}
                                     <input
+                                        ref={emailInputRef}
                                         type="email"
                                         value={profile.email}
                                         placeholder="—"
